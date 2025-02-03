@@ -4,7 +4,6 @@
 #include <array>
 #include <bit>
 #include <cassert>
-#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +22,24 @@ namespace ui::maths {
                 nr *= 2 - n * nr; 
             }
             return nr;
+        }
+
+        template <std::size_t Iter = 1, std::floating_point T>
+        static constexpr auto calculate_sqrt_inv(T n, T nr = T(1)) noexcept -> T {
+            for (auto i = std::size_t{}; i < Iter; ++i) {
+                nr = nr * ((T(3) / T(2)) - ((n * nr * nr) / 2));
+            }
+            return nr;
+        }
+
+        template <std::size_t Iter = 1, std::integral T>
+        static constexpr auto calculate_sqrt_inv(T n, T nr = T(1)) noexcept -> T {
+            auto tn = std::uint64_t(n);
+            auto tnr = std::uint64_t(nr);
+            for (auto i = std::size_t{}; i < Iter; ++i) {
+                tnr = tnr * ((3 - (tn * tnr * tnr)) >> 1);
+            }
+            return static_cast<T>(tnr);
         }
     } // namespace internal
 
@@ -103,6 +120,24 @@ namespace ui::maths {
             return temp * temp;
         }
 
+        template <std::integral T>
+        constexpr auto sqrt_inv(T n) const noexcept -> T {
+            auto bits = std::countr_zero(n); // 2^n
+            auto guess = T(1) << ((bits + 1) >> 1); // 2^(n/2)
+            return internal::calculate_sqrt_inv(n, guess);
+        }
+
+        constexpr auto sqrt_inv(float n) const noexcept -> float {
+            auto bits = std::bit_cast<std::uint32_t>(n);
+            auto temp = std::bit_cast<float>(0x5F1FFFF9 - (bits >> 1));
+            return internal::calculate_sqrt_inv(n, temp);
+        }
+
+        constexpr auto sqrt_inv(double n) const noexcept -> double {
+            auto bits = std::bit_cast<std::uint64_t>(n);
+            auto temp = std::bit_cast<double>(0x5FE6EC85E7DE30DAull - (bits >> 1));
+            return internal::calculate_sqrt_inv(n, temp);
+        }
     };
 
 } // namespace ui::maths

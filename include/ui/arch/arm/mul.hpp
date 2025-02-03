@@ -17,10 +17,10 @@ namespace ui::arm {
 
  template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto mul(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (N == 1) return { .val = static_cast<T>(lhs.val * rhs.val) };
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
@@ -91,10 +91,10 @@ namespace ui::arm {
 
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto safe_mul(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
@@ -147,9 +147,9 @@ namespace ui::arm {
     // INFO: for integral types, it's same as calling `mul`
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto safe_mul(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return mul(lhs, rhs);
     }
 
@@ -157,21 +157,21 @@ namespace ui::arm {
     template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>
         requires (Lane < M)
     UI_ALWAYS_INLINE auto safe_mul(
-        VecReg<N, T> const& a,
-        VecReg<M, T> const& v
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& a,
+        Vec<M, T> const& v
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         #ifdef UI_CPU_ARM64
         if constexpr (N == 1 && std::same_as<T, float>) {
         #else
         if constexpr (true) {
         #endif
-            return safe_mul(a, VecReg<1, T>(v[Lane]));
+            return safe_mul(a, Vec<1, T>(v[Lane]));
         } else {
             if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (M == 1) {
-                    return safe_mul(a, load<N>(v.val));
+                    return safe_mul(a, ret_t::load(v.val));
                 } else if constexpr (M <= 4) {
                     if constexpr (N == 2) {
                         if constexpr (M == 2) {
@@ -261,10 +261,10 @@ namespace ui::arm {
     template <std::size_t Lane, std::size_t N, std::size_t M, std::integral T>
         requires (Lane < M)
     UI_ALWAYS_INLINE auto safe_mul(
-        VecReg<N, T> const& a,
-        VecReg<M, T> const& v
-    ) noexcept -> VecReg<N, T> {
-        return safe_mul(a, load<N>(v[Lane]));
+        Vec<N, T> const& a,
+        Vec<M, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return safe_mul(a, Vec<N, T>::load(v[Lane]));
     }
 
 // !MARK
@@ -272,12 +272,12 @@ namespace ui::arm {
 // MARK: Multiply-Accumulate
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs,
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs,
         [[maybe_unused]] std::plus<> op
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, double>) {
@@ -385,12 +385,12 @@ namespace ui::arm {
 
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs,
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs,
         [[maybe_unused]] std::minus<> op
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, double>) {
@@ -494,13 +494,13 @@ namespace ui::arm {
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto mul_acc(
-        VecReg<N, internal::widening_result_t<T>> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs,
+        Vec<N, internal::widening_result_t<T>> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs,
         [[maybe_unused]] std::plus<> op
-    ) noexcept -> VecReg<N, internal::widening_result_t<T>> {
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        using ret_t = VecReg<N, result_t>;
+        using ret_t = Vec<N, result_t>;
 
         if constexpr (N == 1) {
             return { .val = static_cast<result_t>(acc.val + static_cast<result_t>(lhs.val) * static_cast<result_t>(rhs.val)) };
@@ -557,13 +557,13 @@ namespace ui::arm {
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto mul_acc(
-        VecReg<N, internal::widening_result_t<T>> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs,
+        Vec<N, internal::widening_result_t<T>> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs,
         [[maybe_unused]] std::minus<> op
-    ) noexcept -> VecReg<N, internal::widening_result_t<T>> {
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        using ret_t = VecReg<N, result_t>;
+        using ret_t = Vec<N, result_t>;
 
         if constexpr (N == 1) {
             return { .val = static_cast<result_t>(acc.val - static_cast<result_t>(lhs.val) * static_cast<result_t>(rhs.val)) };
@@ -620,10 +620,10 @@ namespace ui::arm {
 
     template <std::size_t N, typename T, typename U>
     UI_ALWAYS_INLINE auto mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, U> const& lhs,
-        VecReg<N, U> const& rhs
-    ) noexcept -> VecReg<N, U> {
+        Vec<N, T> const& acc,
+        Vec<N, U> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, U> {
         return mul_acc(acc, lhs, rhs, std::plus<>{});
     }
 
@@ -632,12 +632,12 @@ namespace ui::arm {
 // MARK: Fused-Multiply-Accumulate
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto fused_mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs,
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs,
         [[maybe_unused]] std::plus<> op
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
@@ -679,12 +679,12 @@ namespace ui::arm {
 
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto fused_mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs,
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs,
         [[maybe_unused]] std::minus<> op
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
@@ -726,10 +726,10 @@ namespace ui::arm {
 
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto fused_mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return fused_mul_acc(acc, lhs, rhs, std::plus<>{});
     }
 
@@ -737,23 +737,23 @@ namespace ui::arm {
     template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>
         requires (Lane < M)
     UI_ALWAYS_INLINE auto fused_mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& a,
-        VecReg<M, T> const& v,
+        Vec<N, T> const& acc,
+        Vec<N, T> const& a,
+        Vec<M, T> const& v,
         [[maybe_unused]] std::plus<> op
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         #ifdef UI_CPU_ARM64
         if constexpr (N == 1 && std::same_as<T, float>) {
         #else
         if constexpr (true) {
         #endif
-            return fused_mul_acc(acc, a, VecReg<1, T>(v[Lane]));
+            return fused_mul_acc(acc, a, Vec<1, T>(v[Lane]));
         } else {
             if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (M == 1) {
-                    return safe_mul(a, load<N>(v.val));
+                    return safe_mul(a, ret_t::load(v.val));
                 } else if constexpr (M <= 4) {
                     if constexpr (N == 2) {
                         if constexpr (M == 2) {
@@ -843,23 +843,23 @@ namespace ui::arm {
     template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>
         requires (Lane < M)
     UI_ALWAYS_INLINE auto fused_mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& a,
-        VecReg<M, T> const& v,
+        Vec<N, T> const& acc,
+        Vec<N, T> const& a,
+        Vec<M, T> const& v,
         [[maybe_unused]] std::minus<> op
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         #ifdef UI_CPU_ARM64
         if constexpr (N == 1 && std::same_as<T, float>) {
         #else
         if constexpr (true) {
         #endif
-            return fused_mul_acc(acc, a, VecReg<1, T>(v[Lane]), op);
+            return fused_mul_acc(acc, a, Vec<1, T>(v[Lane]), op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (M == 1) {
-                    return safe_mul(a, load<N>(v.val));
+                    return safe_mul(a, ret_t::load(v.val));
                 } else if constexpr (M <= 4) {
                     if constexpr (N == 2) {
                         if constexpr (M == 2) {
@@ -949,10 +949,10 @@ namespace ui::arm {
     template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>
         requires (Lane < M)
     UI_ALWAYS_INLINE auto fused_mul_acc(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& a,
-        VecReg<M, T> const& v
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, T> const& a,
+        Vec<M, T> const& v
+    ) noexcept -> Vec<N, T> {
         return fused_mul_acc<Lane>(acc, a, v, std::plus<>{});
     }
 
@@ -961,11 +961,11 @@ namespace ui::arm {
 // MARK: Widening Multiplication
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto widening_mul(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, internal::widening_result_t<T>> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        using ret_t = VecReg<N, result_t>;
+        using ret_t = Vec<N, result_t>;
         if constexpr (N == 1) {
             auto l = static_cast<result_t>(lhs.val);
             auto r = static_cast<result_t>(rhs.val);

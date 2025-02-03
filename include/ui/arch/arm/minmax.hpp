@@ -15,10 +15,10 @@ namespace ui::arm {
 
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto max(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (N == 1) return { .val = std::max(lhs.val, rhs.val) };
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
@@ -85,10 +85,10 @@ namespace ui::arm {
 
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto min(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (N == 1) return { .val = std::min(lhs.val, rhs.val) };
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
@@ -155,10 +155,10 @@ namespace ui::arm {
 
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto maxnm(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
@@ -196,10 +196,10 @@ namespace ui::arm {
 
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto minnm(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64

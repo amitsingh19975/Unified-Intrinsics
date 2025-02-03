@@ -25,12 +25,12 @@ namespace ui::arm {
 
         template <std::size_t M0, std::size_t M1, std::size_t N, typename T>
         UI_ALWAYS_INLINE auto abs_diff_helper(
-            VecReg<N, T> const& lhs,
-            VecReg<N, T> const& rhs,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
             auto&& fn0,
             auto&& fn1
-        ) noexcept -> VecReg<N, T> {
-            using ret_t = VecReg<N, T>;
+        ) noexcept -> Vec<N, T> {
+            using ret_t = Vec<N, T>;
             if constexpr (M0 != 1 && N == 1) {
                 #ifdef UI_CPU_ARM64
                     if constexpr (std::floating_point<T>) {
@@ -69,9 +69,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto abs_diff(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_helper<8, 16>(
                 lhs, rhs,
@@ -90,9 +90,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto abs_diff(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_helper<4, 8>(
                 lhs, rhs,
@@ -111,9 +111,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto abs_diff(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_helper<2, 4>(
                 lhs, rhs,
@@ -132,9 +132,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto abs_diff(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         // make the index very large to use scalar implementation
         return internal::abs_diff_helper<1000000,1000000>(
             lhs, rhs,
@@ -145,9 +145,9 @@ namespace ui::arm {
 
     template <std::size_t N>
     UI_ALWAYS_INLINE auto abs_diff(
-        VecReg<N, float> const& lhs,
-        VecReg<N, float> const& rhs
-    ) noexcept -> VecReg<N, float> {
+        Vec<N, float> const& lhs,
+        Vec<N, float> const& rhs
+    ) noexcept -> Vec<N, float> {
         return internal::abs_diff_helper<2, 4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vabd_f32(to_vec(l), to_vec(r)); },
@@ -157,9 +157,9 @@ namespace ui::arm {
 
     template <std::size_t N>
     UI_ALWAYS_INLINE auto abs_diff(
-        VecReg<N, double> const& lhs,
-        VecReg<N, double> const& rhs
-    ) noexcept -> VecReg<N, double> {
+        Vec<N, double> const& lhs,
+        Vec<N, double> const& rhs
+    ) noexcept -> Vec<N, double> {
         return internal::abs_diff_helper<1, 2>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vabd_f64(to_vec(l), to_vec(r)); },
@@ -173,12 +173,12 @@ namespace ui::arm {
 
         template <std::size_t M0, std::size_t N, typename T>
         UI_ALWAYS_INLINE auto widening_abs_diff_helper(
-            VecReg<N, T> const& lhs,
-            VecReg<N, T> const& rhs,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
             auto&& fn0
-        ) noexcept -> VecReg<N, widening_result_t<T>> {
+        ) noexcept -> Vec<N, widening_result_t<T>> {
             using result_t = widening_result_t<T>;
-            using ret_t = VecReg<N, result_t>;
+            using ret_t = Vec<N, result_t>;
             if constexpr (M0 != 1 && N == 1) {
                 return {
                     .val = abs_diff_scalar_helper<result_t>(lhs.val, rhs.val)
@@ -200,8 +200,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto widening_abs_diff(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
     ) noexcept {
         if constexpr (std::is_signed_v<T>) {
             return internal::widening_abs_diff_helper<8>(
@@ -219,8 +219,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto widening_abs_diff(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
     ) noexcept {
         if constexpr (std::is_signed_v<T>) {
             return internal::widening_abs_diff_helper<4>(
@@ -238,8 +238,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto widening_abs_diff(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
     ) noexcept {
         if constexpr (std::is_signed_v<T>) {
             return internal::widening_abs_diff_helper<2>(
@@ -260,13 +260,13 @@ namespace ui::arm {
     namespace internal {
         template <std::size_t M0, std::size_t M1, std::size_t N, typename T>
         UI_ALWAYS_INLINE auto abs_diff_acc_helper(
-            VecReg<N, T> const& acc,
-            VecReg<N, T> const& lhs,
-            VecReg<N, T> const& rhs,
+            Vec<N, T> const& acc,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
             auto&& fn0,
             auto&& fn1
-        ) noexcept -> VecReg<N, T> {
-            using ret_t = VecReg<N, T>;
+        ) noexcept -> Vec<N, T> {
+            using ret_t = Vec<N, T>;
             if constexpr (M0 != 1 && N == 1) {
                 return {
                     .val = acc.val + abs_diff_scalar_helper<T>(lhs.val, rhs.val)
@@ -289,12 +289,12 @@ namespace ui::arm {
 
         template <std::size_t M0, std::size_t N, typename T>
         UI_ALWAYS_INLINE auto abs_diff_acc_helper(
-            VecReg<N, widening_result_t<T>> const& acc,
-            VecReg<N, T> const& lhs,
-            VecReg<N, T> const& rhs,
+            Vec<N, widening_result_t<T>> const& acc,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
             auto&& fn0
-        ) noexcept -> VecReg<N, widening_result_t<T>> {
-            using ret_t = VecReg<N, widening_result_t<T>>;
+        ) noexcept -> Vec<N, widening_result_t<T>> {
+            using ret_t = Vec<N, widening_result_t<T>>;
             if constexpr (M0 != 1 && N == 1) {
                 return {
                     .val = acc.val + abs_diff_scalar_helper<T>(lhs.val, rhs.val)
@@ -315,10 +315,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto abs_acc_diff(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_acc_helper<8, 16>(
                 acc, lhs, rhs,
@@ -337,10 +337,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto abs_acc_diff(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_acc_helper<4, 8>(
                 acc, lhs, rhs,
@@ -359,10 +359,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto abs_acc_diff(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_acc_helper<2, 4>(
                 acc, lhs, rhs,
@@ -381,10 +381,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto abs_acc_diff(
-        VecReg<N, T> const& acc,
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::abs_diff_acc_helper<100000, 100000>(
             acc, lhs, rhs,
             [](auto const&, auto const&, auto const&) {  },
@@ -395,10 +395,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto abs_acc_diff(
-        VecReg<N, T> const& acc,
-        VecReg<N, U> const& lhs,
-        VecReg<N, U> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, U> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_acc_helper<8>(
                 acc, lhs, rhs,
@@ -415,10 +415,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto abs_acc_diff(
-        VecReg<N, T> const& acc,
-        VecReg<N, U> const& lhs,
-        VecReg<N, U> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, U> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_acc_helper<4>(
                 acc, lhs, rhs,
@@ -435,10 +435,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto abs_acc_diff(
-        VecReg<N, T> const& acc,
-        VecReg<N, U> const& lhs,
-        VecReg<N, U> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& acc,
+        Vec<N, U> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, T> {
         if constexpr (std::is_signed_v<T>) {
             return internal::abs_diff_acc_helper<2>(
                 acc, lhs, rhs,
@@ -457,9 +457,9 @@ namespace ui::arm {
 // MARK: Absolute Value
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto abs(
-        VecReg<N, T> const& v
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         if constexpr (std::floating_point<T>) {
             if constexpr (N == 1) return { .val = static_cast<T>(std::abs(v.val)) };
         #ifdef UI_CPU_ARM64
@@ -510,9 +510,9 @@ namespace ui::arm {
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto sat_abs(
-        VecReg<N, T> const& v
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
         constexpr auto helper = [](T val) {
             static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
             static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());

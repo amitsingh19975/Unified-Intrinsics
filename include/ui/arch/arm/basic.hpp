@@ -2,10 +2,8 @@
 #define AMT_UI_ARCH_ARM_BASIC_HPP
 
 #include "ui/base.hpp"
-#include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 
 namespace ui::arm::internal {
 

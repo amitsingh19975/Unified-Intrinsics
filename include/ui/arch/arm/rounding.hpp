@@ -32,9 +32,9 @@ namespace ui::arm {
 
     template <std::float_round_style mode = std::float_round_style::round_toward_zero, std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto round(
-        VecReg<N, T> const& v
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64

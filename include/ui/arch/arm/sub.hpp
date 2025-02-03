@@ -20,10 +20,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto wrapping_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             return { .val = static_cast<T>(lhs.val - rhs.val) };
@@ -66,10 +66,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 16)
     UI_ALWAYS_INLINE auto wrapping_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             return { .val = static_cast<T>(lhs.val - rhs.val) };
@@ -112,10 +112,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto wrapping_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             return { .val = static_cast<T>(lhs.val - rhs.val) };
@@ -158,10 +158,10 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto wrapping_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             if constexpr (!std::is_signed_v<T>) {
@@ -206,10 +206,10 @@ namespace ui::arm {
 // MARK: Floating-Point Subtraction
     template <std::size_t N>
     UI_ALWAYS_INLINE auto float_sub(
-        VecReg<N, float> const& lhs,
-        VecReg<N, float> const& rhs
-    ) noexcept -> VecReg<N, float> {
-        using ret_t = VecReg<N, float>;
+        Vec<N, float> const& lhs,
+        Vec<N, float> const& rhs
+    ) noexcept -> Vec<N, float> {
+        using ret_t = Vec<N, float>;
 
         if constexpr (N == 1) {
             return { .val = lhs.val + rhs.val };
@@ -235,10 +235,10 @@ namespace ui::arm {
 
     template <std::size_t N>
     UI_ALWAYS_INLINE auto float_sub(
-        VecReg<N, double> const& lhs,
-        VecReg<N, double> const& rhs
-    ) noexcept -> VecReg<N, double> {
-        using ret_t = VecReg<N, double>;
+        Vec<N, double> const& lhs,
+        Vec<N, double> const& rhs
+    ) noexcept -> Vec<N, double> {
+        using ret_t = Vec<N, double>;
 
         if constexpr (N == 1) {
             return std::bit_cast<ret_t>(
@@ -267,13 +267,13 @@ namespace ui::arm {
     namespace internal {
         template <std::size_t M, std::size_t N, std::integral T, std::integral U>
         UI_ALWAYS_INLINE auto widening_sub_helper(
-            VecReg<N, T> const& lhs,
-            VecReg<N, U> const& rhs,
+            Vec<N, T> const& lhs,
+            Vec<N, U> const& rhs,
             auto&& sign_fn,
             auto&& unsigned_fn
-        ) noexcept -> VecReg<N, internal::widening_result_t<T, U>> {
+        ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
             using result_t = internal::widening_result_t<T, U>;
-            using ret_t = VecReg<N, result_t>;
+            using ret_t = Vec<N, result_t>;
 
             if constexpr (N == 1) {
                 return { .val = static_cast<result_t>(lhs.val) + static_cast<result_t>(rhs.val) };
@@ -299,9 +299,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, internal::widening_result_t<T>> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         return internal::widening_sub_helper<8>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubl_s8(to_vec(l), to_vec(r)); },
@@ -312,9 +312,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 2 && sizeof(U) == 1)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, U> const& rhs
-    ) noexcept -> VecReg<N, internal::widening_result_t<T, U>> {
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
         return internal::widening_sub_helper<8>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubw_s8(to_vec(l), to_vec(r)); },
@@ -325,8 +325,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 1 && sizeof(U) == 2)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, U> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
     ) noexcept {
         return widening_sub(rhs, lhs); 
     }
@@ -334,9 +334,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, internal::widening_result_t<T>> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         return internal::widening_sub_helper<4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubl_s16(to_vec(l), to_vec(r)); },
@@ -347,9 +347,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 4 && sizeof(U) == 2)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, U> const& rhs
-    ) noexcept -> VecReg<N, internal::widening_result_t<T, U>> {
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
         return internal::widening_sub_helper<4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubw_s16(to_vec(l), to_vec(r)); },
@@ -360,8 +360,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 2 && sizeof(U) == 4)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, U> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
     ) noexcept {
         return widening_sub(rhs, lhs); 
     }
@@ -369,9 +369,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, internal::widening_result_t<T>> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         return internal::widening_sub_helper<2>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubl_s32(to_vec(l), to_vec(r)); },
@@ -382,9 +382,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 8 && sizeof(U) == 4)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, U> const& rhs
-    ) noexcept -> VecReg<N, internal::widening_result_t<T, U>> {
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
         return internal::widening_sub_helper<2>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubw_s32(to_vec(l), to_vec(r)); },
@@ -395,8 +395,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 4 && sizeof(U) == 8)
     UI_ALWAYS_INLINE auto widening_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, U> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
     ) noexcept {
         return widening_sub(rhs, lhs);
     }
@@ -408,14 +408,14 @@ namespace ui::arm {
     namespace internal {
         template <std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto halving_sub_helper(
-            VecReg<N, T> const& lhs,
-            VecReg<N, T> const& rhs,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
             auto&&   signed_fn0,
             auto&& unsigned_fn0,
             auto&&   signed_fn1,
             auto&& unsigned_fn1
-        ) noexcept -> VecReg<N, T> {
-            using ret_t = VecReg<N, T>;
+        ) noexcept -> Vec<N, T> {
+            using ret_t = Vec<N, T>;
             using acc_t = widening_result_t<T>;
             if constexpr (N == 1) {
                 return { .val = halving_round_helper<false, acc_t>(lhs.val, rhs.val, std::minus<>{})};
@@ -465,9 +465,9 @@ namespace ui::arm {
     template <bool Round = false, std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto halving_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::halving_sub_helper<Round, 8, 16>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vhsub_s8(to_vec(l), to_vec(r)) ; },
@@ -481,9 +481,9 @@ namespace ui::arm {
     template <bool Round = false, std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto halving_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::halving_sub_helper<Round, 4, 8>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vhsub_s16(to_vec(l), to_vec(r)) ; },
@@ -496,9 +496,9 @@ namespace ui::arm {
     template <bool Round = false, std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto halving_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::halving_sub_helper<Round, 2, 4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vhsub_s32(to_vec(l), to_vec(r)) ; },
@@ -512,13 +512,13 @@ namespace ui::arm {
     namespace internal {
         template <std::size_t M, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto narrowing_sub_helper(
-            VecReg<N, T> const& lhs,
-            VecReg<N, T> const& rhs,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
             auto&& signed_fn,
             auto&& unsigned_fn
-        ) noexcept -> VecReg<N, narrowing_result_t<T>> {
+        ) noexcept -> Vec<N, narrowing_result_t<T>> {
             using result_t = narrowing_result_t<T>; 
-            using ret_t    = VecReg<N, result_t>; 
+            using ret_t    = Vec<N, result_t>; 
 
             if constexpr (N == 1) {
                 return {
@@ -550,8 +550,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto narrowing_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
     ) noexcept {
         return internal::narrowing_sub_helper<8>(
             lhs, rhs,
@@ -566,8 +566,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto narrowing_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
     ) noexcept {
         return internal::narrowing_sub_helper<4>(
             lhs, rhs,
@@ -582,8 +582,8 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto narrowing_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
     ) noexcept {
         return internal::narrowing_sub_helper<4>(
             lhs, rhs,
@@ -609,14 +609,14 @@ namespace ui::arm {
     
         template <std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto sat_sub_helper(
-            VecReg<N, T> const& lhs,
-            VecReg<N, T> const& rhs,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
             auto&& signed_fn0,
             auto&& unsigned_fn0,
             auto&& signed_fn1,
             auto&& unsigned_fn1
-        ) noexcept -> VecReg<N, T> {
-            using ret_t = VecReg<N, T>;
+        ) noexcept -> Vec<N, T> {
+            using ret_t = Vec<N, T>;
 
             if constexpr (M0 != 1 && N == 1) {
                 #ifdef UI_CPU_ARM64
@@ -678,9 +678,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto sat_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::sat_sub_helper<8, 16>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vqsub_s8(to_vec(l), to_vec(r)); },
@@ -694,9 +694,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto sat_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::sat_sub_helper<4, 8>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vqsub_s16(to_vec(l), to_vec(r)); },
@@ -711,9 +711,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto sat_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::sat_sub_helper<2, 4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vqsub_s32(to_vec(l), to_vec(r)); },
@@ -728,9 +728,9 @@ namespace ui::arm {
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto sat_sub(
-        VecReg<N, T> const& lhs,
-        VecReg<N, T> const& rhs
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
         return internal::sat_sub_helper<1, 2>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vqsub_s64(to_vec(l), to_vec(r)); },

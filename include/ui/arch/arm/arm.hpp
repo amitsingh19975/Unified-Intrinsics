@@ -9,9 +9,9 @@
 
 namespace ui::arm {
 
-    template <std::size_t N, typename T>
-    UI_ALWAYS_INLINE auto load(T val) noexcept -> VecReg<N, T> {
-		using ret_t = VecReg<N, T>;
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto load(T val) noexcept -> Vec<N, T> {
+		using ret_t = Vec<N, T>;
 		
 		if constexpr (N == 1) {
 			return { .val = val };
@@ -38,10 +38,46 @@ namespace ui::arm {
 		}
 
 		if constexpr (N > 1) {
-			return join(load<N/2>(val), load<N/2>(val));
+			return join(
+				load<N/2>(val),
+				load<N/2>(val)
+			);
 		}
     }
 
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE auto load(T val) noexcept -> Vec<N, T> {
+		using ret_t = Vec<N, T>;
+		
+		if constexpr (N == 1) {
+			return { .val = val };
+		} else {
+			if constexpr (std::same_as<T, float>) {
+				if constexpr (N == 2) {
+					return std::bit_cast<ret_t>(
+						vld1_f32(val)
+					);
+				} else if constexpr (N == 4) {
+					return std::bit_cast<ret_t>(
+						vld1q_f32(val)
+					);
+				}
+			#ifdef UI_CPU_ARM64
+			} else if constexpr (std::same_as<T, double>) {
+				if constexpr (N == 2) {
+					return std::bit_cast<ret_t>(
+						vld1q_f64(val)
+					);
+				}
+			#endif
+			}
+
+			return join(
+				load<N / 2>(val),
+				load<N / 2>(val)
+			);
+		}
+	}
 } // namespace ui::arm;
 
 #include "add.hpp"

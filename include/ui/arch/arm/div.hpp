@@ -17,10 +17,10 @@ namespace ui::arm {
 
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto div(
-        VecReg<N, T> const& num,
-        VecReg<N, T> const& den
-    ) noexcept -> VecReg<N, T> {
-        using ret_t = VecReg<N, T>;
+        Vec<N, T> const& num,
+        Vec<N, T> const& den
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
 
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
@@ -65,9 +65,9 @@ namespace ui::arm {
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto div(
-        VecReg<N, T> const& num,
-        VecReg<N, T> const& den
-    ) noexcept -> VecReg<N, T> {
+        Vec<N, T> const& num,
+        Vec<N, T> const& den
+    ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
             return {
                 .val = num.val / num.den

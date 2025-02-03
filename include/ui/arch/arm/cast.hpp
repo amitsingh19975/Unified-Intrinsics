@@ -10,7 +10,7 @@
 
 namespace ui::arm {
     template <std::size_t N, typename T>
-    UI_ALWAYS_INLINE constexpr auto to_vec(VecReg<N, T> const& v) noexcept {
+    UI_ALWAYS_INLINE constexpr auto to_vec(Vec<N, T> const& v) noexcept {
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<float, T>) {
                 if constexpr (N == 1) return std::bit_cast<float>(v);
@@ -63,10 +63,10 @@ namespace ui::arm {
 
         template <typename To, std::size_t M0, std::size_t N, typename From>
         UI_ALWAYS_INLINE auto cast_helper(
-            VecReg<N, From> const& v,
+            Vec<N, From> const& v,
             auto&& fn0
-        ) noexcept -> VecReg<N, To> {
-            using ret_t = VecReg<N, To>;
+        ) noexcept -> Vec<N, To> {
+            using ret_t = Vec<N, To>;
             
             if constexpr (M0 != 1 && N == 1) {
                 return {
@@ -86,11 +86,11 @@ namespace ui::arm {
 
         template <typename To, std::size_t M0, std::size_t M1, std::size_t N, typename From>
         UI_ALWAYS_INLINE auto cast_helper(
-            VecReg<N, From> const& v,
+            Vec<N, From> const& v,
             auto&& fn0,
             auto&& fn1
-        ) noexcept -> VecReg<N, To> {
-            using ret_t = VecReg<N, To>;
+        ) noexcept -> Vec<N, To> {
+            using ret_t = Vec<N, To>;
             
             if constexpr (M0 != 1 && N == 1) {
                 return {
@@ -117,8 +117,8 @@ namespace ui::arm {
         struct CastImpl {
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::int8_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::int8_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     return v;
                 } else if constexpr (std::same_as<To, std::int16_t>) {
@@ -139,16 +139,16 @@ namespace ui::arm {
                         [](auto const& v) { return vmovl_s32(to_vec(v)); }
                     ); 
                 } else if constexpr (std::same_as<To, std::uint8_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v);
+                    return std::bit_cast<Vec<N, To>>(v);
                 } else if constexpr (std::same_as<To, std::uint16_t>) {
                     auto temp = CastImpl<std::int16_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, std::uint32_t>) {
                     auto temp = CastImpl<std::int32_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, std::uint64_t>) {
                     auto temp = CastImpl<std::int64_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, float>) {
                     auto temp = CastImpl<std::int32_t, Saturating>{}(v);
                     return cast_helper<To, 2, 4>(
@@ -172,19 +172,19 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::uint8_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::uint8_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v); 
+                    return std::bit_cast<Vec<N, To>>(v); 
                 } else if constexpr (std::same_as<To, std::int16_t>) {
                     auto temp = CastImpl<std::uint16_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int32_t>) {
                     auto temp = CastImpl<std::uint32_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int64_t>) {
                     auto temp = CastImpl<std::uint64_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::uint8_t>) {
                     return v; 
                 } else if constexpr (std::same_as<To, std::uint16_t>) {
@@ -227,8 +227,8 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::int16_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::int16_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     return cast_helper<To, 8>(
                         v,
@@ -265,13 +265,13 @@ namespace ui::arm {
                         }
                     );
                 } else if constexpr (std::same_as<To, std::uint16_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v); 
+                    return std::bit_cast<Vec<N, To>>(v); 
                 } else if constexpr (std::same_as<To, std::uint32_t>) {
                     auto temp = CastImpl<std::int32_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::uint64_t>) {
                     auto temp = CastImpl<std::int64_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, float>) {
                     auto temp = CastImpl<std::int32_t, Saturating>{}(v);
                     return cast_helper<To, 2, 4>(
@@ -296,19 +296,19 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::uint16_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::uint16_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     auto temp = CastImpl<std::uint8_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int16_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v);
+                    return std::bit_cast<Vec<N, To>>(v);
                 } else if constexpr (std::same_as<To, std::int32_t>) {
                     auto temp = CastImpl<std::uint32_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int64_t>) {
                     auto temp = CastImpl<std::uint64_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::uint8_t>) {
                     return cast_helper<To, 8>(
                         v,
@@ -350,8 +350,8 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::int32_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::int32_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     auto temp = CastImpl<std::int16_t, Saturating>{}(v);
                     return CastImpl<std::int8_t, Saturating>{}(temp);
@@ -388,10 +388,10 @@ namespace ui::arm {
                         }
                     );
                 } else if constexpr (std::same_as<To, std::uint32_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v); 
+                    return std::bit_cast<Vec<N, To>>(v); 
                 } else if constexpr (std::same_as<To, std::uint64_t>) {
                     auto temp = CastImpl<std::int64_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, float>) {
                     return cast_helper<To, 2, 4>(
                         v,
@@ -414,19 +414,19 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::uint32_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::uint32_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     auto temp = CastImpl<std::uint8_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int16_t>) {
                     auto temp = CastImpl<std::uint16_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, std::int32_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v); 
+                    return std::bit_cast<Vec<N, To>>(v); 
                 } else if constexpr (std::same_as<To, std::int64_t>) {
                     auto temp = CastImpl<std::uint64_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::uint8_t>) {
                     auto temp = CastImpl<std::uint16_t>{}(v); 
                     return CastImpl<std::uint8_t>{}(temp);
@@ -464,8 +464,8 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::int64_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::int64_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     auto temp = CastImpl<std::int16_t, Saturating>{}(v);
                     return CastImpl<std::int8_t, Saturating>{}(temp);
@@ -487,10 +487,10 @@ namespace ui::arm {
                     return v;
                 } else if constexpr (std::same_as<To, std::uint8_t>) {
                     auto temp = CastImpl<std::int8_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, std::uint16_t>) {
                     auto temp = CastImpl<std::int16_t, Saturating>{}(v);
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, std::uint32_t>) {
                     return cast_helper<To, 2>(
                         v,
@@ -503,7 +503,7 @@ namespace ui::arm {
                         }
                     );
                 } else if constexpr (std::same_as<To, std::uint64_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v);
+                    return std::bit_cast<Vec<N, To>>(v);
                 } else if constexpr (std::same_as<To, float>) {
                     return map([](auto v) { return static_cast<float>(v); }, v); 
                 } else if constexpr (std::same_as<To, double>) {
@@ -521,19 +521,19 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, std::uint64_t> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, std::uint64_t> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     auto temp = CastImpl<std::uint8_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp); 
+                    return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int16_t>) {
                     auto temp = CastImpl<std::uint16_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, std::int32_t>) {
                     auto temp = CastImpl<std::uint16_t>{}(v); 
-                    return std::bit_cast<VecReg<N, To>>(temp);
+                    return std::bit_cast<Vec<N, To>>(temp);
                 } else if constexpr (std::same_as<To, std::int64_t>) {
-                    return std::bit_cast<VecReg<N, To>>(v); 
+                    return std::bit_cast<Vec<N, To>>(v); 
                 } else if constexpr (std::same_as<To, std::uint8_t>) {
                     auto temp = CastImpl<std::uint16_t>{}(v); 
                     return CastImpl<std::uint8_t>{}(temp);
@@ -565,8 +565,8 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, float> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, float> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, double>) {
                     #ifdef UI_CPU_ARM64
                     return cast_helper<To, 2>(
@@ -599,8 +599,8 @@ namespace ui::arm {
 
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
-                VecReg<N, double> const& v
-            ) noexcept -> VecReg<N, To> {
+                Vec<N, double> const& v
+            ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, double>) {
                     return v;
                 } else if constexpr (std::same_as<To, float>) {
@@ -636,12 +636,12 @@ namespace ui::arm {
     } // namespace internal
 
     template <typename To, std::size_t N, typename From>
-    UI_ALWAYS_INLINE auto cast(VecReg<N, From> const& v) noexcept -> VecReg<N, To> {
+    UI_ALWAYS_INLINE auto cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
         return internal::CastImpl<To, false>{}(v);
     }
 
     template <typename To, std::size_t N, typename From>
-    UI_ALWAYS_INLINE auto sat_cast(VecReg<N, From> const& v) noexcept -> VecReg<N, To> {
+    UI_ALWAYS_INLINE auto sat_cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
         return internal::CastImpl<To, true>{}(v);
     }
 } // namespace ui::arm
