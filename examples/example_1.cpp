@@ -6,6 +6,9 @@
 #include <numeric>
 #include <print>
 #include "ui/arch/arm/arm.hpp"
+#include "ui/arch/arm/reciprocal.hpp"
+#include "ui/arch/arm/sqrt.hpp"
+#include "ui/maths.hpp"
 #include "ui/vec_op.hpp"
 #include <cxxabi.h>
 
@@ -31,20 +34,14 @@ int main() {
 
     static constexpr auto N = 1zu;
 
-    auto a = ui::load<N>(source.data(), source.size());
+    auto a = ui::Vec<N, type>::load(source.data(), source.size());
     using ot = int;
-    auto b = ui::load<N, ot>(source.data() + N, source.size() - N);
-
-    /*a[0] = INFINITY;*/
-    /*b[0] = -INFINITY;*/
+    auto b = ui::Vec<N, ot>::load(source.data() + N, source.size() - N);
 
     std::println("A: {}\nB: {}", a.to_span(), b.to_span());
 
-    auto r = ui::load<N, double>(10);
-    auto e = ui::arm::reciprocal_estimate(r);
-    std::println("Estimate: {}", e.to_span());
-
-    auto t = ui::arm::reciprocal_refine(r, e);
+    auto r = ui::Vec<N, float>::load(2);
+    auto t = ui::arm::sqrt(r);
 
     std::println("Vec: {} | {}", t.to_span(), to_name<decltype(t)::element_t>());
     return 0; 
