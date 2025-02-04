@@ -3,15 +3,16 @@
 
 #include "cast.hpp"
 #include <algorithm>
+#include <arm_neon.h>
 #include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <limits>
 #include <type_traits>
 #include "basic.hpp"
+#include "ui/base.hpp"
 
 namespace ui::arm { 
 
@@ -423,7 +424,7 @@ namespace ui::arm {
             using ret_t = Vec<N, T>;
             using acc_t = widening_result_t<T>;
             if constexpr (N == 1) {
-                return { .val = halving_round_helper<Round, acc_t>(lhs.val, rhs.val, std::plus<>{})};
+                return { .val = halving_round_helper<Round, acc_t>(lhs.val, rhs.val, op::add_t{})};
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
                     if constexpr (!Round) {
@@ -1035,6 +1036,538 @@ namespace ui::arm {
             #endif
         );
     }
+// !MARK
+
+// MARK: Pairwise Addition
+
+    template <std::size_t N, typename T>
+        requires (N != 1)
+    UI_ALWAYS_INLINE auto padd(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        using ret_t = Vec<N, T>;
+        if constexpr (N == 2) {
+            #ifdef UI_CPU_ARM64
+            if constexpr (std::same_as<T, double>) {
+                return std::bit_cast<ret_t>(
+                    vpaddq_f64(to_vec(lhs), to_vec(rhs))
+                );
+            } 
+            #endif
+            if constexpr (std::same_as<T, float>) {
+                return std::bit_cast<ret_t>(
+                    vpadd_f32(to_vec(lhs), to_vec(rhs))
+                );
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 4) {
+                    return std::bit_cast<ret_t>(
+                        vpadd_s32(to_vec(lhs), to_vec(rhs))
+                    );
+                #ifdef UI_CPU_ARM64
+                }
+                else if constexpr (sizeof(T) == 8) {
+                    return std::bit_cast<ret_t>(
+                        vpaddq_s64(to_vec(lhs), to_vec(rhs))
+                    );
+                #endif
+                } 
+            } else {
+                if constexpr (sizeof(T) == 4) {
+                    return std::bit_cast<ret_t>(
+                        vpadd_u32(to_vec(lhs), to_vec(rhs))
+                    );
+                #ifdef UI_CPU_ARM64
+                }
+                else if constexpr (sizeof(T) == 8) {
+                    return std::bit_cast<ret_t>(
+                        vpaddq_u64(to_vec(lhs), to_vec(rhs))
+                    );
+                #endif
+                } 
+            }
+            return ret_t(lhs[0] + lhs[1], rhs[0] + rhs[1]);
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                #ifdef UI_CPU_ARM64
+                if constexpr (N == 4) {
+                    return std::bit_cast<ret_t>(
+                        vpaddq_f32(to_vec(lhs), to_vec(rhs))
+                    );
+                }
+                #endif
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return std::bit_cast<ret_t>(
+                            vpadd_s8(to_vec(lhs), to_vec(rhs))
+                        );
+
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (N == 16) {
+                        return std::bit_cast<ret_t>(
+                            vpaddq_s8(to_vec(lhs), to_vec(rhs))
+                        );
+                    }
+                    #endif
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return std::bit_cast<ret_t>(
+                            vpadd_s16(to_vec(lhs), to_vec(rhs))
+                        );
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (N == 8) {
+                        return std::bit_cast<ret_t>(
+                            vpaddq_s16(to_vec(lhs), to_vec(rhs))
+                        );
+                    }
+                    #endif
+                } else if constexpr (sizeof(T) == 4) {
+                    #ifdef UI_CPU_ARM64
+                    if constexpr (N == 4) {
+                        return std::bit_cast<ret_t>(
+                            vpaddq_s32(to_vec(lhs), to_vec(rhs))
+                        );
+                    }
+                    #endif
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return std::bit_cast<ret_t>(
+                            vpadd_u8(to_vec(lhs), to_vec(rhs))
+                        );
+
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (N == 16) {
+                        return std::bit_cast<ret_t>(
+                            vpaddq_u8(to_vec(lhs), to_vec(rhs))
+                        );
+                    }
+                    #endif
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return std::bit_cast<ret_t>(
+                            vpadd_u16(to_vec(lhs), to_vec(rhs))
+                        );
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (N == 8) {
+                        return std::bit_cast<ret_t>(
+                            vpaddq_u16(to_vec(lhs), to_vec(rhs))
+                        );
+                    }
+                    #endif
+                } else if constexpr (sizeof(T) == 4) {
+                    #ifdef UI_CPU_ARM64
+                    if constexpr (N == 4) {
+                        return std::bit_cast<ret_t>(
+                            vpaddq_u32(to_vec(lhs), to_vec(rhs))
+                        );
+                    }
+                    #endif
+                }
+            } 
+            return join(
+                padd(lhs.lo, rhs.lo),
+                padd(lhs.hi, rhs.hi)
+            );
+        }
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto padd(
+        Vec<N, T> const& v
+    ) noexcept -> T {
+        if constexpr (N == 1) {
+            return v.val;
+        } else {
+            #ifdef UI_CPU_ARM64 
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpadds_f32(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, double>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpaddd_f64(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, std::uint64_t>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpaddd_u64(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, std::int64_t>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpaddd_s64(to_vec(v)));
+                }
+            }
+            #endif
+
+            return padd(v.lo) + padd(v.hi);
+        }
+    }
+// !Mark
+
+// MARK: Widening Pairwise Addition
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto widening_padd(
+        Vec<N, T> const& v
+    ) noexcept {
+        using result_t = internal::widening_result_t<T>;
+
+        if constexpr (N == 1) {
+            return Vec<1, result_t>{ .val = static_cast<result_t>(v.val) };
+        } else {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return from_vec(
+                            vpaddl_s8(to_vec(v))
+                        );
+                    } else if constexpr (N == 16) {
+                        return from_vec(
+                            vpaddl_s16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec(
+                            vpaddl_s16(to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec(
+                            vpaddl_s16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec(
+                            vpaddl_s32(to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec(
+                            vpaddl_s32(to_vec(v))
+                        );
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return from_vec(
+                            vpaddl_u8(to_vec(v))
+                        );
+                    } else if constexpr (N == 16) {
+                        return from_vec(
+                            vpaddl_u16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec(
+                            vpaddl_u16(to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec(
+                            vpaddl_u16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec(
+                            vpaddl_u32(to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec(
+                            vpaddl_u32(to_vec(v))
+                        );
+                    }
+                }
+            }
+
+            return join(
+                widening_padd(v.lo),
+                widening_padd(v.hi)
+            );
+        }
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto widening_padd(
+        Vec<N, internal::widening_result_t<T>> const& x,
+        Vec<2 * N, T> const& v
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+
+        if constexpr (N == 1)  {
+            if constexpr (sizeof(T) == 4) {
+                if constexpr (std::is_signed_v<T>) {
+                    return from_vec(
+                        vpadal_s32(to_vec(x), to_vec(v))
+                    );
+                } else {
+                    return from_vec(
+                        vpadal_u32(to_vec(x), to_vec(v))
+                    );
+                }
+            }
+            return { .val = x.val + static_cast<result_t>(v.lo.val) + static_cast<result_t>(v.hi.val) };
+        } else {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 4) {
+                        return from_vec(
+                            vpadal_s8(to_vec(x), to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec(
+                            vpadalq_s8(to_vec(x), to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec(
+                            vpadal_s16(to_vec(x), to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec(
+                            vpadalq_s16(to_vec(x), to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec(
+                            vpadalq_s32(to_vec(x), to_vec(v))
+                        );
+                    } 
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 4) {
+                        return from_vec(
+                            vpadal_u8(to_vec(x), to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec(
+                            vpadalq_u8(to_vec(x), to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec(
+                            vpadal_u16(to_vec(x), to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec(
+                            vpadalq_u16(to_vec(x), to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec(
+                            vpadalq_u32(to_vec(x), to_vec(v))
+                        );
+                    } 
+                }
+            }
+
+            return join(
+                widening_padd(x.lo, v.lo),
+                widening_padd(x.hi, v.hi)
+            );
+        }
+    }
+// !MARK
+
+// MARK: Addition across vector
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::add_t op
+    ) noexcept -> T {
+        if constexpr (N == 1) {
+            return v.val;
+        } else {
+            #ifdef UI_CPU_ARM64
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(
+                        vaddv_f32(to_vec(v))
+                    );
+                } else if constexpr (N == 4) {
+                    return static_cast<T>(
+                        vaddvq_f32(to_vec(v))
+                    );
+                }
+            } else if constexpr (std::same_as<T, double>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(
+                        vaddvq_f64(to_vec(v))
+                    );
+                } 
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return static_cast<T>(
+                            vaddv_s8(to_vec(v))
+                        );
+                    } else if constexpr (N == 16) {
+                        return static_cast<T>(
+                            vaddvq_s8(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return static_cast<T>(
+                            vaddv_s16(to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return static_cast<T>(
+                            vaddvq_s16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return static_cast<T>(
+                            vaddv_s32(to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return static_cast<T>(
+                            vaddvq_s32(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return static_cast<T>(
+                            vaddvq_s64(to_vec(v))
+                        );
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return static_cast<T>(
+                            vaddv_u8(to_vec(v))
+                        );
+                    } else if constexpr (N == 16) {
+                        return static_cast<T>(
+                            vaddvq_u8(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return static_cast<T>(
+                            vaddv_u16(to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return static_cast<T>(
+                            vaddvq_u16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return static_cast<T>(
+                            vaddv_u32(to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return static_cast<T>(
+                            vaddvq_u32(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return static_cast<T>(
+                            vaddvq_u64(to_vec(v))
+                        );
+                    }
+                }
+            }
+            #endif
+            return fold(v.lo, op) + fold(v.hi, op);
+        }
+    }
+
+// !MARK
+
+// MARK: Widening Addition across vector
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto widening_fold(
+        Vec<N, T> const& v,
+        op::add_t op
+    ) noexcept -> internal::widening_result_t<T> {
+        using result_t = internal::widening_result_t<T>;
+        if constexpr (N == 1) {
+            return static_cast<result_t>(v.val);
+        } else {
+            #ifdef UI_CPU_ARM64
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return static_cast<result_t>(
+                            vaddlv_s8(to_vec(v))
+                        );
+                    } else if constexpr (N == 16) {
+                        return static_cast<result_t>(
+                            vaddlvq_s8(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return static_cast<result_t>(
+                            vaddlv_s16(to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return static_cast<result_t>(
+                            vaddlvq_s16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return static_cast<result_t>(
+                            vaddlv_s32(to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return static_cast<result_t>(
+                            vaddlvq_s32(to_vec(v))
+                        );
+                    }
+                } 
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return static_cast<result_t>(
+                            vaddlv_u8(to_vec(v))
+                        );
+                    } else if constexpr (N == 16) {
+                        return static_cast<result_t>(
+                            vaddlvq_u8(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return static_cast<result_t>(
+                            vaddlv_u16(to_vec(v))
+                        );
+                    } else if constexpr (N == 8) {
+                        return static_cast<result_t>(
+                            vaddlvq_u16(to_vec(v))
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return static_cast<result_t>(
+                            vaddlv_u32(to_vec(v))
+                        );
+                    } else if constexpr (N == 4) {
+                        return static_cast<result_t>(
+                            vaddlvq_u32(to_vec(v))
+                        );
+                    }
+                }
+            }
+            #endif
+            return fold(v.lo, op) + fold(v.hi, op);
+        }
+    }
+
 // !MARK
 
 } // namespace ui::arm;

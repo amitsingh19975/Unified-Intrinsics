@@ -39,6 +39,19 @@ namespace ui {
         UI_ALWAYS_INLINE constexpr Vec& operator=(Vec &&) noexcept = default;
         UI_ALWAYS_INLINE constexpr ~Vec() noexcept = default;
 
+        UI_ALWAYS_INLINE constexpr Vec(element_t x, element_t y) noexcept requires (N == 2)
+            : lo(x)
+            , hi(y)
+        {}
+
+        UI_ALWAYS_INLINE constexpr Vec(
+            Vec<elements / 2, element_t> const& lo,
+            Vec<elements / 2, element_t> const& hi
+        ) noexcept requires (elements != 4)
+            : lo(lo)
+            , hi(hi)
+        {}
+
         UI_ALWAYS_INLINE constexpr Vec(element_t val) noexcept
             : lo(val)
             , hi(val)
@@ -247,22 +260,22 @@ namespace ui {
         Vec<N, T> const& x,
         Vec<N, T> const& y
     ) noexcept -> Vec<2 * N, T> {
-        return { .lo = x, .hi = y };
+        return { x, y };
     }
 
     namespace internal {
         template <typename T>
-        struct is_vec_reg_impl: std::false_type {};
+        struct is_vec_impl: std::false_type {};
 
         template <std::size_t N, typename T>
-        struct is_vec_reg_impl<Vec<N, T>>: std::true_type {};
+        struct is_vec_impl<Vec<N, T>>: std::true_type {};
 
         template <typename T>
-        concept is_vec_reg = is_vec_reg_impl<std::decay_t<T>>::value;
+        concept is_vec = is_vec_impl<std::decay_t<T>>::value;
         
     
         template <typename A, typename... Args>
-            requires (is_vec_reg<A> && (is_vec_reg<Args> && ...))
+            requires (is_vec<A> && (is_vec<Args> && ...))
         constexpr auto is_valid_map_args() {
             return ((A::elements == Args::elements) && ...);
         }

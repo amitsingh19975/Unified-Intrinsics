@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <functional>
 #include <limits>
 #include <type_traits>
 #include "basic.hpp"
@@ -418,7 +417,7 @@ namespace ui::arm {
             using ret_t = Vec<N, T>;
             using acc_t = widening_result_t<T>;
             if constexpr (N == 1) {
-                return { .val = halving_round_helper<false, acc_t>(lhs.val, rhs.val, std::minus<>{})};
+                return { .val = halving_round_helper<false, acc_t>(lhs.val, rhs.val, op::sub_t{})};
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
                     return std::bit_cast<ret_t>(

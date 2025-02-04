@@ -8,6 +8,8 @@
 #include "ui/arch/arm/arm.hpp"
 #include "ui/arch/arm/reciprocal.hpp"
 #include "ui/arch/arm/sqrt.hpp"
+#include "ui/base.hpp"
+#include "ui/base_vec.hpp"
 #include "ui/maths.hpp"
 #include "ui/vec_op.hpp"
 #include <cxxabi.h>
@@ -32,7 +34,7 @@ int main() {
     std::array<type, 100> source;
     std::iota(source.begin(), source.end(), 1);
 
-    static constexpr auto N = 1zu;
+    static constexpr auto N = 4zu;
 
     auto a = ui::Vec<N, type>::load(source.data(), source.size());
     using ot = int;
@@ -40,9 +42,10 @@ int main() {
 
     std::println("A: {}\nB: {}", a.to_span(), b.to_span());
 
-    auto r = ui::Vec<N, float>::load(2);
-    auto t = ui::arm::sqrt(r);
+    /*auto r = ui::Vec<N / 2, int64_t>::load(2);*/
+    auto t = ui::arm::fold(a, ui::op::max_t{});
 
-    std::println("Vec: {} | {}", t.to_span(), to_name<decltype(t)::element_t>());
+    /*std::println("Vec: {} | {}", t.to_span(), to_name<decltype(t)::element_t>());*/
+    std::println("Vec: {} | {}", t, to_name<decltype(t)>()); 
     return 0; 
 }

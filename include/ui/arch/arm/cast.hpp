@@ -4,6 +4,7 @@
 #include "../../base_vec.hpp"
 #include "../../base.hpp"
 #include "../../vec_headers.hpp"
+#include <arm_neon.h>
 #include <bit>
 #include <concepts>
 #include <cstdint>
@@ -57,6 +58,72 @@ namespace ui::arm {
                 else return std::bit_cast<uint64x2_t>(v);
             }
         }
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint8x8_t const& v) noexcept -> Vec<8, std::uint8_t> {
+        return std::bit_cast<Vec<8, std::uint8_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint8x16_t const& v) noexcept -> Vec<16, std::uint8_t> {
+        return std::bit_cast<Vec<16, std::uint8_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int8x8_t const& v) noexcept -> Vec<8, std::int8_t> {
+        return std::bit_cast<Vec<8, std::int8_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int8x16_t const& v) noexcept -> Vec<16, std::int8_t> {
+        return std::bit_cast<Vec<16, std::int8_t>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint16x4_t const& v) noexcept -> Vec<4, std::uint16_t> {
+        return std::bit_cast<Vec<4, std::uint16_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint16x8_t const& v) noexcept -> Vec<8, std::uint16_t> {
+        return std::bit_cast<Vec<8, std::uint16_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int16x4_t const& v) noexcept -> Vec<4, std::int16_t> {
+        return std::bit_cast<Vec<4, std::int16_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int16x8_t const& v) noexcept -> Vec<8, std::int16_t> {
+        return std::bit_cast<Vec<8, std::int16_t>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint32x2_t const& v) noexcept -> Vec<2, std::uint32_t> {
+        return std::bit_cast<Vec<2, std::uint32_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint32x4_t const& v) noexcept -> Vec<4, std::uint32_t> {
+        return std::bit_cast<Vec<4, std::uint32_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int32x2_t const& v) noexcept -> Vec<2, std::int32_t> {
+        return std::bit_cast<Vec<2, std::int32_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int32x4_t const& v) noexcept -> Vec<4, std::int32_t> {
+        return std::bit_cast<Vec<4, std::int32_t>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint64x1_t const& v) noexcept -> Vec<1, std::uint64_t> {
+        return std::bit_cast<Vec<1, std::uint64_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(uint64x2_t const& v) noexcept -> Vec<2, std::uint64_t> {
+        return std::bit_cast<Vec<2, std::uint64_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int64x1_t const& v) noexcept -> Vec<1, std::int64_t> {
+        return std::bit_cast<Vec<1, std::int64_t>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(int64x2_t const& v) noexcept -> Vec<2, std::int64_t> {
+        return std::bit_cast<Vec<2, std::int64_t>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x2_t const& v) noexcept -> Vec<2, float> {
+        return std::bit_cast<Vec<2, float>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x4_t const& v) noexcept -> Vec<4, float> {
+        return std::bit_cast<Vec<4, float>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x1_t const& v) noexcept -> Vec<1, double> {
+        return std::bit_cast<Vec<1, double>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x2_t const& v) noexcept -> Vec<2, double> {
+        return std::bit_cast<Vec<2, double>>(v);
     }
 
     namespace internal {
