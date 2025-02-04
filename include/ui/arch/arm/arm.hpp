@@ -88,5 +88,6 @@ namespace ui::arm {
 #include "div.hpp"
 #include "rounding.hpp"
 #include "reciprocal.hpp"
+#include "cmp.hpp"
 
 #endif // AMT_UI_ARCH_ARM_ARM_HPP

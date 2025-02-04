@@ -6,6 +6,7 @@
 #include <bit>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <initializer_list>
 #include <span>
@@ -289,6 +290,23 @@ namespace ui {
         template <typename... Args>
         using map_arg_vec_result_t = decltype(map_arg_vec_result_helper<Args...>());
 
+        template <typename T>
+        struct Mask {
+            using type = std::make_unsigned_t<T>;
+        };
+
+        template <>
+        struct Mask<float> {
+            using type = std::uint32_t;
+        };
+
+        template <>
+        struct Mask<double> {
+            using type = std::uint64_t;
+        };
+
+        template <std::size_t N, typename T>
+        struct Mask<Vec<N, T>>: Mask<T> {};
     } // namespace internal
 
     template <typename Fn, internal::valid_vec_map_arg... Args>
@@ -308,6 +326,12 @@ namespace ui {
         };
         return helper(std::make_index_sequence<N>{});
     }
+
+    template <typename T>
+    using mask_inner_t = internal::Mask<std::decay_t<T>>::type;
+
+    template <std::size_t N, typename T>
+    using mask_t = Vec<N, mask_inner_t<T>>;
 
 } // namespace ui
 

@@ -62,17 +62,37 @@ namespace ui {
         struct OpTag {
             static constexpr auto id = Op;
         };
-        using add_t = OpTag<0>;
-        using sub_t = OpTag<1>;
-        using mul_t = OpTag<2>;
-        using div_t = OpTag<3>;
-        using max_t = OpTag<4>;
-        using min_t = OpTag<5>;
+        using add_t                 = OpTag<0>; // +
+        using sub_t                 = OpTag<1>; // -
+        using mul_t                 = OpTag<2>; // *
+        using div_t                 = OpTag<3>; // /
+        using max_t                 = OpTag<4>;
+        using min_t                 = OpTag<5>;
 
         // maximum operation avoiding NaN
-        using maxnm_t = OpTag<6>;
+        // max(4.f, NaN) == 4.f
+        using maxnm_t               = OpTag<6>;
         // minimum operation avoiding NaN
-        using minnm_t = OpTag<7>;
+        // min(4.f, NaN) == 4.f
+        using minnm_t               = OpTag<7>;
+
+        using and_test_t            = OpTag< 8>; // (lhs & rhs) != 0
+        using equal_t               = OpTag< 9>; // =
+        using equal_zero_t          = OpTag<10>; // =0
+
+        using greater_t             = OpTag<11>; // >
+        using greater_zero_t        = OpTag<12>; // >0
+        using greater_equal_t       = OpTag<13>; // >=
+        using greater_equal_zero_t  = OpTag<14>; // >=0
+        using less_t                = OpTag<15>; // <
+        using less_zero_t           = OpTag<16>; // <0
+        using less_equal_t          = OpTag<17>; // <=
+        using less_equal_zero_t     = OpTag<18>; // <=0
+
+        using abs_greater_t         = OpTag<19>;
+        using abs_greater_equal_t   = OpTag<20>;
+        using abs_less_t            = OpTag<21>;
+        using abs_less_equal_t      = OpTag<22>;
     }
 
 } // namespace ui

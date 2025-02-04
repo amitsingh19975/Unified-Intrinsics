@@ -9,6 +9,7 @@
 #include "ui/arch/arm/reciprocal.hpp"
 #include "ui/arch/arm/sqrt.hpp"
 #include "ui/base.hpp"
+#include "ui/format.hpp"
 #include "ui/base_vec.hpp"
 #include "ui/maths.hpp"
 #include "ui/vec_op.hpp"
@@ -30,22 +31,22 @@ std::string to_name() {
 
 int main() {
 
-    using type = int;
+    using type = uint32_t;
     std::array<type, 100> source;
     std::iota(source.begin(), source.end(), 1);
 
-    static constexpr auto N = 4zu;
+    static constexpr auto N = 1zu;
 
     auto a = ui::Vec<N, type>::load(source.data(), source.size());
-    using ot = int;
+    using ot = uint32_t;
     auto b = ui::Vec<N, ot>::load(source.data() + N, source.size() - N);
 
     std::println("A: {}\nB: {}", a.to_span(), b.to_span());
 
     /*auto r = ui::Vec<N / 2, int64_t>::load(2);*/
-    auto t = ui::arm::fold(a, ui::op::max_t{});
+    auto t = ui::arm::cmp(a, b, ui::op::and_test_t{});
 
-    /*std::println("Vec: {} | {}", t.to_span(), to_name<decltype(t)::element_t>());*/
-    std::println("Vec: {} | {}", t, to_name<decltype(t)>()); 
+    std::println("Vec: {:0x} | {}", t, to_name<decltype(t)::element_t>());
+    /*std::println("Vec: {} | {}", t, to_name<decltype(t)>()); */
     return 0; 
 }
