@@ -1,9 +1,13 @@
 #ifndef AMT_UI_FORMAT_HPP
 #define AMT_UI_FORMAT_HPP
 
-#include "ui/base_vec.hpp"
+#include "float.hpp"
+#include "base_vec.hpp"
+#include "ui/matrix.hpp"
 #include <concepts>
 #include <format>
+#include <iterator>
+#include <type_traits>
 
 namespace std {
     template <std::size_t N, typename T>
@@ -37,6 +41,7 @@ namespace std {
         }
 
         auto format(ui::Vec<N, T> const& v, auto& ctx) const {
+            using namespace ui;
             auto&& out = ctx.out();
             format_to(out, "[");
             for (auto i = std::size_t{}; i < N; ++i) {
@@ -49,14 +54,29 @@ namespace std {
                             // TODO: Do we really need binary rep for floats?
                             format_to(out, "{}", v[i]);
                         } else {
-                            format_to(out, "0b{:0{}b}", v[i], sizeof(T) * 8);
+                            auto temp = static_cast<std::make_unsigned_t<T>>(v[i]);
+                            if (v[i] < 0) {
+                                format_to(out, "-0b{:0{}b}", temp, sizeof(T) * 8);
+                            } else {
+                                format_to(out, "0b{:0{}b}", temp, sizeof(T) * 8);
+                            }
                         }
                     } break;
                     case Radix::hex: {
                         if constexpr (std::floating_point<T>) {
-                            format_to(out, "0x{:a}", v[i]);
+                            auto f = fp::decompose_fp(v[i]);
+                            if (f.sign) {
+                                format_to(out, "-0x{:a}", -v[i], sizeof(T) * 8);
+                            } else {
+                                format_to(out, "0x{:a}", v[i], sizeof(T) * 8);
+                            }
                         } else {
-                            format_to(out, "0x{:0{}x}", v[i], sizeof(T) * 8 / 4);
+                            auto temp = static_cast<std::make_unsigned_t<T>>(v[i]);
+                            if (v[i] < 0) {
+                                format_to(out, "-0x{:0{}x}", temp, sizeof(T) * 8);
+                            } else {
+                                format_to(out, "0x{:0{}x}", temp, sizeof(T) * 8);
+                            }
                         }
                     } break;
                     default: break;
@@ -65,6 +85,38 @@ namespace std {
                 if (i + 1 != N) {
                     format_to(out, ", ");
                 }
+            }
+            return format_to(out, "]");
+        }
+    };
+
+    template <std::size_t R, std::size_t C, typename T>
+    struct formatter<ui::VecMat<R, C, T>> {
+        constexpr auto parse(format_parse_context& ctx) {
+            return ctx.begin();
+        }
+
+        auto format(ui::VecMat<R, C, T> const& v, auto& ctx) const {
+            auto&& out = ctx.out();
+            format_to(out, "[\n");
+            std::size_t width = 0u;
+            std::string buff;
+            buff.reserve(100);
+            for (auto i = 0u; i < R * C; ++i) {
+                format_to(std::back_inserter(buff), "{}", v.data()[i]);
+                width = std::max(width, buff.size());
+                buff.clear();
+            }
+
+            for (auto i = 0u; i < R; ++i) {
+                format_to(out, "  [");
+                for (auto j = 0u; j < C; ++j) {
+                    format_to(out, "{:{}}", v(i, j), width);
+                    if (j + 1 < C) {
+                        format_to(out, ", ");
+                    }
+                }
+                format_to(out, "]\n");
             }
             return format_to(out, "]");
         }

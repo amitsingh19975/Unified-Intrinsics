@@ -3,18 +3,41 @@
 
 #include "base_vec.hpp"
 #include "features.hpp"
-#include "ui/arch/arm/arm.hpp"
-#include <initializer_list>
 #include <type_traits>
+
+#ifdef UI_ARM_HAS_NEON
+    #include "arch/arm/arm.hpp"
+#endif
 
 namespace ui {
     template <std::size_t N, typename T>
-    inline constexpr auto Vec<N, T>::load(T val) noexcept -> Vec<N, T> {
+        requires (std::is_arithmetic_v<T>)
+    inline constexpr auto load(T val) noexcept -> Vec<N, T> {
         #if defined(UI_ARM_HAS_NEON)
-            return arm::load<N>(val);
+            return arm::neon::load<N>(val);
         #else
             #error "not implemented"
         #endif
+    }
+
+    template <std::size_t N, typename T>
+    inline constexpr auto Vec<N, T>::load(T val) noexcept -> Vec<N, T> {
+        return load<N>(val);
+    }
+
+    template <std::size_t N, unsigned Lane, std::size_t M, typename T>
+    inline constexpr auto load(Vec<M, T> const& v) noexcept -> Vec<N, T> {
+        #if defined(UI_ARM_HAS_NEON)
+            return arm::neon::load<N, Lane>(v);
+        #else
+            #error "not implemented"
+        #endif
+    }
+
+    template <std::size_t N, typename T>
+    template <unsigned Lane, std::size_t M>
+    inline constexpr auto Vec<N, T>::load(Vec<M, T> const& v) noexcept -> Vec<N, T> {
+        return load<N, Lane>(v);
     }
 } // namespace ui
 

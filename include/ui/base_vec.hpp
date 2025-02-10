@@ -1,10 +1,11 @@
 #ifndef AMT_UI_BASE_VEC_HPP
 #define AMT_UI_BASE_VEC_HPP
 
-#include "ui/base.hpp"
-#include "ui/maths.hpp"
+#include "base.hpp"
+#include "maths.hpp"
 #include <bit>
 #include <cassert>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -12,6 +13,11 @@
 #include <span>
 #include <cstring>
 #include <type_traits>
+#include "features.hpp"
+
+#ifdef UI_ARM_HAS_NEON
+    #include "arch/arm/join.hpp"
+#endif
 
 namespace ui {
 
@@ -76,14 +82,14 @@ namespace ui {
         {}
 
         UI_ALWAYS_INLINE constexpr Vec(std::initializer_list<element_t> li) noexcept {
-            store(li.data(), li.size());
+            store(li.begin(), li.size());
         }
 
         UI_ALWAYS_INLINE constexpr Vec(std::span<element_t> li) noexcept {
             store(li.data(), li.size());
         }
 
-        operator std::span<element_t>() const noexcept {
+        explicit operator std::span<element_t>() const noexcept {
             return to_span();
         }
 
@@ -172,13 +178,16 @@ namespace ui {
         }
 
         template <typename... Us>
-            requires ((... && std::same_as<element_t, Us>) && (sizeof...(Us) > 1) && (sizeof...(Us) <= N))
-        UI_ALWAYS_INLINE constexpr auto load(Us... args) noexcept -> Vec {
+            requires ((... && (std::convertible_to<Us, element_t>)) && (sizeof...(Us) > 1) && (sizeof...(Us) <= N))
+        UI_ALWAYS_INLINE static constexpr auto load(Us... args) noexcept -> Vec {
             std::array<element_t, elements> res = { args... };
             return load(res);
         }
 
         UI_ALWAYS_INLINE static constexpr auto load(element_t val) noexcept -> Vec;
+
+        template <unsigned Lane, std::size_t M>
+        UI_ALWAYS_INLINE static constexpr auto load(Vec<M, T> const&) noexcept -> Vec; 
 
         UI_ALWAYS_INLINE constexpr auto store(element_t const* const UI_RESTRICT in, size_type size) noexcept {
             assert(size >= N);
@@ -234,21 +243,24 @@ namespace ui {
             return val;
         }
 
-        static constexpr auto load(T const* const UI_RESTRICT in, size_type size) noexcept {
+        UI_ALWAYS_INLINE static constexpr auto load(T const* const UI_RESTRICT in, size_type size) noexcept {
             auto res = Vec{};
             res.store(in, size);
             return res;
         }
 
-        static constexpr auto load(std::span<T> data) noexcept {
+        UI_ALWAYS_INLINE static constexpr auto load(std::span<T> data) noexcept {
             auto res = Vec{};
             res.store(data);
             return res;
         }
 
-        static constexpr auto load(element_t val) noexcept -> Vec {
+        UI_ALWAYS_INLINE static constexpr auto load(element_t val) noexcept -> Vec {
             return { .val = val };
         }
+
+        template <unsigned Lane, std::size_t M>
+        UI_ALWAYS_INLINE static constexpr auto load(Vec<M, T> const&) noexcept -> Vec;
 
         constexpr auto store(T const* const UI_RESTRICT in, [[maybe_unused]] size_type size) noexcept {
             assert(size >= 1);
@@ -261,7 +273,11 @@ namespace ui {
         Vec<N, T> const& x,
         Vec<N, T> const& y
     ) noexcept -> Vec<2 * N, T> {
+        #ifdef UI_ARM_HAS_NEON
+        return arm::neon::join_impl(x, y); 
+        #else
         return { x, y };
+        #endif
     }
 
     namespace internal {
