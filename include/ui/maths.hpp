@@ -3,9 +3,11 @@
 
 #include <algorithm>
 #include <bit>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <array>
 #include "base.hpp"
 
 #if defined(UI_COMPILER_GCC) || defined(UI_COMPILER_CLANG)
@@ -24,11 +26,27 @@
 
 namespace ui::maths {
 
-    template <typename T>
-        requires std::is_arithmetic_v<T>
+    template <std::integral T>
     static inline constexpr auto is_power_of_2(T num) noexcept -> bool {
         if (num == 0) return true;
         return (num & (num - 1)) == 0;
+    }
+
+    static inline constexpr auto nearest_power_of_2(std::size_t num) noexcept -> std::size_t {
+        if ((num & (num - 1)) == 0) return num;
+        --num;
+        num |= (num >> 1);
+        num |= (num >> 2);
+        num |= (num >> 4);
+        num |= (num >> 8);
+        num |= (num >> 16);
+        num |= (num >> 32);
+        ++num;
+        return num;
+    }
+
+    static inline constexpr auto round_toward_multiple_of_2(std::size_t num) noexcept -> std::size_t {
+        return num + (num & 1);
     }
 
     template <typename T>
@@ -76,66 +94,31 @@ namespace ui::maths {
         }
     }
 
+    namespace internal {
+        static constexpr auto bit_reverse_map = []{
+            std::array<std::uint8_t, 256> arr{};
+            for (auto i = 0u; i < 256u; ++i) {
+                arr[i] = static_cast<std::uint8_t>((i & 1) * (1 << (8 - 1)) | (arr[i>>1] >> 1));
+            }
+            return arr;
+        }();
+    } // namespace internal
+
     template <typename T>
-    struct FloatingPointRep;
-
-    template <>
-    struct FloatingPointRep<float> {
-        bool sign;
-        std::uint32_t exponent;
-        std::uint32_t mantissa;
-    };
-
-    template <>
-    struct FloatingPointRep<double> {
-        bool sign;
-        std::uint32_t exponent;
-        std::uint64_t mantissa;
-    };
-
-    UI_ALWAYS_INLINE static constexpr auto decompose_fp(float n) noexcept -> FloatingPointRep<float> {
-        auto bits = std::bit_cast<std::uint32_t>(n);
-        if constexpr (std::endian::native == std::endian::big) {
-            bits = byteswap(bits);
-        }
-
-        return {
-            .sign = static_cast<bool>(bits >> 31),
-            .exponent = ((bits >> 23) & 0xFF) - 127,
-            .mantissa = bits & 0x7FFFFF,
+    constexpr auto bit_reverse(T val) noexcept -> T {
+        auto temp = byteswap(val);
+        static constexpr auto Bytes = sizeof(T) / sizeof(std::uint8_t);
+        struct Wrapper {
+            std::uint8_t data[Bytes];
         };
+
+        auto res = std::bit_cast<Wrapper>(temp);
+        for (auto i = 0u; i < Bytes; ++i) {
+            res.data[i] = static_cast<std::uint8_t>(internal::bit_reverse_map[res.data[i]]);
+        }
+        return std::bit_cast<T>(res);
     }
 
-    UI_ALWAYS_INLINE static constexpr auto decompose_fp(double n) noexcept -> FloatingPointRep<double> {
-        auto bits = std::bit_cast<std::uint64_t>(n);
-        if constexpr (std::endian::native == std::endian::big) {
-            bits = byteswap(bits);
-        }
-
-        return {
-            .sign = static_cast<bool>(bits >> 63),
-            .exponent = static_cast<std::uint32_t>((bits >> 52) & 0x7FF) - 1023,
-            .mantissa = bits & 0xFFFFFFFFFFFFF,
-        };
-    }
-    
-    UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<float> fp) noexcept -> float {
-        auto bits = (static_cast<std::uint32_t>(fp.sign) << 31) | (((fp.exponent & 0xFF) + 127) << 23) | (fp.mantissa);
-        
-        if constexpr (std::endian::native == std::endian::big) {
-            bits = byteswap(bits);
-        }
-        return std::bit_cast<float>(bits);
-    }
-
-    UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<double> fp) noexcept -> double {
-        auto bits = (static_cast<std::uint64_t>(fp.sign) << 63) | (((fp.exponent & 0x7FF) + 1023ull) << 52) | (fp.mantissa);
-        
-        if constexpr (std::endian::native == std::endian::big) {
-            bits = byteswap(bits);
-        }
-        return std::bit_cast<double>(bits);
-    }
 } // namespace ui::maths
 
 #undef UI_BYTE_SWAP_INTRINSIC_2
