@@ -6,12 +6,17 @@
 #include <numeric>
 #include <print>
 #include "ui/arch/arm/arm.hpp"
+#include "ui/arch/arm/bit.hpp"
+#include "ui/arch/arm/manip.hpp"
 #include "ui/arch/arm/reciprocal.hpp"
+#include "ui/arch/arm/shift.hpp"
 #include "ui/arch/arm/sqrt.hpp"
 #include "ui/base.hpp"
+#include "ui/float.hpp"
 #include "ui/format.hpp"
 #include "ui/base_vec.hpp"
 #include "ui/maths.hpp"
+#include "ui/vec_headers.hpp"
 #include "ui/vec_op.hpp"
 #include <cxxabi.h>
 
@@ -29,24 +34,22 @@ std::string to_name() {
     return (status==0) ? res.get() : name ;
 }
 
+using namespace ui::arm::neon;
+using namespace ui;
+
 int main() {
 
-    using type = uint32_t;
+    using type = int32_t;
     std::array<type, 100> source;
     std::iota(source.begin(), source.end(), 1);
+    constexpr auto R = 8;
+    constexpr auto C = 4;
+    auto a = VecMat<R, C, type>::load(source);
+    auto b = VecMat<R, C, type>::load(source);
+    std::println("A: {}\nB: {}", a, b);
 
-    static constexpr auto N = 1zu;
-
-    auto a = ui::Vec<N, type>::load(source.data(), source.size());
-    using ot = uint32_t;
-    auto b = ui::Vec<N, ot>::load(source.data() + N, source.size() - N);
-
-    std::println("A: {}\nB: {}", a.to_span(), b.to_span());
-
-    /*auto r = ui::Vec<N / 2, int64_t>::load(2);*/
-    auto t = ui::arm::cmp(a, b, ui::op::and_test_t{});
-
-    std::println("Vec: {:0x} | {}", t, to_name<decltype(t)::element_t>());
+    auto t = transpose(a);
+    std::println("Vec: {} | {}", t, to_name<decltype(t)::element_t>());
     /*std::println("Vec: {} | {}", t, to_name<decltype(t)>()); */
     return 0; 
 }
