@@ -3,36 +3,43 @@
 
 #include "cast.hpp"
 #include "basic.hpp"
+#include "ui/base.hpp"
+#include "ui/float.hpp"
 #include <bit>
 #include <cassert>
 #include <cmath>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <type_traits>
 
-namespace ui::arm {
+namespace ui::arm::neon {
 // MARK: Multiplication
-
- template <std::size_t N, typename T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto mul(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
         if constexpr (N == 1) return { .val = static_cast<T>(lhs.val * rhs.val) };
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vmul_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmul_f32(to_vec(lhs), to_vec(rhs)));
                 else if constexpr (N == 4) 
-                    return std::bit_cast<ret_t>(vmulq_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmulq_f32(to_vec(lhs), to_vec(rhs)));
             } else if constexpr (std::same_as<T, double>) {
                 #ifdef UI_CPU_ARM64
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmulq_f64(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmulq_f64(to_vec(lhs), to_vec(rhs)));
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vmul_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vmulq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             }
             if constexpr (N > 1) {
                 return join(
@@ -44,36 +51,36 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmul_s8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmul_s8(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 16)
-                        return std::bit_cast<ret_t>(vmulq_s8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmulq_s8(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmul_s16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmul_s16(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmulq_s16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmulq_s16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmul_s32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmul_s32(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmulq_s32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmulq_s32(to_vec(lhs), to_vec(rhs)));
                 }
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmul_u8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmul_u8(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 16)
-                        return std::bit_cast<ret_t>(vmulq_u8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmulq_u8(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmul_u16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmul_u16(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmulq_u16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmulq_u16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmul_u32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmul_u32(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmulq_u32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmulq_u32(to_vec(lhs), to_vec(rhs)));
                 }
             }
             if constexpr (N > 1) {
@@ -94,29 +101,29 @@ namespace ui::arm {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
-                return std::bit_cast<ret_t>(vmulx_f64(to_vec(lhs), to_vec(rhs)));
+                return from_vec<T>(vmulx_f64(to_vec(lhs), to_vec(rhs)));
             } else if constexpr (std::same_as<T, float>) {
                 return {
                     .val = vmulxs_f32(lhs.val, rhs.val)
                 };
             }
             #endif
-            auto lc = std::fpclassify(lhs.val);
-            auto rc = std::fpclassify(rhs.val);
+            using namespace std;
+            using namespace ui;
+            auto lc = fpclassify(lhs.val);
+            auto rc = fpclassify(rhs.val);
             auto linf = lc == FP_INFINITE;
             auto rinf = rc == FP_INFINITE;
             auto lz = lc == FP_ZERO;
             auto rz = rc == FP_ZERO;
-            auto ls = std::signbit(lhs.val);
-            auto rs = std::signbit(rhs.val);
+            auto ls = signbit(lhs.val);
+            auto rs = signbit(rhs.val);
             auto sign = ls || rs;
 
-            if ((linf && rz) || (lz &&rinf)) {
+            if ((linf && rz) || (lz && rinf)) {
                 return { .val = static_cast<T>(std::copysign<T>(2.0, (sign ? -1 : 1))) };
             } else if (lz || rz) {
                 return { .val = static_cast<T>(std::copysign<T>(0.0, (sign ? -1 : 1))) };
@@ -128,12 +135,18 @@ namespace ui::arm {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vmulx_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmulx_f32(to_vec(lhs), to_vec(rhs)));
                 else if constexpr (N == 4)
-                    return std::bit_cast<ret_t>(vmulxq_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmulxq_f32(to_vec(lhs), to_vec(rhs)));
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vmulxq_f64(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmulxq_f64(to_vec(lhs), to_vec(rhs)));
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vmulx_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vmulxq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             }
             #endif
 
@@ -162,7 +175,7 @@ namespace ui::arm {
     ) noexcept -> Vec<N, T> {
         using ret_t = Vec<N, T>;
         #ifdef UI_CPU_ARM64
-        if constexpr (N == 1 && std::same_as<T, float>) {
+        if constexpr (N == 1 && (std::same_as<T, float> || std::same_as<T, float16>)) {
         #else
         if constexpr (true) {
         #endif
@@ -175,21 +188,21 @@ namespace ui::arm {
                 } else if constexpr (M <= 4) {
                     if constexpr (N == 2) {
                         if constexpr (M == 2) {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulx_lane_f32(to_vec(a), to_vec(v), Lane)
                             );
                         } else {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulx_laneq_f32(to_vec(a), to_vec(v), Lane)
                             );
                         }
                     } else if constexpr (N == 4) {
                         if constexpr (M == 2) {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulxq_lane_f32(to_vec(a), to_vec(v), Lane)
                             );
                         } else {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulxq_laneq_f32(to_vec(a), to_vec(v), Lane)
                             );
                         }
@@ -216,21 +229,21 @@ namespace ui::arm {
                 if constexpr (M <= 2) {
                     if constexpr (N == 1) {
                         if constexpr (M == 1) {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulx_lane_f64(to_vec(a), to_vec(v), Lane)
                             );
                         } else {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulx_laneq_f64(to_vec(a), to_vec(v), Lane)
                             );
                         }
                     } else if constexpr (N == 2) {
                         if constexpr (M == 1) {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulxq_lane_f64(to_vec(a), to_vec(v), Lane)
                             );
                         } else {
-                            return std::bit_cast<ret_t>(
+                            return from_vec<T>(
                                 vmulxq_laneq_f64(to_vec(a), to_vec(v), Lane)
                             );
                         }
@@ -253,8 +266,54 @@ namespace ui::arm {
                         safe_mul<Lane>(a.hi, v)
                     );
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (M == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmulx_lane_f16(to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vmulxq_lane_f16(to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M > 8) {
+                    if constexpr (Lane < M / 2) {
+                        return safe_mul<Lane>(a, v.lo);
+                    } else {
+                        return safe_mul<Lane - M / 2>(a, v.hi);
+                    }
+                }
+                #ifdef UI_CPU_ARM64
+                if constexpr (M == 1) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmulx_n_f16(to_vec(a), v[Lane])
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vmulxq_n_f16(to_vec(a), v[Lane])
+                        );
+                    }
+                } else if constexpr (M == 8) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmulx_laneq_f16(to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vmulxq_laneq_f16(to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                }
+                #else
+                    return join(
+                        safe_mul<Lane>(a.lo, v),
+                        safe_mul<Lane>(a.hi, v)
+                    );
+                #endif
+
             }
-    
         }
     }
 
@@ -275,13 +334,12 @@ namespace ui::arm {
         Vec<N, T> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        [[maybe_unused]] std::plus<> op
+        op::add_t op
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, double>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmla_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 }
@@ -292,48 +350,48 @@ namespace ui::arm {
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmla_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 } else if constexpr (N == 4) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmlaq_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 }
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmlaq_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmla_s8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlaq_s8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmla_s16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlaq_s16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmla_s32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlaq_s32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
@@ -343,31 +401,31 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmla_u8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlaq_u8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmla_u16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlaq_u16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmla_u32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlaq_u32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
@@ -388,13 +446,12 @@ namespace ui::arm {
         Vec<N, T> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        [[maybe_unused]] std::minus<> op
+        op::sub_t op
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, double>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmls_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 }
@@ -405,48 +462,48 @@ namespace ui::arm {
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmls_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 } else if constexpr (N == 4) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmlsq_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 }
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmlsq_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))
                     );
                 }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmls_s8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlsq_s8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmls_s16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlsq_s16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmls_s32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlsq_s32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
@@ -454,31 +511,31 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmls_u8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlsq_u8(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmls_u16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlsq_u16(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmls_u32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vmlsq_u32(to_vec(acc), to_vec(lhs), to_vec(rhs))
                         );
                     }
@@ -497,10 +554,9 @@ namespace ui::arm {
         Vec<N, internal::widening_result_t<T>> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        [[maybe_unused]] std::plus<> op
+        op::add_t op
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        using ret_t = Vec<N, result_t>;
 
         if constexpr (N == 1) {
             return { .val = static_cast<result_t>(acc.val + static_cast<result_t>(lhs.val) * static_cast<result_t>(rhs.val)) };
@@ -509,19 +565,19 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlal_s8(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlal_s16(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlal_s32(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
@@ -529,19 +585,19 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlal_u8(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlal_u16(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlal_u32(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
@@ -549,8 +605,8 @@ namespace ui::arm {
             }
 
             return join(
-                mul_acc(acc.lo, lhs.lo, rhs.lo),
-                mul_acc(acc.hi, lhs.hi, rhs.hi)
+                mul_acc(acc.lo, lhs.lo, rhs.lo, op),
+                mul_acc(acc.hi, lhs.hi, rhs.hi, op)
             );
         }
     }
@@ -560,10 +616,9 @@ namespace ui::arm {
         Vec<N, internal::widening_result_t<T>> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        [[maybe_unused]] std::minus<> op
+        op::sub_t op
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        using ret_t = Vec<N, result_t>;
 
         if constexpr (N == 1) {
             return { .val = static_cast<result_t>(acc.val - static_cast<result_t>(lhs.val) * static_cast<result_t>(rhs.val)) };
@@ -572,19 +627,19 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlsl_s8(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlsl_s16(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlsl_s32(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
@@ -592,19 +647,19 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlsl_u8(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlsl_u16(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmlsl_u32(to_vec(acc), to_vec(lhs), to_vec(rhs))             
                         );
                     }
@@ -612,21 +667,11 @@ namespace ui::arm {
             }
 
             return join(
-                mul_acc(acc.lo, lhs.lo, rhs.lo),
-                mul_acc(acc.hi, lhs.hi, rhs.hi)
+                mul_acc(acc.lo, lhs.lo, rhs.lo, op),
+                mul_acc(acc.hi, lhs.hi, rhs.hi, op)
             );
         }
     }
-
-    template <std::size_t N, typename T, typename U>
-    UI_ALWAYS_INLINE auto mul_acc(
-        Vec<N, T> const& acc,
-        Vec<N, U> const& lhs,
-        Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, U> {
-        return mul_acc(acc, lhs, rhs, std::plus<>{});
-    }
-
 // !MARK
 
 // MARK: Fused-Multiply-Accumulate
@@ -635,13 +680,12 @@ namespace ui::arm {
         Vec<N, T> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        [[maybe_unused]] std::plus<> op
+        op::add_t op
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vfma_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                 );
             }
@@ -652,22 +696,28 @@ namespace ui::arm {
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vfma_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                     );
                 } else if constexpr (N == 4) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vfmaq_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                     );
                 }
             } else if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vfmaq_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                     );
                 }
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vfma_f16(to_vec(acc), to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vfmaq_f16(to_vec(acc), to_vec(lhs), to_vec(rhs)));
+                }
             }
 
             return join(
@@ -682,13 +732,12 @@ namespace ui::arm {
         Vec<N, T> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        [[maybe_unused]] std::minus<> op
+        [[maybe_unused]] op::sub_t op
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vfms_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                 );
             }
@@ -699,22 +748,28 @@ namespace ui::arm {
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vfms_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                     );
                 } else if constexpr (N == 4) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vfmsq_f32(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                     );
                 }
             } else if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vfmsq_f64(to_vec(acc), to_vec(lhs), to_vec(rhs))        
                     );
                 }
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vfms_f16(to_vec(acc), to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vfmsq_f16(to_vec(acc), to_vec(lhs), to_vec(rhs)));
+                }
             }
 
             return join(
@@ -724,238 +779,247 @@ namespace ui::arm {
         }
     }
 
-    template <std::size_t N, std::floating_point T>
-    UI_ALWAYS_INLINE auto fused_mul_acc(
-        Vec<N, T> const& acc,
-        Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return fused_mul_acc(acc, lhs, rhs, std::plus<>{});
-    }
-
-
     template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>
         requires (Lane < M)
     UI_ALWAYS_INLINE auto fused_mul_acc(
         Vec<N, T> const& acc,
         Vec<N, T> const& a,
         Vec<M, T> const& v,
-        [[maybe_unused]] std::plus<> op
+        op::add_t op
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-        #ifdef UI_CPU_ARM64
-        if constexpr (N == 1 && std::same_as<T, float>) {
-        #else
-        if constexpr (true) {
-        #endif
-            return fused_mul_acc(acc, a, Vec<1, T>(v[Lane]));
+        if constexpr (N == 1) {
+            #ifdef UI_CPU_ARM64
+            if constexpr (std::same_as<T, double>) {
+                if constexpr (M == 1) {
+                    return from_vec<T>(
+                        vfma_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                    );
+                } else if constexpr (M == 2) {
+                    return from_vec<T>(
+                        vfma_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                    );
+                } else if constexpr (M > 2) {
+                    if constexpr (Lane < M / 2) {
+                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
+                    } else {
+                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
+                    }
+                }
+            }
+            #endif
+            return fused_mul_acc(acc, a, Vec<N, T>::load(v[Lane]));
         } else {
             if constexpr (std::same_as<T, float>) {
-                #ifdef UI_CPU_ARM64
-                if constexpr (M == 1) {
-                    return safe_mul(a, ret_t::load(v.val));
-                } else if constexpr (M <= 4) {
+            #ifdef UI_CPU_ARM64
+                if constexpr (M == 2) {
                     if constexpr (N == 2) {
-                        if constexpr (M == 2) {
-                            return std::bit_cast<ret_t>(
-                                vfma_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfma_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
+                        return from_vec<T>(
+                            vfma_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
                     } else if constexpr (N == 4) {
-                        if constexpr (M == 2) {
-                            return std::bit_cast<ret_t>(
-                                vfmaq_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfmaq_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
-                    }
-                    return join(
-                        fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                        fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
-                    );
-                } else {
-                    if constexpr (Lane < M / 2) {
-                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
-                    } else {
-                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
-                    }
-                }
-                #else
-                    return join(
-                        fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                        fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
-                    );
-                #endif
-            } else if constexpr (std::same_as<T, double>) {
-                #ifdef UI_CPU_ARM64
-                if constexpr (M <= 2) {
-                    if constexpr (N == 1) {
-                        if constexpr (M == 1) {
-                            return std::bit_cast<ret_t>(
-                                vfma_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfma_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
-                    } else if constexpr (N == 2) {
-                        if constexpr (M == 1) {
-                            return std::bit_cast<ret_t>(
-                                vfmaq_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfmaq_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
-                    } else {
-                        return join(
-                            fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                            fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
+                        return from_vec<T>(
+                            vfmaq_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
                         );
                     }
-                } else {
+                } else if constexpr (M == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vfma_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vfmaq_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M > 4) {
                     if constexpr (Lane < M / 2) {
                         return fused_mul_acc<Lane>(acc, a, v.lo, op);
                     } else {
                         return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
                     }
                 }
-                #else
-                    return join(
-                        fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                        fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
-                    );
-                #endif
+            #endif
+            } else if constexpr (std::same_as<T, double>) {
+            #ifdef UI_CPU_ARM64
+                if constexpr (M == 1) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vfmaq_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } 
+                } else if constexpr (M == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vfmaq_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } 
+                } else if constexpr (M > 2) {
+                    if constexpr (Lane < M / 2) {
+                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
+                    } else {
+                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
+                    }
+                }
+            #endif
+            } else if constexpr (std::same_as<T, float16>) {
+            #ifdef UI_CPU_ARM64
+                if constexpr (M == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vfma_lane_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vfmaq_lane_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M == 8) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vfma_laneq_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vfmaq_laneq_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M > 8) {
+                    if constexpr (Lane < M / 2) {
+                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
+                    } else {
+                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
+                    }
+                }
+            #endif
             }
-    
+
+            return join(
+                fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
+                fused_mul_acc<Lane>(acc.hi, a.hi, v, op)
+            );
         }
     }
-
+    
     template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>
         requires (Lane < M)
     UI_ALWAYS_INLINE auto fused_mul_acc(
         Vec<N, T> const& acc,
         Vec<N, T> const& a,
         Vec<M, T> const& v,
-        [[maybe_unused]] std::minus<> op
+        op::sub_t op
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-        #ifdef UI_CPU_ARM64
-        if constexpr (N == 1 && std::same_as<T, float>) {
-        #else
-        if constexpr (true) {
-        #endif
-            return fused_mul_acc(acc, a, Vec<1, T>(v[Lane]), op);
+        if constexpr (N == 1) {
+            #ifdef UI_CPU_ARM64
+            if constexpr (std::same_as<T, double>) {
+                if constexpr (M == 1) {
+                    return from_vec<T>(
+                        vfms_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                    );
+                } else if constexpr (M == 2) {
+                    return from_vec<T>(
+                        vfms_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                    );
+                } else if constexpr (M > 2) {
+                    if constexpr (Lane < M / 2) {
+                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
+                    } else {
+                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
+                    }
+                }
+            }
+            #endif
+            return fused_mul_acc(acc, a, Vec<N, T>::load(v[Lane]));
         } else {
             if constexpr (std::same_as<T, float>) {
-                #ifdef UI_CPU_ARM64
-                if constexpr (M == 1) {
-                    return safe_mul(a, ret_t::load(v.val));
-                } else if constexpr (M <= 4) {
+            #ifdef UI_CPU_ARM64
+                if constexpr (M == 2) {
                     if constexpr (N == 2) {
-                        if constexpr (M == 2) {
-                            return std::bit_cast<ret_t>(
-                                vfms_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfms_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
+                        return from_vec<T>(
+                            vfms_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
                     } else if constexpr (N == 4) {
-                        if constexpr (M == 2) {
-                            return std::bit_cast<ret_t>(
-                                vfmsq_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfmsq_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
-                    }
-                    return join(
-                        fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                        fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
-                    );
-                } else {
-                    if constexpr (Lane < M / 2) {
-                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
-                    } else {
-                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
-                    }
-                }
-                #else
-                    return join(
-                        fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                        fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
-                    );
-                #endif
-            } else if constexpr (std::same_as<T, double>) {
-                #ifdef UI_CPU_ARM64
-                if constexpr (M <= 2) {
-                    if constexpr (N == 1) {
-                        if constexpr (M == 1) {
-                            return std::bit_cast<ret_t>(
-                                vfms_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfms_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
-                    } else if constexpr (N == 2) {
-                        if constexpr (M == 1) {
-                            return std::bit_cast<ret_t>(
-                                vfmsq_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        } else {
-                            return std::bit_cast<ret_t>(
-                                vfmsq_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
-                            );
-                        }
-                    } else {
-                        return join(
-                            fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                            fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
+                        return from_vec<T>(
+                            vfmsq_lane_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
                         );
                     }
-                } else {
+                } else if constexpr (M == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vfms_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vfmsq_laneq_f32(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M > 4) {
                     if constexpr (Lane < M / 2) {
                         return fused_mul_acc<Lane>(acc, a, v.lo, op);
                     } else {
                         return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
                     }
                 }
-                #else
-                    return join(
-                        fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
-                        fused_mul_acc<Lane>(acc.lo, a.hi, v, op)
-                    );
-                #endif
+            #endif
+            } else if constexpr (std::same_as<T, double>) {
+            #ifdef UI_CPU_ARM64
+                if constexpr (M == 1) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vfmsq_lane_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } 
+                } else if constexpr (M == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vfmsq_laneq_f64(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } 
+                } else if constexpr (M > 2) {
+                    if constexpr (Lane < M / 2) {
+                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
+                    } else {
+                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
+                    }
+                }
+            #endif
+            } else if constexpr (std::same_as<T, float16>) {
+            #ifdef UI_CPU_ARM64
+                if constexpr (M == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vfms_lane_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vfmsq_lane_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M == 8) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vfms_laneq_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vfmsq_laneq_f16(to_vec(acc), to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M > 8) {
+                    if constexpr (Lane < M / 2) {
+                        return fused_mul_acc<Lane>(acc, a, v.lo, op);
+                    } else {
+                        return fused_mul_acc<Lane - M / 2>(acc, a, v.hi, op);
+                    }
+                }
+            #endif
             }
-    
+
+            return join(
+                fused_mul_acc<Lane>(acc.lo, a.lo, v, op),
+                fused_mul_acc<Lane>(acc.hi, a.hi, v, op)
+            );
         }
     }
-
-    template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>
-        requires (Lane < M)
-    UI_ALWAYS_INLINE auto fused_mul_acc(
-        Vec<N, T> const& acc,
-        Vec<N, T> const& a,
-        Vec<M, T> const& v
-    ) noexcept -> Vec<N, T> {
-        return fused_mul_acc<Lane>(acc, a, v, std::plus<>{});
-    }
-
 // !MARK
 
 // MARK: Widening Multiplication
@@ -965,7 +1029,6 @@ namespace ui::arm {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        using ret_t = Vec<N, result_t>;
         if constexpr (N == 1) {
             auto l = static_cast<result_t>(lhs.val);
             auto r = static_cast<result_t>(rhs.val);
@@ -976,19 +1039,19 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmull_s8(to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmull_s16(to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmull_s32(to_vec(lhs), to_vec(rhs))
                         );
                     }
@@ -996,19 +1059,19 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmull_u8(to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmull_u16(to_vec(lhs), to_vec(rhs))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<result_t>(
                             vmull_u32(to_vec(lhs), to_vec(rhs))
                         );
                     }
@@ -1023,6 +1086,1122 @@ namespace ui::arm {
     }
 // !MARK
 
-} // namespace ui::arm
+// MARK: Vector multiply-accumulate by scalar
+    template <unsigned Lane, std::size_t N, std::size_t M, typename T>
+        requires (Lane < M)
+    UI_ALWAYS_INLINE auto mul_acc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        Vec<M, T> const& v,
+        op::add_t op
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<T>(a.val + b.val * v[Lane])
+            };
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (M == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmla_lane_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlaq_lane_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    }
+                #ifdef UI_CPU_ARM64
+                } else if constexpr (M == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmla_laneq_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlaq_laneq_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    }
+                #endif
+                } else if constexpr (M > 4) {
+                    if constexpr (Lane * 2 >= M) {
+                        return mul_acc<Lane - M / 2>(a, b, v.hi);
+                    } else {
+                        return mul_acc<Lane>(a, b, v.lo);
+                    }
+                }
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmla_lane_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlaq_lane_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmla_laneq_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlaq_laneq_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmla_lane_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlaq_lane_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmla_laneq_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlaq_laneq_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmla_lane_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlaq_lane_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmla_laneq_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlaq_laneq_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmla_lane_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlaq_lane_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmla_laneq_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlaq_laneq_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                }
+            }
+            return join(
+                mul_acc<Lane>(a.lo, b.lo, v, op),
+                mul_acc<Lane>(a.hi, b.hi, v, op)
+            );
+        }
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto mul_acc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T const c,
+        op::add_t op
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<T>(a.val + b.val * c)
+            };
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(
+                        vmla_n_f32(to_vec(a), to_vec(b), c)
+                    );
+                } else if constexpr (N == 4) {
+                    return from_vec<T>(
+                        vmlaq_n_f32(to_vec(a), to_vec(b), c)
+                    );
+                }
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmla_n_s16(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vmlaq_n_s16(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmla_n_s32(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlaq_n_s32(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmla_n_u16(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vmlaq_n_u16(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmla_n_u32(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlaq_n_u32(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                }
+            }
+            return join(
+                mul_acc(a.lo, b.lo, c, op),
+                mul_acc(a.hi, b.hi, c, op)
+            );
+        }
+    }
+// !MARK
+
+// MARK: Vector multiply-subtract by scalar
+    template <unsigned Lane, std::size_t N, std::size_t M, typename T>
+        requires (Lane < M)
+    UI_ALWAYS_INLINE auto mul_acc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        Vec<M, T> const& v,
+        op::sub_t op
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<T>(a.val - (b.val * v[Lane]))
+            };
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (M == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmls_lane_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlsq_lane_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    }
+                #ifdef UI_CPU_ARM64
+                } else if constexpr (M == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmls_laneq_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlsq_laneq_f32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                        );
+                    }
+                #endif
+                } else if constexpr (M > 4) {
+                    if constexpr (Lane * 2 >= M) {
+                        return mul_acc<Lane - M / 2>(a, b, v.hi);
+                    } else {
+                        return mul_acc<Lane>(a, b, v.lo);
+                    }
+                }
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmls_lane_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlsq_lane_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmls_laneq_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlsq_laneq_s16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmls_lane_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlsq_lane_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmls_laneq_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlsq_laneq_s32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmls_lane_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlsq_lane_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmls_laneq_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmlsq_laneq_u16(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmls_lane_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlsq_lane_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmls_laneq_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmlsq_laneq_u32(to_vec(a), to_vec(b), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul_acc<Lane - M / 2>(a, b, v.hi);
+                        } else {
+                            return mul_acc<Lane>(a, b, v.lo);
+                        }
+                    }
+                }
+            }
+            return join(
+                mul_acc<Lane>(a.lo, b.lo, v, op),
+                mul_acc<Lane>(a.hi, b.hi, v, op)
+            );
+        }
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto mul_acc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T const c,
+        op::sub_t op
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<T>(a.val - (b.val * c))
+            };
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(
+                        vmls_n_f32(to_vec(a), to_vec(b), c)
+                    );
+                } else if constexpr (N == 4) {
+                    return from_vec<T>(
+                        vmlsq_n_f32(to_vec(a), to_vec(b), c)
+                    );
+                }
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmls_n_s16(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vmlsq_n_s16(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmls_n_s32(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlsq_n_s32(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmls_n_u16(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vmlsq_n_u16(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmls_n_u32(to_vec(a), to_vec(b), c)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmlsq_n_u32(to_vec(a), to_vec(b), c)
+                        );
+                    }
+                }
+            }
+            return join(
+                mul_acc(a.lo, b.lo, c, op),
+                mul_acc(a.hi, b.hi, c, op)
+            );
+        }
+    }
+// !MARK
+
+// MARK: Multiplication with scalar
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto mul(
+        Vec<N, T> const& v,
+        T const c
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<T>(v.val * c)
+            };
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(vmul_n_f32(to_vec(v), c));
+                } else if constexpr (N == 4) {
+                    return from_vec<T>(vmulq_n_f32(to_vec(v), c));
+                }
+            #ifdef UI_CPU_ARM64
+            } else if constexpr (std::same_as<T, double>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(vmulq_n_f64(to_vec(v), c));
+                }
+            #endif
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(vmul_n_s16(to_vec(v), c));
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(vmulq_n_s16(to_vec(v), c));
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(vmul_n_s32(to_vec(v), c));
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(vmulq_n_s32(to_vec(v), c));
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(vmul_n_u16(to_vec(v), c));
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(vmulq_n_u16(to_vec(v), c));
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(vmul_n_u32(to_vec(v), c));
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(vmulq_n_u32(to_vec(v), c));
+                    }
+                }
+            }
+
+            return join(
+                mul(v.lo, c),
+                mul(v.hi, c)
+            );
+        }
+    }
+
+    template <unsigned Lane, std::size_t N, std::size_t M, typename T>
+        requires (Lane < M)
+    UI_ALWAYS_INLINE auto mul(
+        Vec<N, T> const& a,
+        Vec<M, T> const& v
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<T>(a.val * v[Lane])
+            };
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (M == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmul_lane_f32(to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmulq_lane_f32(to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                #ifdef UI_CPU_ARM64
+                } else if constexpr (M == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmul_laneq_f32(to_vec(a), to_vec(v), Lane)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vmulq_laneq_f32(to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                #endif
+                } else if constexpr (M > 4) {
+                    if constexpr (Lane * 2 >= M) {
+                        return mul<Lane - M / 2>(a, v.hi);
+                    } else {
+                        return mul<Lane>(a, v.lo);
+                    }
+                }
+            #ifdef UI_CPU_ARM64
+            } else if constexpr (std::same_as<T, double>) {
+                if constexpr (M == 1) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmulq_lane_f64(to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } else if constexpr (M == 2) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vmulq_laneq_f64(to_vec(a), to_vec(v), Lane)
+                        );
+                    }
+                } 
+            #endif
+            } else if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmul_lane_s16(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmulq_lane_s16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmul_laneq_s16(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmulq_laneq_s16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return mul<Lane>(a, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmul_lane_s32(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmulq_lane_s32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmul_laneq_s32(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmulq_laneq_s32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return mul<Lane>(a, v.lo);
+                        }
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmul_lane_u16(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmulq_lane_u16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmul_laneq_u16(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 8) {
+                            return from_vec<T>(
+                                vmulq_laneq_u16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return mul<Lane>(a, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmul_lane_u32(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmulq_lane_u32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmul_laneq_u32(to_vec(a), to_vec(v), Lane)
+                            );
+                        } else if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmulq_laneq_u32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return mul<Lane>(a, v.lo);
+                        }
+                    }
+                }
+            }
+            return join(
+                mul<Lane>(a.lo, v),
+                mul<Lane>(a.hi, v)
+            );
+        }
+    }
+// !MARK
+
+// MARK: Multiplication with scalar and widen
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto widening_mul(
+        Vec<N, T> const& v,
+        T const c
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<result_t>(static_cast<result_t>(v.val) * static_cast<result_t>(c))
+            };
+        } else {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    auto temp = cast<std::int16_t>(v);
+                    return mul(temp, static_cast<std::int16_t>(c));
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(vmull_n_s16(to_vec(v), c));
+                    } 
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(vmull_n_s32(to_vec(v), c));
+                    }
+                } else if constexpr (sizeof(T) == 8) {
+                    auto temp = cast<double>(v);
+                    return mul(temp, static_cast<double>(c));
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    auto temp = cast<std::uint16_t>(v);
+                    return mul(temp, static_cast<std::int16_t>(c));
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(vmull_n_u16(to_vec(v), c));
+                    } 
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(vmull_n_u32(to_vec(v), c));
+                    }
+                } else if constexpr (sizeof(T) == 8) {
+                    auto temp = cast<double>(v);
+                    return mul(temp, static_cast<double>(c));
+                }
+            } 
+            return join(
+                widening_mul(v.lo, c),
+                widening_mul(v.hi, c)
+            );
+        }
+    }
+
+    template <unsigned Lane, std::size_t N, std::size_t M, typename T>
+    UI_ALWAYS_INLINE auto widening_mul(
+        Vec<N, T> const& a,
+        Vec<M, T> const& v
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<result_t>(static_cast<result_t>(a.val) * static_cast<result_t>(v[Lane]))
+            };
+        } else {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    auto at = cast<std::int16_t>(a);
+                    auto vt = cast<std::int16_t>(v);
+                    return mul<Lane>(at, vt);
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmull_lane_s16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmull_laneq_s16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return widening_mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return widening_mul<Lane>(a, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmull_lane_s32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmull_laneq_s32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return widening_mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return widening_mul<Lane>(a, v.lo);
+                        }
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    auto at = cast<std::uint16_t>(a);
+                    auto vt = cast<std::uint16_t>(v);
+                    return mul<Lane>(at, vt);
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (M == 4) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmull_lane_u16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 8) {
+                        if constexpr (N == 4) {
+                            return from_vec<T>(
+                                vmull_laneq_u16(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 8) {
+                        if constexpr (Lane * 2 >= M) {
+                            return widening_mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return widening_mul<Lane>(a, v.lo);
+                        }
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (M == 2) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmull_lane_u32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #ifdef UI_CPU_ARM64
+                    } else if constexpr (M == 4) {
+                        if constexpr (N == 2) {
+                            return from_vec<T>(
+                                vmull_laneq_u32(to_vec(a), to_vec(v), Lane)
+                            );
+                        }
+                    #endif
+                    } else if constexpr (M > 4) {
+                        if constexpr (Lane * 2 >= M) {
+                            return widening_mul<Lane - M / 2>(a, v.hi);
+                        } else {
+                            return widening_mul<Lane>(a, v.lo);
+                        }
+                    }
+                }
+            } 
+            return join(
+                widening_mul<Lane>(a.lo, v),
+                widening_mul<Lane>(a.hi, v)
+            );
+        }
+    }
+
+// !MARK
+
+// MARK: Vector multiply-accumulate by scalar and widen
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto widening_mul_acc(
+        Vec<N, internal::widening_result_t<T>> const& a,
+        Vec<N, T> const& v,
+        T const c,
+        op::add_t op
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<result_t>(a.val + static_cast<result_t>(v.val) * static_cast<result_t>(c))
+            };
+        } else {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    auto temp = cast<std::int16_t>(v);
+                    return mul_acc(a, temp, static_cast<std::int16_t>(c), op);
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(
+                            vmlal_n_s16(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<result_t>(
+                            vmlal_n_s32(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 8) {
+                    auto temp = cast<double>(v);
+                    return mul_acc(a, temp, static_cast<double>(c), op);
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    auto temp = cast<std::uint16_t>(v);
+                    return mul_acc(a, temp, static_cast<std::int16_t>(c), op);
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(
+                            vmlal_n_u16(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<result_t>(
+                            vmlal_n_u32(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 8) {
+                    auto temp = cast<double>(v);
+                    return mul_acc(a, temp, static_cast<double>(c), op);
+                }
+            } 
+            return join(
+                widening_mul_acc(a.lo, v.lo, c, op),
+                widening_mul_acc(a.hi, v.hi, c, op)
+            );
+        }
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto widening_mul_acc(
+        Vec<N, internal::widening_result_t<T>> const& a,
+        Vec<N, T> const& v,
+        T const c,
+        op::sub_t op
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        if constexpr (N == 1) {
+            return {
+                .val = static_cast<result_t>(a.val + static_cast<result_t>(v.val) * static_cast<result_t>(c))
+            };
+        } else {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    auto temp = cast<std::int16_t>(v);
+                    return mul_acc(a, temp, static_cast<std::int16_t>(c), op);
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(
+                            vmlsl_n_s16(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<result_t>(
+                            vmlsl_n_s32(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 8) {
+                    auto temp = cast<double>(v);
+                    return mul_acc(a, temp, static_cast<double>(c), op);
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    auto temp = cast<std::uint16_t>(v);
+                    return mul_acc(a, temp, static_cast<std::int16_t>(c), op);
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(
+                            vmlsl_n_u16(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 2) {
+                        return from_vec<result_t>(
+                            vmlsl_n_u32(to_vec(a), to_vec(v), c)
+                        );
+                    } 
+                } else if constexpr (sizeof(T) == 8) {
+                    auto temp = cast<double>(v);
+                    return mul_acc(a, temp, static_cast<double>(c), op);
+                }
+            } 
+            return join(
+                widening_mul_acc(a.lo, v.lo, c, op),
+                widening_mul_acc(a.hi, v.hi, c, op)
+            );
+        }
+    }
+
+// !MARK
+
+// MARK: Fused multiply-accumulate by scalar
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE auto fused_mul_acc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T const c,
+        op::add_t op
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = a.val + (b.val * c)
+            };
+        } else {
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(vfma_n_f32(to_vec(a), to_vec(b), c));
+                } else if constexpr (N == 4) {
+                    return from_vec<T>(vfmaq_n_f32(to_vec(a), to_vec(b), c));
+                }
+            #ifdef UI_CPU_ARM64
+            } else if constexpr (std::same_as<T, double>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(vfmaq_n_f64(to_vec(a), to_vec(b), c));
+                }
+            #endif
+            } 
+            return join(
+                fused_mul_acc(a.lo, b.lo, c, op),
+                fused_mul_acc(a.hi, b.hi, c, op)
+            );
+        }
+    }
+
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE auto fused_mul_acc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T const c,
+        op::sub_t op
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return {
+                .val = a.val - (b.val * c)
+            };
+        } else {
+            #ifdef UI_CPU_ARM64
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(vfms_n_f32(to_vec(a), to_vec(b), c));
+                } else if constexpr (N == 4) {
+                    return from_vec<T>(vfmsq_n_f32(to_vec(a), to_vec(b), c));
+                }
+            } else if constexpr (std::same_as<T, double>) {
+                if constexpr (N == 2) {
+                    return from_vec<T>(vfmsq_n_f64(to_vec(a), to_vec(b), c));
+                }
+            } 
+            #endif
+            return join(
+                fused_mul_acc(a.lo, b.lo, c, op),
+                fused_mul_acc(a.hi, b.hi, c, op)
+            );
+        }
+    }
+// !MARK
+
+} // namespace ui::arm::neon
 
 #endif // AMT_UI_ARCH_ARM_MUL_HPP

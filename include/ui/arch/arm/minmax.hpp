@@ -3,6 +3,7 @@
 
 #include "cast.hpp"
 #include "ui/base.hpp"
+#include "ui/float.hpp"
 #include <bit>
 #include <cassert>
 #include <cmath>
@@ -12,26 +13,31 @@
 #include <algorithm>
 #include <type_traits>
 
-namespace ui::arm {
+namespace ui::arm::neon {
 
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto max(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
         if constexpr (N == 1) return { .val = std::max(lhs.val, rhs.val) };
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vmax_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmax_f32(to_vec(lhs), to_vec(rhs)));
                 else if constexpr (N == 4) 
-                    return std::bit_cast<ret_t>(vmaxq_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmaxq_f32(to_vec(lhs), to_vec(rhs)));
             } else if constexpr (std::same_as<T, double>) {
                 #ifdef UI_CPU_ARM64
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmaxq_f64(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmaxq_f64(to_vec(lhs), to_vec(rhs)));
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vmax_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vmaxq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             }
             if constexpr (N > 1) {
                 return join(
@@ -43,36 +49,36 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmax_s8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmax_s8(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 16)
-                        return std::bit_cast<ret_t>(vmaxq_s8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmaxq_s8(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmax_s16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmax_s16(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmaxq_s16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmaxq_s16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmax_s32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmax_s32(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmaxq_s32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmaxq_s32(to_vec(lhs), to_vec(rhs)));
                 }
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmax_u8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmax_u8(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 16)
-                        return std::bit_cast<ret_t>(vmaxq_u8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmaxq_u8(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmax_u16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmax_u16(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmaxq_u16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmaxq_u16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmax_u32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmax_u32(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmaxq_u32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmaxq_u32(to_vec(lhs), to_vec(rhs)));
                 }
             }
             if constexpr (N > 1) {
@@ -89,19 +95,24 @@ namespace ui::arm {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
         if constexpr (N == 1) return { .val = std::min(lhs.val, rhs.val) };
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vmin_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmin_f32(to_vec(lhs), to_vec(rhs)));
                 else if constexpr (N == 4) 
-                    return std::bit_cast<ret_t>(vminq_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vminq_f32(to_vec(lhs), to_vec(rhs)));
             } else if constexpr (std::same_as<T, double>) {
                 #ifdef UI_CPU_ARM64
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vminq_f64(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vminq_f64(to_vec(lhs), to_vec(rhs)));
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vmin_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vminq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             }
             if constexpr (N > 1) {
                 return join(
@@ -113,36 +124,36 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmin_s8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmin_s8(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 16)
-                        return std::bit_cast<ret_t>(vminq_s8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vminq_s8(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmin_s16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmin_s16(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vminq_s16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vminq_s16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmin_s32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmin_s32(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vminq_s32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vminq_s32(to_vec(lhs), to_vec(rhs)));
                 }
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vmin_u8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmin_u8(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 16)
-                        return std::bit_cast<ret_t>(vminq_u8(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vminq_u8(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vmin_u16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmin_u16(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 8)
-                        return std::bit_cast<ret_t>(vminq_u16(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vminq_u16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2)
-                        return std::bit_cast<ret_t>(vmin_u32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vmin_u32(to_vec(lhs), to_vec(rhs)));
                     else if constexpr (N == 4)
-                        return std::bit_cast<ret_t>(vminq_u32(to_vec(lhs), to_vec(rhs)));
+                        return from_vec<T>(vminq_u32(to_vec(lhs), to_vec(rhs)));
                 }
             }
             if constexpr (N > 1) {
@@ -157,15 +168,19 @@ namespace ui::arm {
     namespace internal {
         template <std::floating_point T>
         UI_ALWAYS_INLINE static constexpr auto maxnm(T a, T b) noexcept -> T {
-            if (std::isnan(a)) return { .val = b };
-            if (std::isnan(b)) return { .val = a };
+            using namespace ui;
+            using namespace std;
+            if (isnan(a)) return { .val = b };
+            if (isnan(b)) return { .val = a };
             return std::max(a, b);
         }
 
         template <std::floating_point T>
         UI_ALWAYS_INLINE static constexpr auto minnm(T a, T b) noexcept -> T {
-            if (std::isnan(a)) return { .val = b };
-            if (std::isnan(b)) return { .val = a };
+            using namespace ui;
+            using namespace std;
+            if (isnan(a)) return { .val = b };
+            if (isnan(b)) return { .val = a };
             return std::min(a, b);
         }
     } // namespace internal
@@ -178,12 +193,10 @@ namespace ui::arm {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, double>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vmaxnm_f64(to_vec(lhs), to_vec(rhs))
                     );
                 }
@@ -195,14 +208,20 @@ namespace ui::arm {
 
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vmaxnm_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmaxnm_f32(to_vec(lhs), to_vec(rhs)));
                 else if constexpr (N == 4)
-                    return std::bit_cast<ret_t>(vmaxnmq_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmaxnmq_f32(to_vec(lhs), to_vec(rhs)));
             } else if constexpr (std::same_as<T, double>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vmaxnmq_f64(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vmaxnmq_f64(to_vec(lhs), to_vec(rhs)));
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vmaxnm_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vmaxnmq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             }
 
             return join(
@@ -220,12 +239,10 @@ namespace ui::arm {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, double>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vminnm_f64(to_vec(lhs), to_vec(rhs))
                     );
                 }
@@ -237,14 +254,20 @@ namespace ui::arm {
 
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vminnm_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vminnm_f32(to_vec(lhs), to_vec(rhs)));
                 else if constexpr (N == 4)
-                    return std::bit_cast<ret_t>(vminnmq_f32(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vminnmq_f32(to_vec(lhs), to_vec(rhs)));
             } else if constexpr (std::same_as<T, double>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (N == 2)
-                    return std::bit_cast<ret_t>(vminnmq_f64(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<T>(vminnmq_f64(to_vec(lhs), to_vec(rhs)));
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vminnm_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vminnmq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             }
 
             return join(
@@ -264,11 +287,11 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
-                return from_vec(
+                return from_vec<T>(
                     vpmax_f32(to_vec(x), to_vec(y))
                 ); 
             } else if constexpr (std::same_as<T, double>) {
-                return from_vec(
+                return from_vec<T>(
                     vpmaxq_f64(to_vec(x), to_vec(y))
                 ); 
             }
@@ -278,41 +301,49 @@ namespace ui::arm {
             if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (N == 4) {
-                    return from_vec(
+                    return from_vec<T>(
                         vpmaxq_f32(to_vec(x), to_vec(y))
                     ); 
                 }
                 #endif
             } else if constexpr (std::same_as<T, double>) {
                 // do nothing
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vpmax_f16(to_vec(x), to_vec(y)));
+                #ifdef UI_CPU_ARM64
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vpmaxq_f16(to_vec(x), to_vec(y)));
+                #endif
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmax_s8(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 16) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmaxq_s8(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmax_s16(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmaxq_s16(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmax_s32(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmaxq_s32(to_vec(x), to_vec(y))
                         ); 
                     }
@@ -320,31 +351,31 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmax_u8(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 16) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmaxq_u8(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmax_u16(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmaxq_u16(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmax_u32(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmaxq_u32(to_vec(x), to_vec(y))
                         ); 
                     }
@@ -367,9 +398,9 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
-                    return static_cast<T>(vpmaxs_f32(from_vec(v)));
+                    return static_cast<T>(vpmaxs_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return static_cast<T>(vpmaxqd_f64(from_vec(v)));
+                    return static_cast<T>(vpmaxqd_f64(from_vec<T>(v)));
                 }
             #endif
             return static_cast<T>(std::max(v.lo.val, v.hi.val));
@@ -393,9 +424,9 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
-                    return from_vec(vpmaxnm_f32(to_vec(x), to_vec(y)));
+                    return from_vec<T>(vpmaxnm_f32(to_vec(x), to_vec(y)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return from_vec(vpmaxnmq_f64(to_vec(x), to_vec(y)));
+                    return from_vec<T>(vpmaxnmq_f64(to_vec(x), to_vec(y)));
                 }
             #endif
             return {
@@ -406,7 +437,13 @@ namespace ui::arm {
             #ifdef UI_ALWAYS_INLINE
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 4) {
-                    return from_vec(vpmaxnmq_f32(to_vec(x), to_vec(y)));
+                    return from_vec<T>(vpmaxnmq_f32(to_vec(x), to_vec(y)));
+                }
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vpmaxnm_f16(to_vec(x), to_vec(y)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vpmaxnmq_f16(to_vec(x), to_vec(y)));
                 }
             }
             #endif
@@ -428,12 +465,12 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
-                    return static_cast<T>(vpmaxnms_f32(from_vec(v)));
+                    return static_cast<T>(vpmaxnms_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return static_cast<T>(vpmaxnmqd_f64(from_vec(v)));
+                    return static_cast<T>(vpmaxnmqd_f64(from_vec<T>(v)));
                 }
             #endif
-            return static_cast<T>(std::max(v.lo.val, v.hi.val));
+            return static_cast<T>(internal::maxnm(v.lo.val, v.hi.val));
         } else {
             return join(
                 pmaxnm(v.lo),
@@ -453,11 +490,11 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
-                return from_vec(
+                return from_vec<T>(
                     vpmin_f32(to_vec(x), to_vec(y))
                 ); 
             } else if constexpr (std::same_as<T, double>) {
-                return from_vec(
+                return from_vec<T>(
                     vpminq_f64(to_vec(x), to_vec(y))
                 ); 
             }
@@ -467,41 +504,47 @@ namespace ui::arm {
             if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (N == 4) {
-                    return from_vec(
+                    return from_vec<T>(
                         vpminq_f32(to_vec(x), to_vec(y))
                     ); 
                 }
                 #endif
             } else if constexpr (std::same_as<T, double>) {
                 // do nothing
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vpmin_f16(to_vec(x), to_vec(y)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vpminq_f16(to_vec(x), to_vec(y)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmin_s8(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 16) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpminq_s8(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmin_s16(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpminq_s16(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmin_s32(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpminq_s32(to_vec(x), to_vec(y))
                         ); 
                     }
@@ -509,31 +552,31 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmin_u8(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 16) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpminq_u8(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmin_u16(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpminq_u16(to_vec(x), to_vec(y))
                         ); 
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpmin_u32(to_vec(x), to_vec(y))
                         ); 
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<T>(
                             vpminq_u32(to_vec(x), to_vec(y))
                         ); 
                     }
@@ -556,9 +599,9 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
-                    return static_cast<T>(vpmins_f32(from_vec(v)));
+                    return static_cast<T>(vpmins_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return static_cast<T>(vpminqd_f64(from_vec(v)));
+                    return static_cast<T>(vpminqd_f64(from_vec<T>(v)));
                 }
             #endif
             return static_cast<T>(std::min(v.lo.val, v.hi.val));
@@ -582,9 +625,9 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
-                    return from_vec(vpminnm_f32(to_vec(x), to_vec(y)));
+                    return from_vec<T>(vpminnm_f32(to_vec(x), to_vec(y)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return from_vec(vpminnmq_f64(to_vec(x), to_vec(y)));
+                    return from_vec<T>(vpminnmq_f64(to_vec(x), to_vec(y)));
                 }
             #endif
             return {
@@ -595,7 +638,13 @@ namespace ui::arm {
             #ifdef UI_ALWAYS_INLINE
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 4) {
-                    return from_vec(vpminnmq_f32(to_vec(x), to_vec(y)));
+                    return from_vec<T>(vpminnmq_f32(to_vec(x), to_vec(y)));
+                }
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vpminnm_f16(to_vec(x), to_vec(y)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vpminnmq_f16(to_vec(x), to_vec(y)));
                 }
             }
             #endif
@@ -617,12 +666,12 @@ namespace ui::arm {
         if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
-                    return static_cast<T>(vpminnms_f32(from_vec(v)));
+                    return static_cast<T>(vpminnms_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return static_cast<T>(vpminnmqd_f64(from_vec(v)));
+                    return static_cast<T>(vpminnmqd_f64(from_vec<T>(v)));
                 }
             #endif
-            return static_cast<T>(std::min(v.lo.val, v.hi.val));
+            return static_cast<T>(internal::minnm(v.lo.val, v.hi.val));
         } else {
             return join(
                 pminnm(v.lo),
@@ -654,6 +703,12 @@ namespace ui::arm {
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
                     return static_cast<result_t>(vmaxvq_f64(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return std::bit_cast<result_t>(vmaxv_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return std::bit_cast<result_t>(vmaxvq_f16(to_vec(v)));
                 }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -725,6 +780,12 @@ namespace ui::arm {
                 if constexpr (N == 2) {
                     return static_cast<result_t>(vmaxnmvq_f64(to_vec(v)));
                 }
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return std::bit_cast<result_t>(vmaxnmv_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return std::bit_cast<result_t>(vmaxnmvq_f16(to_vec(v)));
+                }
             }
             #endif
             return internal::maxnm(
@@ -757,6 +818,12 @@ namespace ui::arm {
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
                     return static_cast<result_t>(vminvq_f64(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return std::bit_cast<result_t>(vminv_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return std::bit_cast<result_t>(vminvq_f16(to_vec(v)));
                 }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -828,6 +895,12 @@ namespace ui::arm {
                 if constexpr (N == 2) {
                     return static_cast<result_t>(vminnmvq_f64(to_vec(v)));
                 }
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return std::bit_cast<result_t>(vminnmv_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return std::bit_cast<result_t>(vminnmvq_f16(to_vec(v)));
+                }
             }
             #endif
             return internal::minnm(
@@ -838,6 +911,6 @@ namespace ui::arm {
     }
 // !MARK
 
-} // namespace ui::arm
+} // namespace ui::arm::neon
 
 #endif // AMT_UI_ARCH_ARM_MINMAX_HPP

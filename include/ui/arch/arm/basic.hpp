@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace ui::arm::internal {
+namespace ui::arm::neon::internal {
 
     template <typename T, typename U>
     struct WideningResult {
@@ -174,6 +174,6 @@ namespace ui::arm::internal {
         auto sum = op(l, r) + Round;
         return static_cast<From>(sum >> 1);
     }
-} // namespace ui::arm::internal
+} // namespace ui::arm::neon::internal
 
 #endif // AMT_UI_ARCH_ARM_BASIC_HPP

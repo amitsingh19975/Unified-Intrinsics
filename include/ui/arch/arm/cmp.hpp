@@ -2,8 +2,7 @@
 #define AMT_UI_ARCH_ARM_CMP_HPP
 
 #include "cast.hpp"
-#include <algorithm>
-#include <arm_neon.h>
+#include "ui/float.hpp"
 #include <bit>
 #include <cassert>
 #include <cmath>
@@ -13,11 +12,8 @@
 #include <cstdlib>
 #include <limits>
 #include <type_traits>
-#include "basic.hpp"
-#include "ui/base.hpp"
-#include "ui/base_vec.hpp"
 
-namespace ui::arm { 
+namespace ui::arm::neon { 
 
 // MARK: Bitwise equal and 'and' test
     template <std::size_t N, typename T>
@@ -70,6 +66,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vceqq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vceq_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vceqq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -282,6 +284,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcgeq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcge_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcgeq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -379,6 +387,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcgezq_f64(to_vec(v)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcgez_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcgezq_f16(to_vec(v)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -493,6 +507,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcleq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcle_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcleq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -590,6 +610,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vclezq_f64(to_vec(v)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vclez_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vclezq_f16(to_vec(v)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -703,6 +729,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcgtq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcgt_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcgtq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -800,6 +832,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcgtzq_f64(to_vec(v)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcgtz_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcgtzq_f16(to_vec(v)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -914,6 +952,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcltq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vclt_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcltq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -1011,6 +1055,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcltzq_f64(to_vec(v)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcltz_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcltzq_f16(to_vec(v)));
+                }
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
                     if constexpr (N == 8) {
@@ -1109,6 +1159,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcageq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcage_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcageq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else {
                 if constexpr (sizeof(T) == 8) {
                     return cmp(cast<double>(lhs), cast<double>(rhs), op);
@@ -1160,6 +1216,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcaleq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcale_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcaleq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else {
                 if constexpr (sizeof(T) == 8) {
                     return cmp(cast<double>(lhs), cast<double>(rhs), op);
@@ -1211,6 +1273,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcagtq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcagt_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcagtq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else {
                 if constexpr (sizeof(T) == 8) {
                     return cmp(cast<double>(lhs), cast<double>(rhs), op);
@@ -1262,6 +1330,12 @@ namespace ui::arm {
                     return std::bit_cast<ret_t>(vcaltq_f64(to_vec(lhs), to_vec(rhs)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec<T>(vcalt_f16(to_vec(lhs), to_vec(rhs)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vcaltq_f16(to_vec(lhs), to_vec(rhs)));
+                }
             } else {
                 if constexpr (sizeof(T) == 8) {
                     return cmp(cast<double>(lhs), cast<double>(rhs), op);
@@ -1279,6 +1353,6 @@ namespace ui::arm {
 
 
 
-} // namespace ui::arm;
+} // namespace ui::arm::neon;
 
 #endif // AMT_UI_ARCH_ARM_CMP_HPP

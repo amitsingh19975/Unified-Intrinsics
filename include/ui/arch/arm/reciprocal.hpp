@@ -2,7 +2,6 @@
 #define AMT_UI_ARCH_ARM_RECIPROCAL_HPP
 
 #include "cast.hpp"
-#include <bit>
 #include <cassert>
 #include <cfenv>
 #include <concepts>
@@ -10,17 +9,15 @@
 #include <cstdlib>
 #include <type_traits>
 #include "../../modular_inv.hpp"
-#include "ui/maths.hpp"
+#include "ui/float.hpp"
 
-namespace ui::arm {
+namespace ui::arm::neon {
 
     template <std::size_t N, typename T>
         requires (std::floating_point<T> || !std::is_signed_v<T>)
     UI_ALWAYS_INLINE auto reciprocal_estimate(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
@@ -40,36 +37,41 @@ namespace ui::arm {
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrecpe_f32(to_vec(v))
                     );
                 } else if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrecpeq_f32(to_vec(v))
                     );
                 }
             #ifdef UI_CPU_ARM64
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrecpeq_f64(to_vec(v))
                     );
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec(vrecpe_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return from_vec(vrecpeq_f16(to_vec(v)));
+                }
             } else {
                 if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vrecpe_u32(to_vec(v))
                         );
                     } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vrecpeq_u32(to_vec(v))
                         );
                     }
                 }
             }
-
             return join(
                 reciprocal_estimate(v.lo),
                 reciprocal_estimate(v.hi)
@@ -89,8 +91,6 @@ namespace ui::arm {
         Vec<N, T> const& v,
         Vec<N, T> const& e
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
@@ -109,25 +109,30 @@ namespace ui::arm {
             };
 
         } else {
-
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrecps_f32(to_vec(v), to_vec(e))
                     );
                 } else if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrecpsq_f32(to_vec(v), to_vec(e))
                     );
                 }
             #ifdef UI_CPU_ARM64
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrecpsq_f64(to_vec(v), to_vec(e))
                     );
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec(vrecps_f16(to_vec(v), to_vec(e)));
+                } else if constexpr (N == 8) {
+                    return from_vec(vrecpsq_f16(to_vec(v), to_vec(e)));
+                }
             }
 
             return join(
@@ -142,8 +147,6 @@ namespace ui::arm {
     UI_ALWAYS_INLINE auto sqrt_inv_estimate(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
@@ -163,30 +166,36 @@ namespace ui::arm {
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrsqrte_f32(to_vec(v))
                     );
                 } else if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrsqrteq_f32(to_vec(v))
                     );
                 }
             #ifdef UI_CPU_ARM64
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrsqrteq_f64(to_vec(v))
                     );
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec(vrsqrte_f16(to_vec(v)));
+                } else if constexpr (N == 8) {
+                    return from_vec(vrsqrteq_f16(to_vec(v)));
+                }
             } else {
                 if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vrsqrte_u32(to_vec(v))
                         );
                     } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(
+                        return from_vec<T>(
                             vrsqrteq_u32(to_vec(v))
                         );
                     }
@@ -211,8 +220,6 @@ namespace ui::arm {
         Vec<N, T> const& v,
         Vec<N, T> const& e
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
@@ -233,22 +240,28 @@ namespace ui::arm {
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrsqrts_f32(to_vec(v), to_vec(e))
                     );
                 } else if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrsqrtsq_f32(to_vec(v), to_vec(e))
                     );
                 }
             #ifdef UI_CPU_ARM64
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vrsqrtsq_f64(to_vec(v), to_vec(e))
                     );
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec(vrsqrts_f16(to_vec(v), to_vec(e)));
+                } else if constexpr (N == 8) {
+                    return from_vec(vrsqrtsq_f16(to_vec(v), to_vec(e)));
+                }
             }
 
             return join(
@@ -271,10 +284,10 @@ namespace ui::arm {
                     return { .val = vrecpxd_f64(v.val) };
                 }
             #else
-                auto fp = maths::decompose_fp(v.val);
+                auto fp = fp::decompose_fp(v.val);
                 return reciprocal_estimate(Vec<1, T>(1 << fp.exponent));
             #endif
-        } else {
+        } else { 
             return join(
                 exponent_reciprocal_estimate(v.lo),
                 exponent_reciprocal_estimate(v.hi)
@@ -282,6 +295,6 @@ namespace ui::arm {
         }
     }
 
-} // namespace ui::arm
+} // namespace ui::arm::neon
 
 #endif // AMT_UI_ARCH_ARM_RECIPROCAL_HPP

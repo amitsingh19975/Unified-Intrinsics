@@ -1,6 +1,7 @@
 #ifndef AMT_UI_MODULAR_INV_HPP
 #define AMT_UI_MODULAR_INV_HPP
 
+#include "ui/float.hpp"
 #include <array>
 #include <bit>
 #include <cassert>
@@ -131,6 +132,11 @@ namespace ui::maths {
             auto bits = std::bit_cast<std::uint32_t>(n);
             auto temp = std::bit_cast<float>(0x5F1FFFF9 - (bits >> 1));
             return internal::calculate_sqrt_inv(n, temp);
+        }
+
+        constexpr auto sqrt_inv(float16 n) const noexcept -> float16 {
+            auto temp = static_cast<float>(n);
+            return sqrt_inv(temp);
         }
 
         constexpr auto sqrt_inv(double n) const noexcept -> double {

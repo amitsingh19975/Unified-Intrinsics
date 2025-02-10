@@ -3,7 +3,6 @@
 
 #include "cast.hpp"
 #include <algorithm>
-#include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -13,28 +12,26 @@
 #include <type_traits>
 #include "basic.hpp"
 
-namespace ui::arm { 
+namespace ui::arm::neon { 
 
 // MARK: Wrapping Subtraction
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
-    UI_ALWAYS_INLINE auto wrapping_sub(
+    UI_ALWAYS_INLINE auto sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             return { .val = static_cast<T>(lhs.val - rhs.val) };
         } else if constexpr (N == 8) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_u8(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_s8(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -42,13 +39,13 @@ namespace ui::arm {
             }
         } else if constexpr (N == 16) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_u8(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_s8(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -56,31 +53,29 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_sub(lhs.lo, rhs.lo),
-                wrapping_sub(lhs.hi, rhs.hi)
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 16)
-    UI_ALWAYS_INLINE auto wrapping_sub(
+    UI_ALWAYS_INLINE auto sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             return { .val = static_cast<T>(lhs.val - rhs.val) };
         } else if constexpr (N == 4) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_u16(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_s16(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -88,13 +83,13 @@ namespace ui::arm {
             }
         } else if constexpr (N == 8) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_u16(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_s16(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -102,31 +97,29 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_sub(lhs.lo, rhs.lo),
-                wrapping_sub(lhs.hi, rhs.hi)
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
-    UI_ALWAYS_INLINE auto wrapping_sub(
+    UI_ALWAYS_INLINE auto sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             return { .val = static_cast<T>(lhs.val - rhs.val) };
         } else if constexpr (N == 2) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_u32(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_s32(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -134,13 +127,13 @@ namespace ui::arm {
             }
         } else if constexpr (N == 4) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_u32(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_s32(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -148,29 +141,27 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_sub(lhs.lo, rhs.lo),
-                wrapping_sub(lhs.hi, rhs.hi)
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
-    UI_ALWAYS_INLINE auto wrapping_sub(
+    UI_ALWAYS_INLINE auto sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_u64(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsub_s64(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -178,13 +169,13 @@ namespace ui::arm {
             }
         } else if constexpr (N == 2) {
             if constexpr (!std::is_signed_v<T>) {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_u64(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
             } else {
-                return std::bit_cast<ret_t>(
+                return from_vec<T>(
                     vsubq_s64(
                         to_vec(lhs), to_vec(rhs)
                     )
@@ -192,8 +183,8 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_sub(lhs.lo, rhs.lo),
-                wrapping_sub(lhs.hi, rhs.hi)
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
             );
         }    
     }
@@ -204,57 +195,80 @@ namespace ui::arm {
 
 // MARK: Floating-Point Subtraction
     template <std::size_t N>
-    UI_ALWAYS_INLINE auto float_sub(
+    UI_ALWAYS_INLINE auto sub(
+        Vec<N, float16> const& lhs,
+        Vec<N, float16> const& rhs
+    ) noexcept -> Vec<N, float16> {
+        if constexpr (N == 1) {
+            return { .val = lhs.val - rhs.val };
+        } else if constexpr (N == 2) {
+            return from_vec(
+                vsub_f16(
+                    to_vec(lhs), to_vec(rhs)
+                )
+            );
+        } else if constexpr (N == 4) {
+            return from_vec(
+                vsubq_f16(
+                    to_vec(lhs), to_vec(rhs)
+                )
+            );
+        } else {
+            return join(
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
+            );
+        }    
+    }
+
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto sub(
         Vec<N, float> const& lhs,
         Vec<N, float> const& rhs
     ) noexcept -> Vec<N, float> {
-        using ret_t = Vec<N, float>;
-
         if constexpr (N == 1) {
-            return { .val = lhs.val + rhs.val };
+            return { .val = lhs.val - rhs.val };
         } else if constexpr (N == 2) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vsub_f32(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else if constexpr (N == 4) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vsubq_f32(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else {
             return join(
-                float_sub(lhs.lo, rhs.lo),
-                float_sub(lhs.hi, rhs.hi)
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N>
-    UI_ALWAYS_INLINE auto float_sub(
+    UI_ALWAYS_INLINE auto sub(
         Vec<N, double> const& lhs,
         Vec<N, double> const& rhs
     ) noexcept -> Vec<N, double> {
-        using ret_t = Vec<N, double>;
-
         if constexpr (N == 1) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vsub_f64(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else if constexpr (N == 2) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vsubq_f64(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else {
             return join(
-                float_sub(lhs.lo, rhs.lo),
-                float_sub(lhs.hi, rhs.hi)
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
             );
         }    
     }
@@ -272,17 +286,15 @@ namespace ui::arm {
             auto&& unsigned_fn
         ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
             using result_t = internal::widening_result_t<T, U>;
-            using ret_t = Vec<N, result_t>;
-
             if constexpr (N == 1) {
-                return { .val = static_cast<result_t>(lhs.val) + static_cast<result_t>(rhs.val) };
+                return { .val = static_cast<result_t>(lhs.val) - static_cast<result_t>(rhs.val) };
             } else if constexpr (N == M) {
                 if constexpr (!std::is_signed_v<T>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<result_t>(
                         unsigned_fn(lhs, rhs) 
                     );
                 } else {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<result_t>(
                         sign_fn(lhs, rhs)
                     );
                 }
@@ -414,27 +426,26 @@ namespace ui::arm {
             auto&&   signed_fn1,
             auto&& unsigned_fn1
         ) noexcept -> Vec<N, T> {
-            using ret_t = Vec<N, T>;
             using acc_t = widening_result_t<T>;
             if constexpr (N == 1) {
                 return { .val = halving_round_helper<false, acc_t>(lhs.val, rhs.val, op::sub_t{})};
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         signed_fn0(lhs, rhs)
                     );
                 } else {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         unsigned_fn0(lhs, rhs)
                     );
                 }
             } else if constexpr (N == M1) {
                 if constexpr (std::is_signed_v<T>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         signed_fn1(lhs, rhs)
                     );
                 } else {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         unsigned_fn1(lhs, rhs)
                     );
                 }
@@ -517,19 +528,18 @@ namespace ui::arm {
             auto&& unsigned_fn
         ) noexcept -> Vec<N, narrowing_result_t<T>> {
             using result_t = narrowing_result_t<T>; 
-            using ret_t    = Vec<N, result_t>; 
 
             if constexpr (N == 1) {
                 return {
-                    .val = static_cast<result_t>((lhs.val + rhs.val) >> (sizeof(result_t) * 8))
+                    .val = static_cast<result_t>((lhs.val - rhs.val) >> (sizeof(result_t) * 8))
                 };
             } else if constexpr (N == M) {
                 if constexpr (std::is_signed_v<T>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<result_t>(
                         signed_fn(lhs, rhs)
                     );
                 } else {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<result_t>(
                         unsigned_fn(lhs, rhs)
                     );
                 }
@@ -598,7 +608,7 @@ namespace ui::arm {
 
         template <typename To>
         UI_ALWAYS_INLINE constexpr auto sat_sub_helper_for_one(auto lhs, auto rhs) noexcept -> To {
-            auto sum = static_cast<std::int64_t>(lhs) + static_cast<std::int64_t>(rhs);
+            auto sum = static_cast<std::int64_t>(lhs) - static_cast<std::int64_t>(rhs);
             static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<To>::min());
             static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<To>::max());
             return static_cast<To>(
@@ -615,8 +625,6 @@ namespace ui::arm {
             auto&& signed_fn1,
             auto&& unsigned_fn1
         ) noexcept -> Vec<N, T> {
-            using ret_t = Vec<N, T>;
-
             if constexpr (M0 != 1 && N == 1) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (std::is_signed_v<T>) {
@@ -647,21 +655,21 @@ namespace ui::arm {
                 #endif
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         signed_fn0(lhs, rhs)
                     );
                 } else {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         unsigned_fn0(lhs, rhs)
                     );
                 } 
             } else if constexpr (N == M1) {
                 if constexpr (std::is_signed_v<T>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         signed_fn1(lhs, rhs)
                     );
                 } else {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         unsigned_fn1(lhs, rhs)
                     );
                 } 
@@ -741,6 +749,6 @@ namespace ui::arm {
     }  
 
 // !MARK
-} // namespace ui::arm;
+} // namespace ui::arm::neon;
 
 #endif // AMT_UI_ARCH_ARM_SUB_HPP

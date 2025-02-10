@@ -12,7 +12,7 @@
 #include <type_traits>
 #include "basic.hpp"
 
-namespace ui::arm { 
+namespace ui::arm::neon { 
 
 // MARK: Difference
 
@@ -560,6 +560,58 @@ namespace ui::arm {
 
 // !MARK
 
-} // namespace ui::arm;
+// MARK: Float16 Absolute value
+
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto abs(
+        Vec<N, ui::float16> const& v
+    ) noexcept -> Vec<N, float16> {
+        if constexpr (N == 1) {
+            return {
+                .val = v.val.is_neg() ? -v.val : v.val
+            };
+        } else {
+            if constexpr (N == 4) {
+                return from_vec(vabs_f16(to_vec(v)));
+            } else if constexpr (N == 8) {
+                return from_vec(vabsq_f16(to_vec(v)));
+            }
+
+            return join(
+                abs(v.lo),
+                abs(v.hi)
+            );
+        }
+    }
+
+// !MARK
+
+// MARK: Float16 Absolute value
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto abs_diff(
+        Vec<N, ui::float16> const& a,
+        Vec<N, ui::float16> const& b
+    ) noexcept -> Vec<N, float16> {
+        if constexpr (N == 1) {
+            auto temp = a.val > b.val ? a.val - b.val : b.val - a.val;
+            return {
+                .val = temp
+            };
+        } else {
+            if constexpr (N == 4) {
+                return from_vec(vabd_f16(to_vec(a), to_vec(b)));
+            } else if constexpr (N == 8) {
+                return from_vec(vabdq_f16(to_vec(a), to_vec(b)));
+            }
+
+            return join(
+                abs_diff(a.lo, b.lo),
+                abs_diff(a.hi, b.hi)
+            );
+        }
+    }
+// !MARK
+
+} // namespace ui::arm::neon;
 
 #endif // AMT_UI_ARCH_ARM_ABS_HPP

@@ -2,30 +2,22 @@
 #define AMT_UI_ARCH_ARM_DIV_HPP
 
 #include "cast.hpp"
-#include <algorithm>
-#include <bit>
 #include <cassert>
-#include <cmath>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
-#include <type_traits>
-#include "basic.hpp"
 
-namespace ui::arm {
+namespace ui::arm::neon {
 
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto div(
         Vec<N, T> const& num,
         Vec<N, T> const& den
     ) noexcept -> Vec<N, T> {
-        using ret_t = Vec<N, T>;
-
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, double>) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vdiv_f64(to_vec(num), to_vec(den))
                     );
                 }
@@ -38,19 +30,25 @@ namespace ui::arm {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vdiv_f32(to_vec(num), to_vec(den))
                     );
                 } else if constexpr (N == 4) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vdivq_f32(to_vec(num), to_vec(den))
                     );
                 }
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    return std::bit_cast<ret_t>(
+                    return from_vec<T>(
                         vdivq_f64(to_vec(num), to_vec(den))
                     );
+                }
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 4) {
+                    return from_vec(vdiv_f16(to_vec(num), to_vec(den)));
+                } else if constexpr (N == 8) {
+                    return from_vec(vdivq_f16(to_vec(num), to_vec(den)));
                 }
             }
 
@@ -84,6 +82,6 @@ namespace ui::arm {
             }
         }
     }
-} // namespace ui::arm
+} // namespace ui::arm::neon
 
 #endif // AMT_UI_ARCH_ARM_DIV_HPP

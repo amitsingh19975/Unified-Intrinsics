@@ -4,12 +4,15 @@
 #include "../../base_vec.hpp"
 #include "../../base.hpp"
 #include "../../vec_headers.hpp"
+#include "../../float.hpp"
+#include "../../matrix.hpp"
 #include <arm_neon.h>
 #include <bit>
 #include <concepts>
 #include <cstdint>
+#include <type_traits>
 
-namespace ui::arm {
+namespace ui::arm::neon {
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE constexpr auto to_vec(Vec<N, T> const& v) noexcept {
         if constexpr (std::floating_point<T>) {
@@ -20,8 +23,12 @@ namespace ui::arm {
             } else if constexpr (std::same_as<double, T>) {
                 if constexpr (N == 1) return std::bit_cast<float64x1_t>(v);
                 else return std::bit_cast<float64x2_t>(v);
+            } else if constexpr (std::same_as<T, ui::float16>) {
+                if constexpr (N == 1) return std::bit_cast<ui::float16>(v);
+                else if constexpr (N == 4) return std::bit_cast<float16x4_t>(v);
+                else return std::bit_cast<float16x8_t>(v);
             } else {
-                static_assert(sizeof(T) == sizeof(float) || sizeof(T) == sizeof(double), "Unknow floating-point type, expecting 'float' or 'double'");
+                static_assert(sizeof(T) == sizeof(float) || sizeof(T) == sizeof(double), "Unknow floating-point type, expecting 'float', 'ui::float16_t' or 'double'");
             }
         } else if constexpr (std::is_signed_v<T>) {
             if constexpr (sizeof(T) == 1) {
@@ -110,6 +117,13 @@ namespace ui::arm {
     }
     UI_ALWAYS_INLINE constexpr auto from_vec(int64x2_t const& v) noexcept -> Vec<2, std::int64_t> {
         return std::bit_cast<Vec<2, std::int64_t>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x4_t const& v) noexcept -> Vec<4, ui::float16> {
+        return std::bit_cast<Vec<4, ui::float16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x8_t const& v) noexcept -> Vec<8, ui::float16> {
+        return std::bit_cast<Vec<8, ui::float16>>(v);
     }
 
     UI_ALWAYS_INLINE constexpr auto from_vec(float32x2_t const& v) noexcept -> Vec<2, float> {
@@ -234,6 +248,13 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    auto temp = CastImpl<std::int16_t, Saturating>{}(v);
+                    return cast_helper<To, 4, 8>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                    ); 
                 }
             }
 
@@ -289,6 +310,13 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    auto temp = CastImpl<std::uint16_t, Saturating>{}(v);
+                    return cast_helper<To, 4, 8>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                    ); 
                 }
             }
 
@@ -357,6 +385,12 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    return cast_helper<To, 4, 8>(
+                        v,
+                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                    ); 
                 }
 
             }
@@ -412,6 +446,12 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    return cast_helper<To, 4, 8>(
+                        v,
+                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                    ); 
                 }
             }
 
@@ -476,6 +516,13 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    auto temp = CastImpl<std::int16_t, Saturating>{}(v);
+                    return cast_helper<To, 4, 8>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                    ); 
                 }
             }
 
@@ -526,6 +573,13 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    auto temp = CastImpl<std::uint16_t, Saturating>{}(v);
+                    return cast_helper<To, 4, 8>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                    ); 
                 }
             }
 
@@ -583,6 +637,13 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    auto temp = CastImpl<std::int16_t, Saturating>{}(v);
+                    return cast_helper<To, 4, 8>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                    ); 
                 }
             }
 
@@ -627,6 +688,13 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    auto temp = CastImpl<std::uint16_t, Saturating>{}(v);
+                    return cast_helper<To, 4, 8>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
+                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                    ); 
                 }
             }
 
@@ -661,6 +729,8 @@ namespace ui::arm {
                         );
                         return CastImpl<To, Saturating>{}(temp);
                     }
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    return map([](auto v) { return ui::float16(v); }, v);
                 }
             }
 
@@ -697,6 +767,8 @@ namespace ui::arm {
                     #else
                     return map([](auto v) { return static_cast<To>(v); }, v); 
                     #endif
+                } else if constexpr (std::same_as<To, ui::float16>) {
+                    return map([](auto v) { return ui::float16(v); }, v);
                 }
             }
         };
@@ -711,6 +783,419 @@ namespace ui::arm {
     UI_ALWAYS_INLINE auto sat_cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
         return internal::CastImpl<To, true>{}(v);
     }
-} // namespace ui::arm
+
+    // retinterpret cast
+    template <typename To, std::size_t N, typename From>
+    UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
+        return std::bit_cast<Vec<N, To>>(v);
+    }
+
+    template <typename T>
+    UI_ALWAYS_INLINE constexpr auto from_vec(auto const& v) noexcept {
+        return rcast<T>(from_vec(v));
+    }
+
+
+    template <std::size_t R, std::size_t C, typename T>
+    UI_ALWAYS_INLINE constexpr auto to_vec(VecMat<R, C, T> const& m) noexcept {
+        if constexpr (std::same_as<T, float16>) {
+            if constexpr (C == 4) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<float16x4x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<float16x4x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<float16x4x4_t>(m);
+                }
+            } else if constexpr (C == 8) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<float16x8x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<float16x8x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<float16x8x4_t>(m);
+                }
+            }
+        } else if constexpr (std::same_as<T, float>) {
+            if constexpr (C == 2) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<float32x2x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<float32x2x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<float32x2x4_t>(m);
+                }
+            } else if constexpr (C == 4) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<float32x4x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<float32x4x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<float32x4x4_t>(m);
+                }
+            }
+        } else if constexpr (std::same_as<T, double>) {
+            if constexpr (C == 1) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<float64x1x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<float64x1x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<float64x1x4_t>(m);
+                }
+            } else if constexpr (C == 2) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<float64x2x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<float64x2x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<float64x2x4_t>(m);
+                }
+            }
+        } else if constexpr (std::is_signed_v<T>) {
+            if constexpr (sizeof(T) == 1) {
+                if constexpr (C == 8) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int8x8x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int8x8x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int8x8x4_t>(m);
+                    }
+                } else if constexpr (C == 16) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int8x16x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int8x16x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int8x16x4_t>(m);
+                    }
+                }
+            } else if constexpr (sizeof(T) == 2) {
+                if constexpr (C == 4) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int16x4x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int16x4x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int16x4x4_t>(m);
+                    }
+                } else if constexpr (C == 8) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int16x8x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int16x8x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int16x8x4_t>(m);
+                    }
+                }
+            } else if constexpr (sizeof(T) == 4) {
+                if constexpr (C == 2) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int32x2x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int32x2x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int32x2x4_t>(m);
+                    }
+                } else if constexpr (C == 4) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int32x4x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int32x4x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int32x4x4_t>(m);
+                    }
+                }
+            } else if constexpr (sizeof(T) == 8) {
+                if constexpr (C == 1) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int64x1x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int64x1x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int64x1x4_t>(m);
+                    }
+                } else if constexpr (C == 2) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<int64x2x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<int64x2x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<int64x2x4_t>(m);
+                    }
+                }
+            }
+        } else {
+            if constexpr (sizeof(T) == 1) {
+                if constexpr (C == 8) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint8x8x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint8x8x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint8x8x4_t>(m);
+                    }
+                } else if constexpr (C == 16) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint8x16x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint8x16x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint8x16x4_t>(m);
+                    }
+                }
+            } else if constexpr (sizeof(T) == 2) {
+                if constexpr (C == 4) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint16x4x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint16x4x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint16x4x4_t>(m);
+                    }
+                } else if constexpr (C == 8) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint16x8x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint16x8x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint16x8x4_t>(m);
+                    }
+                }
+            } else if constexpr (sizeof(T) == 4) {
+                if constexpr (C == 2) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint32x2x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint32x2x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint32x2x4_t>(m);
+                    }
+                } else if constexpr (C == 4) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint32x4x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint32x4x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint32x4x4_t>(m);
+                    }
+                }
+            } else if constexpr (sizeof(T) == 8) {
+                if constexpr (C == 1) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint64x1x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint64x1x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint64x1x4_t>(m);
+                    }
+                } else if constexpr (C == 2) {
+                    if constexpr (R == 2) {
+                        return std::bit_cast<uint64x2x2_t>(m);
+                    } else if constexpr (R == 3) {
+                        return std::bit_cast<uint64x2x3_t>(m);
+                    } else if constexpr (R == 4) {
+                        return std::bit_cast<uint64x2x4_t>(m);
+                    }
+                }
+            }
+        }
+    }
+
+    template <std::integral T>
+        requires (sizeof(T) == 1)
+    UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
+        if constexpr (std::is_signed_v<T>) {
+            if constexpr        (std::same_as<T, int8x8x2_t>) {
+                return std::bit_cast<VecMat<2,  8, std::int8_t>>(v);
+            } else if constexpr (std::same_as<T, int8x8x3_t>) {
+                return std::bit_cast<VecMat<3,  8, std::int8_t>>(v);
+            } else if constexpr (std::same_as<T, int8x8x4_t>) {
+                return std::bit_cast<VecMat<4,  8, std::int8_t>>(v);
+            } else if constexpr (std::same_as<T, int8x16x2_t>) {
+                return std::bit_cast<VecMat<2, 16, std::int8_t>>(v);
+            } else if constexpr (std::same_as<T, int8x16x3_t>) {
+                return std::bit_cast<VecMat<3, 16, std::int8_t>>(v);
+            } else if constexpr (std::same_as<T, int8x16x4_t>) {
+                return std::bit_cast<VecMat<4, 16, std::int8_t>>(v);
+            }
+        } else {
+            if constexpr        (std::same_as<T, uint8x8x2_t>) {
+                return std::bit_cast<VecMat<2,  8, std::uint8_t>>(v);
+            } else if constexpr (std::same_as<T, uint8x8x3_t>) {
+                return std::bit_cast<VecMat<3,  8, std::uint8_t>>(v);
+            } else if constexpr (std::same_as<T, uint8x8x4_t>) {
+                return std::bit_cast<VecMat<4,  8, std::uint8_t>>(v);
+            } else if constexpr (std::same_as<T, uint8x16x2_t>) {
+                return std::bit_cast<VecMat<2, 16, std::uint8_t>>(v);
+            } else if constexpr (std::same_as<T, uint8x16x3_t>) {
+                return std::bit_cast<VecMat<3, 16, std::uint8_t>>(v);
+            } else if constexpr (std::same_as<T, uint8x16x4_t>) {
+                return std::bit_cast<VecMat<4, 16, std::uint8_t>>(v);
+            }
+        }
+    }
+
+    template <std::integral T>
+        requires (sizeof(T) == 2)
+    UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
+        if constexpr (std::is_signed_v<T>) {
+            if constexpr        (std::same_as<T, int16x4x2_t>) {
+                return std::bit_cast<VecMat<2, 4, std::int16_t>>(v);
+            } else if constexpr (std::same_as<T, int16x4x3_t>) {
+                return std::bit_cast<VecMat<3, 4, std::int16_t>>(v);
+            } else if constexpr (std::same_as<T, int16x4x4_t>) {
+                return std::bit_cast<VecMat<4, 4, std::int16_t>>(v);
+            } else if constexpr (std::same_as<T, int16x8x2_t>) {
+                return std::bit_cast<VecMat<2, 8, std::int16_t>>(v);
+            } else if constexpr (std::same_as<T, int16x8x3_t>) {
+                return std::bit_cast<VecMat<3, 8, std::int16_t>>(v);
+            } else if constexpr (std::same_as<T, int16x8x4_t>) {
+                return std::bit_cast<VecMat<4, 8, std::int16_t>>(v);
+            }
+        } else {
+            if constexpr        (std::same_as<T, uint16x4x2_t>) {
+                return std::bit_cast<VecMat<2, 4, std::uint16_t>>(v);
+            } else if constexpr (std::same_as<T, uint16x4x3_t>) {
+                return std::bit_cast<VecMat<3, 4, std::uint16_t>>(v);
+            } else if constexpr (std::same_as<T, uint16x4x4_t>) {
+                return std::bit_cast<VecMat<4, 4, std::uint16_t>>(v);
+            } else if constexpr (std::same_as<T, uint16x8x2_t>) {
+                return std::bit_cast<VecMat<2, 8, std::uint16_t>>(v);
+            } else if constexpr (std::same_as<T, uint16x8x3_t>) {
+                return std::bit_cast<VecMat<3, 8, std::uint16_t>>(v);
+            } else if constexpr (std::same_as<T, uint16x8x4_t>) {
+                return std::bit_cast<VecMat<4, 8, std::uint16_t>>(v);
+            }
+        }
+    }
+
+    template <std::integral T>
+        requires (sizeof(T) == 4)
+    UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
+        if constexpr (std::is_signed_v<T>) {
+            if constexpr        (std::same_as<T, int32x2x2_t>) {
+                return std::bit_cast<VecMat<2, 2, std::int32_t>>(v);
+            } else if constexpr (std::same_as<T, int32x2x3_t>) {
+                return std::bit_cast<VecMat<3, 2, std::int32_t>>(v);
+            } else if constexpr (std::same_as<T, int32x2x4_t>) {
+                return std::bit_cast<VecMat<4, 2, std::int32_t>>(v);
+            } else if constexpr (std::same_as<T, int32x4x2_t>) {
+                return std::bit_cast<VecMat<2, 4, std::int32_t>>(v);
+            } else if constexpr (std::same_as<T, int32x4x3_t>) {
+                return std::bit_cast<VecMat<3, 4, std::int32_t>>(v);
+            } else if constexpr (std::same_as<T, int32x4x4_t>) {
+                return std::bit_cast<VecMat<4, 4, std::int32_t>>(v);
+            }
+        } else {
+            if constexpr        (std::same_as<T, uint32x2x2_t>) {
+                return std::bit_cast<VecMat<2, 2, std::uint32_t>>(v);
+            } else if constexpr (std::same_as<T, uint32x2x3_t>) {
+                return std::bit_cast<VecMat<3, 2, std::uint32_t>>(v);
+            } else if constexpr (std::same_as<T, uint32x2x4_t>) {
+                return std::bit_cast<VecMat<4, 2, std::uint32_t>>(v);
+            } else if constexpr (std::same_as<T, uint32x4x2_t>) {
+                return std::bit_cast<VecMat<2, 4, std::uint32_t>>(v);
+            } else if constexpr (std::same_as<T, uint32x4x3_t>) {
+                return std::bit_cast<VecMat<3, 4, std::uint32_t>>(v);
+            } else if constexpr (std::same_as<T, uint32x4x4_t>) {
+                return std::bit_cast<VecMat<4, 4, std::uint32_t>>(v);
+            }
+        }
+    }
+
+    template <std::integral T>
+        requires (sizeof(T) == 8)
+    UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
+        if constexpr (std::is_signed_v<T>) {
+            if constexpr        (std::same_as<T, int64x1x2_t>) {
+                return std::bit_cast<VecMat<2, 1, std::int64_t>>(v);
+            } else if constexpr (std::same_as<T, int64x1x3_t>) {
+                return std::bit_cast<VecMat<3, 1, std::int64_t>>(v);
+            } else if constexpr (std::same_as<T, int64x1x4_t>) {
+                return std::bit_cast<VecMat<4, 1, std::int64_t>>(v);
+            } else if constexpr (std::same_as<T, int64x2x2_t>) {
+                return std::bit_cast<VecMat<2, 2, std::int64_t>>(v);
+            } else if constexpr (std::same_as<T, int64x2x3_t>) {
+                return std::bit_cast<VecMat<3, 2, std::int64_t>>(v);
+            } else if constexpr (std::same_as<T, int64x2x4_t>) {
+                return std::bit_cast<VecMat<4, 2, std::int64_t>>(v);
+            }
+        } else {
+            if constexpr        (std::same_as<T, uint64x1x2_t>) {
+                return std::bit_cast<VecMat<2, 1, std::uint64_t>>(v);
+            } else if constexpr (std::same_as<T, uint64x1x3_t>) {
+                return std::bit_cast<VecMat<3, 1, std::uint64_t>>(v);
+            } else if constexpr (std::same_as<T, uint64x1x4_t>) {
+                return std::bit_cast<VecMat<4, 1, std::uint64_t>>(v);
+            } else if constexpr (std::same_as<T, uint64x2x2_t>) {
+                return std::bit_cast<VecMat<2, 2, std::uint64_t>>(v);
+            } else if constexpr (std::same_as<T, uint64x2x3_t>) {
+                return std::bit_cast<VecMat<3, 2, std::uint64_t>>(v);
+            } else if constexpr (std::same_as<T, uint64x2x4_t>) {
+                return std::bit_cast<VecMat<4, 2, std::uint64_t>>(v);
+            }
+        }
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x4x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 4, float16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x4x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 4, float16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x4x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 4, float16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x8x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 8, float16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x8x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 8, float16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float16x8x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 8, float16>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x2x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 2, float>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x2x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 2, float>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x2x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 2, float>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x4x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 4, float>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x4x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 4, float>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float32x4x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 4, float>>(v);
+    }
+
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x1x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 1, double>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x1x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 1, double>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x1x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 1, double>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x2x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 2, double>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x2x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 2, double>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(float64x2x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 2, double>>(v);
+    }
+
+} // namespace ui::arm::neon
 
 #endif // AMT_UI_ARCH_ARM_CAST_HPP

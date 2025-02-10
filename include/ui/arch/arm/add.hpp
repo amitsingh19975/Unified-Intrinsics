@@ -13,13 +13,14 @@
 #include <type_traits>
 #include "basic.hpp"
 #include "ui/base.hpp"
+#include "ui/float.hpp"
 
-namespace ui::arm { 
+namespace ui::arm::neon { 
 
 // MARK: Wrapping Addition
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
-    UI_ALWAYS_INLINE auto wrapping_add(
+    UI_ALWAYS_INLINE auto add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
@@ -57,15 +58,15 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_add(lhs.lo, rhs.lo),
-                wrapping_add(lhs.hi, rhs.hi)
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 16)
-    UI_ALWAYS_INLINE auto wrapping_add(
+    UI_ALWAYS_INLINE auto add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
@@ -103,15 +104,15 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_add(lhs.lo, rhs.lo),
-                wrapping_add(lhs.hi, rhs.hi)
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
-    UI_ALWAYS_INLINE auto wrapping_add(
+    UI_ALWAYS_INLINE auto add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
@@ -149,15 +150,15 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_add(lhs.lo, rhs.lo),
-                wrapping_add(lhs.hi, rhs.hi)
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
-    UI_ALWAYS_INLINE auto wrapping_add(
+    UI_ALWAYS_INLINE auto add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
@@ -193,8 +194,8 @@ namespace ui::arm {
             }
         } else {
             return join(
-                wrapping_add(lhs.lo, rhs.lo),
-                wrapping_add(lhs.hi, rhs.hi)
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
             );
         }    
     }
@@ -203,59 +204,73 @@ namespace ui::arm {
 // !MARK
 
 // MARK: Floating-Point Addition
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto add(
+        Vec<N, float16> const& lhs,
+        Vec<N, float16> const& rhs
+    ) noexcept -> Vec<N, float16> {
+        if constexpr (N == 1) {
+            return { .val = lhs.val + rhs.val };
+        } else if constexpr (N == 4) {
+            return from_vec(vadd_f16(to_vec(lhs), to_vec(rhs)));
+        } else if constexpr (N == 8) {
+            return from_vec(vaddq_f16(to_vec(lhs), to_vec(rhs)));
+        } else {
+            return join(
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
+            );
+        }    
+    }
 
-  template <std::size_t N>
-    UI_ALWAYS_INLINE auto float_add(
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto add(
         Vec<N, float> const& lhs,
         Vec<N, float> const& rhs
     ) noexcept -> Vec<N, float> {
-        using ret_t = Vec<N, float>;
-
         if constexpr (N == 1) {
             return { .val = lhs.val + rhs.val };
         } else if constexpr (N == 2) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vadd_f32(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else if constexpr (N == 4) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vaddq_f32(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else {
             return join(
-                float_add(lhs.lo, rhs.lo),
-                float_add(lhs.hi, rhs.hi)
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
             );
         }    
     }
 
     template <std::size_t N>
-    UI_ALWAYS_INLINE auto float_add(
+    UI_ALWAYS_INLINE auto add(
         Vec<N, double> const& lhs,
         Vec<N, double> const& rhs
     ) noexcept -> Vec<N, double> {
-        using ret_t = Vec<N, double>;
-
         if constexpr (N == 1) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vadd_f64(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else if constexpr (N == 2) {
-            return std::bit_cast<ret_t>(
+            return from_vec(
                 vaddq_f64(
                     to_vec(lhs), to_vec(rhs)
                 )
             );
         } else {
             return join(
-                float_add(lhs.lo, rhs.lo),
-                float_add(lhs.hi, rhs.hi)
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
             );
         }    
     }
@@ -263,7 +278,6 @@ namespace ui::arm {
 // !MARK
 
 // MARK: Widening Addition
-//
     namespace internal {
         template <std::size_t M, std::size_t N, std::integral T, std::integral U>
         UI_ALWAYS_INLINE auto widening_add_helper(
@@ -1220,31 +1234,31 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_s8(to_vec(v))
                         );
                     } else if constexpr (N == 16) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_s16(to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_s16(to_vec(v))
                         );
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_s16(to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_s32(to_vec(v))
                         );
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_s32(to_vec(v))
                         );
                     }
@@ -1252,31 +1266,31 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_u8(to_vec(v))
                         );
                     } else if constexpr (N == 16) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_u16(to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_u16(to_vec(v))
                         );
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_u16(to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_u32(to_vec(v))
                         );
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpaddl_u32(to_vec(v))
                         );
                     }
@@ -1300,11 +1314,11 @@ namespace ui::arm {
         if constexpr (N == 1)  {
             if constexpr (sizeof(T) == 4) {
                 if constexpr (std::is_signed_v<T>) {
-                    return from_vec(
+                    return from_vec<result_t>(
                         vpadal_s32(to_vec(x), to_vec(v))
                     );
                 } else {
-                    return from_vec(
+                    return from_vec<result_t>(
                         vpadal_u32(to_vec(x), to_vec(v))
                     );
                 }
@@ -1314,27 +1328,27 @@ namespace ui::arm {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadal_s8(to_vec(x), to_vec(v))
                         );
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadalq_s8(to_vec(x), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadal_s16(to_vec(x), to_vec(v))
                         );
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadalq_s16(to_vec(x), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadalq_s32(to_vec(x), to_vec(v))
                         );
                     } 
@@ -1342,27 +1356,27 @@ namespace ui::arm {
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadal_u8(to_vec(x), to_vec(v))
                         );
                     } else if constexpr (N == 8) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadalq_u8(to_vec(x), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadal_u16(to_vec(x), to_vec(v))
                         );
                     } else if constexpr (N == 4) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadalq_u16(to_vec(x), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
-                        return from_vec(
+                        return from_vec<result_t>(
                             vpadalq_u32(to_vec(x), to_vec(v))
                         );
                     } 
@@ -1570,6 +1584,6 @@ namespace ui::arm {
 
 // !MARK
 
-} // namespace ui::arm;
+} // namespace ui::arm::neon;
 
 #endif // AMT_UI_ARCH_ARM_ADD_HPP
