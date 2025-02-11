@@ -8,11 +8,6 @@
 #include <numeric>
 #include <print>
 #include "ui/arch/arm/arm.hpp"
-#include "ui/arch/arm/bit.hpp"
-#include "ui/arch/arm/manip.hpp"
-#include "ui/arch/arm/reciprocal.hpp"
-#include "ui/arch/arm/shift.hpp"
-#include "ui/arch/arm/sqrt.hpp"
 #include "ui/base.hpp"
 #include "ui/float.hpp"
 #include "ui/format.hpp"
@@ -44,9 +39,11 @@ int main() {
     using type = int32_t;
     std::array<type, 100> source;
     std::iota(source.begin(), source.end(), 1);
-    auto t = Vec<4, bfloat16>::load(bfloat16(12.4f));
-    /*auto f = ui::bfloat16(t);*/
-    /*std::println("{}", f + f);*/
-    std::println("Vec: {} | {}", mul(t, t), to_name<decltype(t)>()); 
+    auto f = Vec<4, float>::load(12.23f);
+    auto t = cast<bfloat16>(f);
+    auto r = cast<float>(t);
+    std::println("{}", bfloat16(f[0]));
+    std::println("VecT: {} | {}", t, to_name<decltype(t)>()); 
+    std::println("VecR: {} | {}", r, to_name<decltype(r)>()); 
     return 0; 
 }

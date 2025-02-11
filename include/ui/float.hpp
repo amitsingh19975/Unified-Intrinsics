@@ -3,12 +3,11 @@
 
 #include "base.hpp"
 #include "vec_headers.hpp"
-#include "maths.hpp"
+#include "forward.hpp"
 #include <bit>
 #include <cmath>
 #include <concepts>
 #include <cstdint>
-#include <ostream>
 #include <type_traits>
 #include <limits>
 
@@ -49,9 +48,6 @@ namespace ui {
             using bfloat16_t = std::uint16_t;
         #endif
     }
-
-    struct alignas(sizeof(internal::float16_t)) float16;
-    struct alignas(sizeof(internal::bfloat16_t)) bfloat16;
 
     namespace fp {
         template <typename T>
@@ -383,7 +379,9 @@ namespace ui {
 
         constexpr bfloat16(float f) noexcept {
             auto temp = std::bit_cast<std::uint32_t>(f);
-            auto mantissa = (temp & 0x7FFFFF) >> 16;
+            // Rounding-to-even
+            auto rounding_bias = 0x7FFF + ((temp >> 16) & 1);
+            auto mantissa = ((temp + rounding_bias) & 0x7FFFFF) >> 16;
             temp = (temp >> 16) | mantissa;
             data = std::bit_cast<base_type>(static_cast<std::uint16_t>(temp));
         }
@@ -465,7 +463,28 @@ namespace ui {
         /*    return std::bit_cast<internal::float16_t>(bits);*/
         /*}*/
     }
-}
+    
+    template <std::size_t N>
+    static inline auto cast_float32_to_float16(
+        Vec<N, float> const& v
+    ) noexcept -> Vec<N, float16>;
+
+    template <std::size_t N>
+    static inline constexpr auto cast_float16_to_float32(
+        Vec<N, float16> const& v
+    ) noexcept -> Vec<N, float>;
+
+    template <std::size_t N>
+    static inline constexpr auto cast_float32_to_bfloat16(
+        Vec<N, float> const& v
+    ) noexcept -> Vec<N, bfloat16>;
+
+    template <std::size_t N>
+    static inline constexpr auto cast_bfloat16_to_float32(
+        Vec<N, bfloat16> const& v
+    ) noexcept -> Vec<N, float>;
+
+} // namespace ui
 
 #if !defined(UI_HAS_CUSTOM_FLOAT16_IMPL) && defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
 namespace ui::internal {

@@ -1,11 +1,6 @@
 #ifndef AMT_UI_ARCH_ARM_ARM_HPP
 #define AMT_UI_ARCH_ARM_ARM_HPP
 
-#include "cast.hpp"
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-
 #include "add.hpp"
 #include "load.hpp"
 #include "sub.hpp"
@@ -22,5 +17,6 @@
 #include "manip.hpp"
 #include "load.hpp"
 #include "matrix.hpp"
+#include "cast_float.hpp"
 
 #endif // AMT_UI_ARCH_ARM_ARM_HPP

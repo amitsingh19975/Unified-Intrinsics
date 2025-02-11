@@ -15,15 +15,13 @@
 #include <type_traits>
 #include "features.hpp"
 #include "float.hpp"
+#include "forward.hpp"
 
 #ifdef UI_ARM_HAS_NEON
     #include "arch/arm/join.hpp"
 #endif
 
 namespace ui {
-
-    template<std::size_t N, typename T>
-    struct alignas(N * sizeof(T)) Vec;
 
     template <std::size_t... Is, std::size_t N, typename T>
     static inline constexpr auto shuffle(Vec<N, T> const&) noexcept -> Vec<sizeof...(Is), T>;
