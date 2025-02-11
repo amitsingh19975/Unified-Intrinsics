@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_ARM_SQRT_HPP
 
 #include "cast.hpp"
+#include "ui/float.hpp"
 #include <cassert>
 #include <cfenv>
 #include <cmath>
@@ -38,11 +39,17 @@ namespace ui::arm::neon {
                         return from_vec<T>(vsqrtq_f64(to_vec(v)));
                     }
                 } else if constexpr (std::same_as<T, float16>) {
+                    #ifdef UI_HAS_FLOAT_16
                     if constexpr (N == 4) {
                         return from_vec(vsqrt_f16(to_vec(v)));
                     } else if constexpr (N == 8) {
                         return from_vec(vsqrtq_f16(to_vec(v)));
                     }
+                    #else
+                    return cast<T>(sqrt(cast<float>(v)));
+                    #endif
+                } else if constexpr (std::same_as<T, bfloat16>) {
+                    return cast<T>(sqrt(cast<float>(v)));
                 }
             #endif
 

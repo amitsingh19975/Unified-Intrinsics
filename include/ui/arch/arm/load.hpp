@@ -5,13 +5,11 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <cstdlib>
 #include <type_traits>
 
 namespace ui::arm::neon { 
     
     template <std::size_t N, typename T>
-        requires ((maths::is_power_of_2(N) && N > 1) || N == 1)
     UI_ALWAYS_INLINE auto load(T val) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
             return { .val = static_cast<T>(val) };
@@ -29,11 +27,25 @@ namespace ui::arm::neon {
                 }
             #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vdup_n_f16(val));
+                    return from_vec<T>(vdup_n_f16(std::bit_cast<float16_t>(val)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vdupq_n_f16(val));
+                    return from_vec<T>(vdupq_n_f16(std::bit_cast<float16_t>(val)));
                 }
+                #else
+                return std::bit_cast<Vec<N, T>>(load<N>(std::bit_cast<std::uint16_t>(val.data)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                #ifdef UI_HAS_BFLOAT_16
+                if constexpr (N == 4) {
+                    return from_vec<T>(vdup_n_bf16(std::bit_cast<bfloat16_t>(val)));
+                } else if constexpr (N == 8) {
+                    return from_vec<T>(vdupq_n_bf16(std::bit_cast<bfloat16_t>(val)));
+                }
+                #else
+                return std::bit_cast<Vec<N, T>>(load<N>(std::bit_cast<std::uint16_t>(val.data)));
+                #endif
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
@@ -84,14 +96,14 @@ namespace ui::arm::neon {
                 }
             }
             return join(
-                load<N / 2, T>(val),
-                load<N / 2, T>(val)
+                load<N / 2>(val),
+                load<N / 2>(val)
             );
         }
     }
 
     template <std::size_t N, unsigned Lane, std::size_t M, typename T>
-        requires (((maths::is_power_of_2(N) && N > 1) || N == 1) && Lane < M)
+        requires (Lane < M)
     UI_ALWAYS_INLINE auto load(
         Vec<M, T> const& v
     ) noexcept -> Vec<N, T> {
@@ -137,17 +149,18 @@ namespace ui::arm::neon {
                 } 
             #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (M == 2) {
                     if constexpr (N == 4) {
-                        return from_vec<T>(vdup_lane_f16(v, Lane));
+                        return from_vec<T>(vdup_lane_f16(to_vec(v), Lane));
                     } else if constexpr (N == 8) {
-                        return from_vec<T>(vdupq_lane_f16(v, Lane));
+                        return from_vec<T>(vdupq_lane_f16(to_vec(v), Lane));
                     }
                 } else if constexpr (M == 4) {
                     if constexpr (N == 4) {
-                        return from_vec<T>(vdup_laneq_f16(v, Lane));
+                        return from_vec<T>(vdup_laneq_f16(to_vec(v), Lane));
                     } else if constexpr (N == 8) {
-                        return from_vec<T>(vdupq_laneq_f16(v, Lane));
+                        return from_vec<T>(vdupq_laneq_f16(to_vec(v), Lane));
                     }
                 } else if constexpr (M > 4) {
                     if constexpr (Lane < M / 2) {
@@ -155,7 +168,36 @@ namespace ui::arm::neon {
                     } else {
                         return load<N, Lane - M / 2>(v.hi);
                     }
-                } 
+                }
+                #else
+                auto temp = std::bit_cast<Vec<N, std::uint16_t>>(v);
+                return std::bit_cast<Vec<N, T>>(load<N, Lane>(temp));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                #ifdef UI_HAS_BFLOAT_16
+                if constexpr (M == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(vdup_lane_bf16(to_vec(v), Lane));
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(vdupq_lane_bf16(to_vec(v), Lane));
+                    }
+                } else if constexpr (M == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(vdup_laneq_bf16(to_vec(v), Lane));
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(vdupq_laneq_bf16(to_vec(v), Lane));
+                    }
+                } else if constexpr (M > 4) {
+                    if constexpr (Lane < M / 2) {
+                        return load<N, Lane>(v.lo);
+                    } else {
+                        return load<N, Lane - M / 2>(v.hi);
+                    }
+                }
+                #else
+                auto temp = std::bit_cast<Vec<N, std::uint16_t>>(v);
+                return std::bit_cast<Vec<N, T>>(load<N, Lane>(temp));
+                #endif
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (M == 8) {

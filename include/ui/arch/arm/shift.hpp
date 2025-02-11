@@ -4,7 +4,6 @@
 
 #include "cast.hpp"
 #include <algorithm>
-#include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstddef>

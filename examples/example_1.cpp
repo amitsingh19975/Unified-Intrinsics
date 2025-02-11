@@ -1,7 +1,9 @@
 #include <array>
+#include <cfloat>
 #include <cmath>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <numbers>
 #include <numeric>
 #include <print>
@@ -42,14 +44,9 @@ int main() {
     using type = int32_t;
     std::array<type, 100> source;
     std::iota(source.begin(), source.end(), 1);
-    constexpr auto R = 8;
-    constexpr auto C = 4;
-    auto a = VecMat<R, C, type>::load(source);
-    auto b = VecMat<R, C, type>::load(source);
-    std::println("A: {}\nB: {}", a, b);
-
-    auto t = transpose(a);
-    std::println("Vec: {} | {}", t, to_name<decltype(t)::element_t>());
-    /*std::println("Vec: {} | {}", t, to_name<decltype(t)>()); */
+    auto t = Vec<4, bfloat16>::load(bfloat16(12.4f));
+    /*auto f = ui::bfloat16(t);*/
+    /*std::println("{}", f + f);*/
+    std::println("Vec: {} | {}", mul(t, t), to_name<decltype(t)>()); 
     return 0; 
 }

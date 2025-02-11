@@ -35,11 +35,17 @@ namespace ui::arm::neon {
                 }
             #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec<T>(vneg_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
                     return from_vec<T>(vnegq_f16(to_vec(v)));
                 }
+                #else
+                return cast<T>(negate(cast<float>(v)));
+                #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                return cast<T>(negate(cast<float>(v)));
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {

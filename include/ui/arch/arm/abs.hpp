@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <type_traits>
 #include "basic.hpp"
+#include "ui/float.hpp"
 
 namespace ui::arm::neon { 
 
@@ -560,7 +561,7 @@ namespace ui::arm::neon {
 
 // !MARK
 
-// MARK: Float16 Absolute value
+// MARK: (B)Float16 Absolute value
 
     template <std::size_t N>
     UI_ALWAYS_INLINE auto abs(
@@ -568,25 +569,40 @@ namespace ui::arm::neon {
     ) noexcept -> Vec<N, float16> {
         if constexpr (N == 1) {
             return {
-                .val = v.val.is_neg() ? -v.val : v.val
+                .val = v.val.abs()
             };
         } else {
+            #ifdef UI_HAS_FLOAT_16 
             if constexpr (N == 4) {
                 return from_vec(vabs_f16(to_vec(v)));
             } else if constexpr (N == 8) {
                 return from_vec(vabsq_f16(to_vec(v)));
             }
-
             return join(
                 abs(v.lo),
                 abs(v.hi)
             );
+            #else
+            return cast<float16>(abs(cast<float>(v)));
+            #endif
         }
     }
 
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto abs(
+        Vec<N, ui::bfloat16> const& v
+    ) noexcept -> Vec<N, bfloat16> {
+        if constexpr (N == 1) {
+            return {
+                .val = v.abs()
+            };
+        } else {
+            return cast<bfloat16>(abs(cast<float>(v)));
+        }
+    }
 // !MARK
 
-// MARK: Float16 Absolute value
+// MARK: (B)Float16 Absolute value
     template <std::size_t N>
     UI_ALWAYS_INLINE auto abs_diff(
         Vec<N, ui::float16> const& a,
@@ -598,16 +614,38 @@ namespace ui::arm::neon {
                 .val = temp
             };
         } else {
+            #ifdef UI_HAS_FLOAT_16 
             if constexpr (N == 4) {
                 return from_vec(vabd_f16(to_vec(a), to_vec(b)));
             } else if constexpr (N == 8) {
                 return from_vec(vabdq_f16(to_vec(a), to_vec(b)));
             }
-
             return join(
                 abs_diff(a.lo, b.lo),
                 abs_diff(a.hi, b.hi)
             );
+            #else
+            auto ta = cast<float>(a);
+            auto tb = cast<float>(b);
+            return cast<float16>(abs_diff(ta, tb));
+            #endif
+        }
+    }
+    
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto abs_diff(
+        Vec<N, ui::bfloat16> const& a,
+        Vec<N, ui::bfloat16> const& b
+    ) noexcept -> Vec<N, bfloat16> {
+        if constexpr (N == 1) {
+            auto temp = a.val > b.val ? a.val - b.val : b.val - a.val;
+            return {
+                .val = temp
+            };
+        } else {
+            auto ta = cast<float>(a);
+            auto tb = cast<float>(b);
+            return cast<bfloat16>(abs_diff(ta, tb));
         }
     }
 // !MARK

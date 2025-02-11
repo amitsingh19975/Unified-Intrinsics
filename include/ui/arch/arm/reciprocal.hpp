@@ -54,11 +54,17 @@ namespace ui::arm::neon {
                 }
             #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec(vrecpe_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
                     return from_vec(vrecpeq_f16(to_vec(v)));
                 }
+                #else
+                return cast<T>(reciprocal_estimate(cast<float>(v)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<T>(reciprocal_estimate(cast<float>(v)));
             } else {
                 if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
@@ -128,11 +134,17 @@ namespace ui::arm::neon {
                 }
             #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec(vrecps_f16(to_vec(v), to_vec(e)));
                 } else if constexpr (N == 8) {
                     return from_vec(vrecpsq_f16(to_vec(v), to_vec(e)));
                 }
+                #else
+                return cast<T>(reciprocal_refine(cast<float>(v), cast<float>(e)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<T>(reciprocal_refine(cast<float>(v), cast<float>(e)));
             }
 
             return join(
@@ -183,11 +195,17 @@ namespace ui::arm::neon {
                 }
             #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec(vrsqrte_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
                     return from_vec(vrsqrteq_f16(to_vec(v)));
                 }
+                #else
+                return cast<T>(sqrt_inv_estimate(cast<float>(v)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<T>(sqrt_inv_estimate(cast<float>(v)));
             } else {
                 if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
@@ -257,11 +275,17 @@ namespace ui::arm::neon {
                 }
             #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec(vrsqrts_f16(to_vec(v), to_vec(e)));
                 } else if constexpr (N == 8) {
                     return from_vec(vrsqrtsq_f16(to_vec(v), to_vec(e)));
                 }
+                #else
+                return cast<T>(sqrt_inv_refine(cast<float>(v), cast<float>(e)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<T>(sqrt_inv_refine(cast<float>(v), cast<float>(e)));
             }
 
             return join(

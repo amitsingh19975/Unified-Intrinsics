@@ -6,7 +6,6 @@
 #include "../../vec_headers.hpp"
 #include "../../float.hpp"
 #include "../../matrix.hpp"
-#include <arm_neon.h>
 #include <bit>
 #include <concepts>
 #include <cstdint>
@@ -23,12 +22,20 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<double, T>) {
                 if constexpr (N == 1) return std::bit_cast<float64x1_t>(v);
                 else return std::bit_cast<float64x2_t>(v);
-            } else if constexpr (std::same_as<T, ui::float16>) {
-                if constexpr (N == 1) return std::bit_cast<ui::float16>(v);
+            } else if constexpr (std::same_as<T, float16>) {
+                if constexpr (N == 1) return std::bit_cast<float16_t>(v);
+            #ifdef UI_HAS_FLOAT_16
                 else if constexpr (N == 4) return std::bit_cast<float16x4_t>(v);
                 else return std::bit_cast<float16x8_t>(v);
+            #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                if constexpr (N == 1) return std::bit_cast<bfloat16_t>(v);
+            #ifdef UI_HAS_BFLOAT_16
+                else if constexpr (N == 4) return std::bit_cast<bfloat16x4_t>(v);
+                else return std::bit_cast<bfloat16x8_t>(v);
+            #endif
             } else {
-                static_assert(sizeof(T) == sizeof(float) || sizeof(T) == sizeof(double), "Unknow floating-point type, expecting 'float', 'ui::float16_t' or 'double'");
+                static_assert(sizeof(T) == sizeof(float) || sizeof(T) == sizeof(double) || sizeof(T) == sizeof(float16) || sizeof(T) == sizeof(bfloat16), "Unknow floating-point type, expecting 'float', 'ui::float16', 'ui::bfloat16' or 'double'");
             }
         } else if constexpr (std::is_signed_v<T>) {
             if constexpr (sizeof(T) == 1) {
@@ -119,12 +126,23 @@ namespace ui::arm::neon {
         return std::bit_cast<Vec<2, std::int64_t>>(v);
     }
 
+    #ifdef UI_HAS_FLOAT_16
     UI_ALWAYS_INLINE constexpr auto from_vec(float16x4_t const& v) noexcept -> Vec<4, ui::float16> {
         return std::bit_cast<Vec<4, ui::float16>>(v);
     }
     UI_ALWAYS_INLINE constexpr auto from_vec(float16x8_t const& v) noexcept -> Vec<8, ui::float16> {
         return std::bit_cast<Vec<8, ui::float16>>(v);
     }
+    #endif
+    
+    #ifdef UI_HAS_BFLOAT_16
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x4_t const& v) noexcept -> Vec<4, ui::bfloat16> {
+        return std::bit_cast<Vec<4, ui::bfloat16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x8_t const& v) noexcept -> Vec<8, ui::bfloat16> {
+        return std::bit_cast<Vec<8, ui::bfloat16>>(v);
+    }
+    #endif
 
     UI_ALWAYS_INLINE constexpr auto from_vec(float32x2_t const& v) noexcept -> Vec<2, float> {
         return std::bit_cast<Vec<2, float>>(v);
@@ -249,12 +267,25 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    auto temp = CastImpl<std::int16_t, Saturating>{}(v);
-                    return cast_helper<To, 4, 8>(
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
                         temp,
-                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -311,12 +342,25 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    auto temp = CastImpl<std::uint16_t, Saturating>{}(v);
-                    return cast_helper<To, 4, 8>(
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
                         temp,
-                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -386,13 +430,26 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    return cast_helper<To, 4, 8>(
-                        v,
-                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
-
             }
 
             template <std::size_t N>
@@ -447,11 +504,25 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    return cast_helper<To, 4, 8>(
-                        v,
-                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -517,12 +588,25 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    auto temp = CastImpl<std::int16_t, Saturating>{}(v);
-                    return cast_helper<To, 4, 8>(
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
                         temp,
-                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -574,12 +658,25 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    auto temp = CastImpl<std::uint16_t, Saturating>{}(v);
-                    return cast_helper<To, 4, 8>(
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
                         temp,
-                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -638,12 +735,25 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    auto temp = CastImpl<std::int16_t, Saturating>{}(v);
-                    return cast_helper<To, 4, 8>(
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
                         temp,
-                        [](auto const& v) { return vcvt_f16_s16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_s16(to_vec(v)); }
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -689,12 +799,25 @@ namespace ui::arm::neon {
                     return map([](auto v) { return static_cast<double>(v); }, v); 
                     #endif
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    auto temp = CastImpl<std::uint16_t, Saturating>{}(v);
-                    return cast_helper<To, 4, 8>(
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
                         temp,
-                        [](auto const& v) { return vcvt_f16_u16(to_vec(v)); },
-                        [](auto const& v) { return vcvtq_f16_u16(to_vec(v)); }
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -730,7 +853,23 @@ namespace ui::arm::neon {
                         return CastImpl<To, Saturating>{}(temp);
                     }
                 } else if constexpr (std::same_as<To, ui::float16>) {
-                    return map([](auto v) { return ui::float16(v); }, v);
+                    #ifdef UI_HAS_FLOAT_16
+                    return cast_helper<To, 4>(
+                        v,
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return float16(v); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    return cast_helper<To, 4>(
+                        v,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
                 }
             }
 
@@ -767,8 +906,81 @@ namespace ui::arm::neon {
                     #else
                     return map([](auto v) { return static_cast<To>(v); }, v); 
                     #endif
-                } else if constexpr (std::same_as<To, ui::float16>) {
-                    return map([](auto v) { return ui::float16(v); }, v);
+                } else if constexpr (std::same_as<To, float16>) {
+                    #ifdef UI_HAS_FLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    #endif
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        temp,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(v); }, v); 
+                    #endif
+                }
+            }
+
+            template <std::size_t N>
+            UI_ALWAYS_INLINE auto operator()(
+                Vec<N, float16> const& v
+            ) noexcept -> Vec<N, To> {
+                if constexpr (std::same_as<To, double>) {
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return CastImpl<double>{}(temp);
+                } else if constexpr (std::same_as<To, float>) {
+                    #ifdef UI_HAS_FLOAT_16
+                    return cast_helper<To, 4>(
+                        v,
+                        [](auto const& v) { return vcvt_f32_f16(to_vec(v)); }
+                    );
+                    #else
+                    return map([](auto v) { return static_cast<To>(v); }, v); 
+                    #endif
+                } else if constexpr (std::integral<To>) {
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return CastImpl<To>{}(temp);
+                } else if constexpr (std::same_as<To, float16>) {
+                    return v;
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_helper<To, 4>(
+                        v,
+                        [](auto const& v) { return vcvt_bf16_f32(to_vec(v)); }
+                    ); 
+                    #else
+                    return map([](auto v) { return bfloat16(static_cast<float>(v)); }, v); 
+                    #endif
+                }
+            }
+
+            template <std::size_t N>
+            UI_ALWAYS_INLINE auto operator()(
+                Vec<N, bfloat16> const& v
+            ) noexcept -> Vec<N, To> {
+                if constexpr (std::same_as<To, float>) {
+                    #ifdef UI_HAS_BFLOAT_16
+                    return cast_helper<To, 4>(
+                        v,
+                        [](auto const& v) { return vcvt_f32_bf16(to_vec(v)); }
+                    );
+                    #else
+                    return map([](auto v) { return static_cast<To>(v); }, v); 
+                    #endif
+                } else if constexpr (std::integral<To>) {
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return CastImpl<To>{}(temp);
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    return v;
                 }
             }
         };
@@ -799,6 +1011,7 @@ namespace ui::arm::neon {
     template <std::size_t R, std::size_t C, typename T>
     UI_ALWAYS_INLINE constexpr auto to_vec(VecMat<R, C, T> const& m) noexcept {
         if constexpr (std::same_as<T, float16>) {
+            #ifdef UI_HAS_FLOAT_16
             if constexpr (C == 4) {
                 if constexpr (R == 2) {
                     return std::bit_cast<float16x4x2_t>(m);
@@ -816,6 +1029,27 @@ namespace ui::arm::neon {
                     return std::bit_cast<float16x8x4_t>(m);
                 }
             }
+            #endif
+        } else if constexpr (std::same_as<T, bfloat16>) {
+            #ifdef UI_HAS_BFLOAT_16
+            if constexpr (C == 4) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<bfloat16x4x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<bfloat16x4x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<bfloat16x4x4_t>(m);
+                }
+            } else if constexpr (C == 8) {
+                if constexpr (R == 2) {
+                    return std::bit_cast<bfloat16x8x2_t>(m);
+                } else if constexpr (R == 3) {
+                    return std::bit_cast<bfloat16x8x3_t>(m);
+                } else if constexpr (R == 4) {
+                    return std::bit_cast<bfloat16x8x4_t>(m);
+                }
+            }
+            #endif
         } else if constexpr (std::same_as<T, float>) {
             if constexpr (C == 2) {
                 if constexpr (R == 2) {
@@ -1139,6 +1373,7 @@ namespace ui::arm::neon {
         }
     }
 
+    #ifdef UI_HAS_FLOAT_16
     UI_ALWAYS_INLINE constexpr auto from_vec(float16x4x2_t const& v) noexcept {
         return std::bit_cast<VecMat<2, 4, float16>>(v);
     }
@@ -1157,6 +1392,28 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE constexpr auto from_vec(float16x8x4_t const& v) noexcept {
         return std::bit_cast<VecMat<4, 8, float16>>(v);
     }
+    #endif
+
+    #ifdef UI_HAS_BFLOAT_16
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x4x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 4, bfloat16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x4x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 4, bfloat16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x4x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 4, bfloat16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x8x2_t const& v) noexcept {
+        return std::bit_cast<VecMat<2, 8, bfloat16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x8x3_t const& v) noexcept {
+        return std::bit_cast<VecMat<3, 8, bfloat16>>(v);
+    }
+    UI_ALWAYS_INLINE constexpr auto from_vec(bfloat16x8x4_t const& v) noexcept {
+        return std::bit_cast<VecMat<4, 8, bfloat16>>(v);
+    }
+    #endif
 
     UI_ALWAYS_INLINE constexpr auto from_vec(float32x2x2_t const& v) noexcept {
         return std::bit_cast<VecMat<2, 2, float>>(v);

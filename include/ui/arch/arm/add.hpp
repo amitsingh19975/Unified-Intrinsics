@@ -206,25 +206,6 @@ namespace ui::arm::neon {
 // MARK: Floating-Point Addition
     template <std::size_t N>
     UI_ALWAYS_INLINE auto add(
-        Vec<N, float16> const& lhs,
-        Vec<N, float16> const& rhs
-    ) noexcept -> Vec<N, float16> {
-        if constexpr (N == 1) {
-            return { .val = lhs.val + rhs.val };
-        } else if constexpr (N == 4) {
-            return from_vec(vadd_f16(to_vec(lhs), to_vec(rhs)));
-        } else if constexpr (N == 8) {
-            return from_vec(vaddq_f16(to_vec(lhs), to_vec(rhs)));
-        } else {
-            return join(
-                add(lhs.lo, rhs.lo),
-                add(lhs.hi, rhs.hi)
-            );
-        }    
-    }
-
-    template <std::size_t N>
-    UI_ALWAYS_INLINE auto add(
         Vec<N, float> const& lhs,
         Vec<N, float> const& rhs
     ) noexcept -> Vec<N, float> {
@@ -275,6 +256,41 @@ namespace ui::arm::neon {
         }    
     }
 
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto add(
+        Vec<N, float16> const& lhs,
+        Vec<N, float16> const& rhs
+    ) noexcept -> Vec<N, float16> {
+        if constexpr (N == 1) {
+            return { .val = lhs.val + rhs.val };
+        } else {
+            #ifdef UI_HAS_FLOAT_16
+            if constexpr (N == 4) {
+                return from_vec(vadd_f16(to_vec(lhs), to_vec(rhs)));
+            } else if constexpr (N == 8) {
+                return from_vec(vaddq_f16(to_vec(lhs), to_vec(rhs)));
+            }
+            return join(
+                add(lhs.lo, rhs.lo),
+                add(lhs.hi, rhs.hi)
+            );
+            #else
+            return cast<float16>(add(cast<float>(lhs), cast<float>(rhs)));
+            #endif
+        }
+    }
+
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto add(
+        Vec<N, bfloat16> const& lhs,
+        Vec<N, bfloat16> const& rhs
+    ) noexcept -> Vec<N, bfloat16> {
+        if constexpr (N == 1) {
+            return { .val = lhs.val + rhs.val };
+        } else {
+            return cast<bfloat16>(add(cast<float>(lhs), cast<float>(rhs)));
+        }
+    }
 // !MARK
 
 // MARK: Widening Addition
@@ -1073,6 +1089,12 @@ namespace ui::arm::neon {
                 return std::bit_cast<ret_t>(
                     vpadd_f32(to_vec(lhs), to_vec(rhs))
                 );
+            } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
+                return from_vec(vpadd_f16(to_vec(lhs), to_vec(rhs)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<bfloat16>(padd(cast<float>(lhs), cast<float>(rhs)));
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 4) {
                     return std::bit_cast<ret_t>(
@@ -1110,6 +1132,16 @@ namespace ui::arm::neon {
                     );
                 }
                 #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                #if defined(UI_HAS_FLOAT_16) && defined(UI_CPU_ARM64) 
+                if constexpr (N == 4) {
+                    return from_vec(vpaddq_f16(to_vec(lhs), to_vec(rhs)));
+                }
+                #else
+                return cast<float16>(padd(cast<float>(lhs), cast<float>(rhs)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<bfloat16>(padd(cast<float>(lhs), cast<float>(rhs)));
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
@@ -1200,6 +1232,8 @@ namespace ui::arm::neon {
                 if constexpr (N == 2) {
                     return static_cast<T>(vpadds_f32(to_vec(v)));
                 }
+            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                return cast<T>(padd(cast<float>(v)));
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
                     return static_cast<T>(vpaddd_f64(to_vec(v)));
@@ -1417,6 +1451,8 @@ namespace ui::arm::neon {
                         vaddvq_f64(to_vec(v))
                     );
                 } 
+            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                return cast<T>(fold(cast<float>(v), op)); 
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {

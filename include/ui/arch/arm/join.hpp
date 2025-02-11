@@ -2,12 +2,12 @@
 #define AMT_UI_ARCH_ARM_JOIN_HPP
 
 #include "../../vec_headers.hpp"
-#include "ui/float.hpp"
-#include <arm_neon.h>
+#include "../../float.hpp"
 #include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <type_traits>
 
@@ -32,9 +32,25 @@ namespace ui::arm::neon {
                     return std::bit_cast<ret_t>(vcombine_f32(std::bit_cast<float32x2_t>(x), std::bit_cast<float32x2_t>(y)));
                 }
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return std::bit_cast<ret_t>(vcombine_f16(std::bit_cast<float16x4_t>(x), std::bit_cast<float16x4_t>(y)));
                 }
+                #else
+                return cast<T>(join_impl(cast<std::uint16_t>(x), cast<std::uint16_t>(y)));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                #ifdef UI_HAS_BFLOAT_16
+                if constexpr (N == 4) {
+                    return std::bit_cast<ret_t>(vcombine_bf16(std::bit_cast<bfloat16x4_t>(x), std::bit_cast<bfloat16x4_t>(y)));
+                }
+                #else
+                return std::bit_cast<ret_t>(join_impl(
+                    std::bit_cast<Vec<N, std::uint16_t>>(x),
+                    std::bit_cast<Vec<N, std::uint16_t>>(y)
+                    )
+                );
+                #endif
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {

@@ -2,10 +2,12 @@
 #define AMT_UI_ARCH_ARM_BIT_HPP
 
 #include "cast.hpp"
+#include "ui/float.hpp"
 #include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <type_traits>
@@ -307,6 +309,18 @@ namespace ui::arm::neon {
                     return from_vec<T>(vbslq_f64(to_vec(a), to_vec(b), to_vec(c)));
                 }
             #endif
+            } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
+                if constexpr (N == 2) {
+                    return from_vec<T>(vbsl_f16(to_vec(a), to_vec(b), to_vec(c)));
+                } else if constexpr (N == 4) {
+                    return from_vec<T>(vbslq_f16(to_vec(a), to_vec(b), to_vec(c)));
+                }
+                #else
+                return cast<T>(bitwise_select(a, cast<std::uint16_t>(b), cast<std::uint16_t>(c))); 
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<T>(bitwise_select(a, cast<std::uint16_t>(b), cast<std::uint16_t>(c))); 
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {

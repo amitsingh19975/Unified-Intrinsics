@@ -196,33 +196,6 @@ namespace ui::arm::neon {
 // MARK: Floating-Point Subtraction
     template <std::size_t N>
     UI_ALWAYS_INLINE auto sub(
-        Vec<N, float16> const& lhs,
-        Vec<N, float16> const& rhs
-    ) noexcept -> Vec<N, float16> {
-        if constexpr (N == 1) {
-            return { .val = lhs.val - rhs.val };
-        } else if constexpr (N == 2) {
-            return from_vec(
-                vsub_f16(
-                    to_vec(lhs), to_vec(rhs)
-                )
-            );
-        } else if constexpr (N == 4) {
-            return from_vec(
-                vsubq_f16(
-                    to_vec(lhs), to_vec(rhs)
-                )
-            );
-        } else {
-            return join(
-                sub(lhs.lo, rhs.lo),
-                sub(lhs.hi, rhs.hi)
-            );
-        }    
-    }
-
-    template <std::size_t N>
-    UI_ALWAYS_INLINE auto sub(
         Vec<N, float> const& lhs,
         Vec<N, float> const& rhs
     ) noexcept -> Vec<N, float> {
@@ -273,6 +246,49 @@ namespace ui::arm::neon {
         }    
     }
 
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto sub(
+        Vec<N, float16> const& lhs,
+        Vec<N, float16> const& rhs
+    ) noexcept -> Vec<N, float16> {
+        if constexpr (N == 1) {
+            return { .val = lhs.val - rhs.val };
+        } else {
+            #ifdef UI_HAS_FLOAT_16
+            if constexpr (N == 2) {
+                return from_vec(
+                    vsub_f16(
+                        to_vec(lhs), to_vec(rhs)
+                    )
+                );
+            } else if constexpr (N == 4) {
+                return from_vec(
+                    vsubq_f16(
+                        to_vec(lhs), to_vec(rhs)
+                    )
+                );
+            }
+            return join(
+                sub(lhs.lo, rhs.lo),
+                sub(lhs.hi, rhs.hi)
+            );
+            #else
+            return cast<float16>(sub(cast<float>(lhs), cast<float>(rhs)));
+            #endif
+        }
+    }
+
+    template <std::size_t N>
+    UI_ALWAYS_INLINE auto sub(
+        Vec<N, bfloat16> const& lhs,
+        Vec<N, bfloat16> const& rhs
+    ) noexcept -> Vec<N, bfloat16> {
+        if constexpr (N == 1) {
+            return { .val = lhs.val - rhs.val };
+        } else {
+            return cast<bfloat16>(sub(cast<float>(lhs), cast<float>(rhs)));
+        }
+    }
 // !MARK
 
 // MARK: Widening Subtraction

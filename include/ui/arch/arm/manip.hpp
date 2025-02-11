@@ -7,6 +7,7 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <type_traits>
 
@@ -99,6 +100,11 @@ namespace ui::arm::neon {
                         return copy<ToLane, FromLane - M / 2>(to, from.hi);
                     }
                 }
+            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                return std::bit_cast<T>(copy<ToLane, FromLane>(
+                    std::bit_cast<Vec<N, std::uint16_t>>(to),
+                    std::bit_cast<Vec<N, std::uint16_t>>(from)
+                ));
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (M == 8) {
@@ -531,11 +537,17 @@ namespace ui::arm::neon {
                     return from_vec<T>(vrev64q_f32(to_vec(v)));
                 }
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec<T>(vrev64_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
                     return from_vec<T>(vrev64q_f16(to_vec(v)));
                 }
+                #else
+                return std::bit_cast<T>(reverse(std::bit_cast<Vec<N, std::uint16_t>>(v))); 
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return std::bit_cast<T>(reverse(std::bit_cast<Vec<N, std::uint16_t>>(v))); 
             } else if constexpr (std::floating_point<T>) {
                 // DO nothing
             } else if constexpr (std::is_signed_v<T>) {
@@ -609,11 +621,23 @@ namespace ui::arm::neon {
                         return from_vec<T>(vzip1q_f64(to_vec(a), to_vec(b)));
                     }
                 } else if constexpr (std::same_as<T, float16>) {
+                    #ifndef UI_HAS_FLOAT_16
                     if constexpr (N == 4) {
                         return from_vec<T>(vzip1_f16(to_vec(a), to_vec(b)));
                     } else if constexpr (N == 8) {
                         return from_vec<T>(vzip1q_f16(to_vec(a), to_vec(b)));
                     }
+                    #else
+                    return std::bit_cast<T>(zip_low_helper(
+                        std::bit_cast<Vec<N, std::uint16_t>>(a),
+                        std::bit_cast<Vec<N, std::uint16_t>>(b)
+                    ));
+                    #endif
+                } else if constexpr (std::same_as<T, bfloat16>) {
+                    return std::bit_cast<T>(zip_low_helper(
+                        std::bit_cast<Vec<N, std::uint16_t>>(a),
+                        std::bit_cast<Vec<N, std::uint16_t>>(b)
+                    ));
                 } else if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
                         if constexpr (N == 8) {
@@ -691,11 +715,23 @@ namespace ui::arm::neon {
                         return from_vec<T>(vzip2q_f64(to_vec(a), to_vec(b)));
                     }
                 } else if constexpr (std::same_as<T, float16>) {
+                    #ifdef UI_HAS_FLOAT_16
                     if constexpr (N == 4) {
                         return from_vec<T>(vzip2_f16(to_vec(a), to_vec(b)));
                     } else if constexpr (N == 8) {
                         return from_vec<T>(vzip2q_f16(to_vec(a), to_vec(b)));
                     }
+                    #else
+                    return std::bit_cast<T>(zip_high_helper(
+                        std::bit_cast<Vec<N, std::uint16_t>>(a),
+                        std::bit_cast<Vec<N, std::uint16_t>>(b)
+                    ));
+                    #endif
+                } else if constexpr (std::same_as<T, bfloat16>) {
+                    return std::bit_cast<T>(zip_high_helper(
+                        std::bit_cast<Vec<N, std::uint16_t>>(a),
+                        std::bit_cast<Vec<N, std::uint16_t>>(b)
+                    ));
                 } else if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
                         if constexpr (N == 8) {
@@ -806,11 +842,23 @@ namespace ui::arm::neon {
                     return from_vec<T>(vuzp1q_f32(to_vec(a), to_vec(b)));
                 }
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec<T>(vuzp1_f16(to_vec(a), to_vec(b)));
                 } else if constexpr (N == 8) {
                     return from_vec<T>(vuzp1q_f16(to_vec(a), to_vec(b)));
                 }
+                #else
+                return std::bit_cast<T>(unzip_low(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return std::bit_cast<T>(unzip_low(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
@@ -887,11 +935,23 @@ namespace ui::arm::neon {
                     return from_vec<T>(vuzp2q_f32(to_vec(a), to_vec(b)));
                 }
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec<T>(vuzp2_f16(to_vec(a), to_vec(b)));
                 } else if constexpr (N == 8) {
                     return from_vec<T>(vuzp2q_f16(to_vec(a), to_vec(b)));
                 }
+                #else
+                return std::bit_cast<T>(unzip_high(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return std::bit_cast<T>(unzip_high(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
@@ -970,11 +1030,23 @@ namespace ui::arm::neon {
                     return from_vec<T>(vtrn1q_f32(to_vec(a), to_vec(b)));
                 }
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec<T>(vtrn1_f16(to_vec(a), to_vec(b)));
                 } else if constexpr (N == 8) {
                     return from_vec<T>(vtrn1q_f16(to_vec(a), to_vec(b)));
                 }
+                #else
+                return std::bit_cast<T>(transpose_low(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return std::bit_cast<T>(transpose_low(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
@@ -1051,11 +1123,23 @@ namespace ui::arm::neon {
                     return from_vec<T>(vtrn2q_f32(to_vec(a), to_vec(b)));
                 }
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     return from_vec<T>(vtrn2_f16(to_vec(a), to_vec(b)));
                 } else if constexpr (N == 8) {
                     return from_vec<T>(vtrn2q_f16(to_vec(a), to_vec(b)));
                 }
+                #else
+                return std::bit_cast<T>(transpose_high(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return std::bit_cast<T>(transpose_high(
+                    std::bit_cast<Vec<N, std::uint16_t>>(a),
+                    std::bit_cast<Vec<N, std::uint16_t>>(b)
+                ));
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {

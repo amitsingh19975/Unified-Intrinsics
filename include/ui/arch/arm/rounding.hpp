@@ -61,9 +61,9 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            if constexpr (std::same_as<T, float16>) {
+            if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                 return {
-                    .val = float16(internal::round_helper(float(v.val), mode))
+                    .val = T(internal::round_helper(float(v.val), mode))
                 };
             } else {
                 return {
@@ -146,6 +146,7 @@ namespace ui::arm::neon {
                 }
                 #endif
             } else if constexpr (std::same_as<T, float16>) {
+                #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
                     if constexpr (mode == std::float_round_style::round_toward_zero) {
                         return from_vec<T>(
@@ -191,7 +192,12 @@ namespace ui::arm::neon {
                         );
                     }
                 }
-            } 
+                #else
+                return cast<T>(round<mode>(cast<float>(v))); 
+                #endif
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                return cast<T>(round<mode>(cast<float>(v))); 
+            }
 
             return join(
                 round<mode>(v.lo),
