@@ -14,6 +14,7 @@
 #include <cstring>
 #include <type_traits>
 #include "features.hpp"
+#include "float.hpp"
 
 #ifdef UI_ARM_HAS_NEON
     #include "arch/arm/join.hpp"
@@ -178,7 +179,7 @@ namespace ui {
         }
 
         template <typename... Us>
-            requires ((... && (std::convertible_to<Us, element_t>)) && (sizeof...(Us) > 1) && (sizeof...(Us) <= N))
+            requires ((... && (std::convertible_to<Us, element_t> || std::same_as<Us, element_t>)) && (sizeof...(Us) > 1) && (sizeof...(Us) <= N))
         UI_ALWAYS_INLINE static constexpr auto load(Us... args) noexcept -> Vec {
             std::array<element_t, elements> res = { args... };
             return load(res);
@@ -314,6 +315,16 @@ namespace ui {
         template <>
         struct Mask<float> {
             using type = std::uint32_t;
+        };
+
+        template <>
+        struct Mask<float16> {
+            using type = std::uint16_t;
+        };
+
+        template <>
+        struct Mask<bfloat16> {
+            using type = std::uint16_t;
         };
 
         template <>
