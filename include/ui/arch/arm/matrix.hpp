@@ -4,8 +4,6 @@
 #include "cast.hpp"
 #include "mul.hpp"
 #include "manip.hpp"
-#include "ui/maths.hpp"
-#include "ui/matrix.hpp"
 #include <cassert>
 #include <concepts>
 #include <cstddef>
