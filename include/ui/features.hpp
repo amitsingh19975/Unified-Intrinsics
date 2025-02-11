@@ -94,7 +94,7 @@
     #define UI_HAS_FLOAT_16
 #endif
 
-#if defined(__STDCPP_BFLOAT16_T__) || __has_keyword(__bf16)
+#if defined(__STDCPP_BFLOAT16_T__)
     #define UI_HAS_BFLOAT_16
 #endif
 
