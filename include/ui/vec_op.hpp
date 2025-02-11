@@ -4,6 +4,7 @@
 #include "base_vec.hpp"
 #include "features.hpp"
 #include <type_traits>
+#include "float.hpp"
 
 #ifdef UI_ARM_HAS_NEON
     #include "arch/arm/arm.hpp"
@@ -12,7 +13,7 @@
 namespace ui {
     template <std::size_t N, typename T>
         requires (std::is_arithmetic_v<T>)
-    inline constexpr auto load(T val) noexcept -> Vec<N, T> {
+    static inline constexpr auto load(T val) noexcept -> Vec<N, T> {
         #if defined(UI_ARM_HAS_NEON)
             return arm::neon::load<N>(val);
         #else
@@ -22,7 +23,7 @@ namespace ui {
 
     template <std::size_t N, typename T>
     inline constexpr auto Vec<N, T>::load(T val) noexcept -> Vec<N, T> {
-        return load<N>(val);
+        return ui::load<N, T>(val);
     }
 
     template <std::size_t N, unsigned Lane, std::size_t M, typename T>
@@ -37,7 +38,7 @@ namespace ui {
     template <std::size_t N, typename T>
     template <unsigned Lane, std::size_t M>
     inline constexpr auto Vec<N, T>::load(Vec<M, T> const& v) noexcept -> Vec<N, T> {
-        return load<N, Lane>(v);
+        return ui::load<N, Lane>(v);
     }
 } // namespace ui
 
