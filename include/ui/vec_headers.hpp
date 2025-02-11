@@ -11,6 +11,11 @@
     #include <xmmintrin.h>
 #elif defined(UI_ARM_HAS_NEON)
     #include <arm_neon.h>
+    #if defined __has_include
+        #if __has_include(<arm_bf16.h>)
+            #include <arm_bf16.h>
+        #endif
+    #endif
 #elif defined(__wasm_simd128__)
     #include <wasm_simd128.h>
 #endif
