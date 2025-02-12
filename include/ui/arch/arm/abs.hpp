@@ -10,14 +10,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <type_traits>
-#include "basic.hpp"
-#include "ui/float.hpp"
 
 namespace ui::arm::neon { 
 
 // MARK: Difference
-
     namespace internal {
+        using namespace ::ui::internal;
 
         template <typename To, typename From>
         UI_ALWAYS_INLINE constexpr auto abs_diff_scalar_helper(From lhs, From rhs) noexcept -> To {
@@ -270,7 +268,7 @@ namespace ui::arm::neon {
             using ret_t = Vec<N, T>;
             if constexpr (M0 != 1 && N == 1) {
                 return {
-                    .val = acc.val + abs_diff_scalar_helper<T>(lhs.val, rhs.val)
+                    .val = static_cast<T>(acc.val + abs_diff_scalar_helper<T>(lhs.val, rhs.val))
                 };
             } else if constexpr (N == M0) {
                 return std::bit_cast<ret_t>(
@@ -295,10 +293,12 @@ namespace ui::arm::neon {
             Vec<N, T> const& rhs,
             auto&& fn0
         ) noexcept -> Vec<N, widening_result_t<T>> {
+            using result_t = widening_result_t<T>;
+
             using ret_t = Vec<N, widening_result_t<T>>;
             if constexpr (M0 != 1 && N == 1) {
                 return {
-                    .val = acc.val + abs_diff_scalar_helper<T>(lhs.val, rhs.val)
+                    .val = static_cast<result_t>(acc.val + abs_diff_scalar_helper<T>(lhs.val, rhs.val))
                 };
             } else if constexpr (N == M0) {
                 return std::bit_cast<ret_t>(
@@ -456,7 +456,7 @@ namespace ui::arm::neon {
 // !MARK
 
 // MARK: Absolute Value
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto abs(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
@@ -515,9 +515,10 @@ namespace ui::arm::neon {
     ) noexcept -> Vec<N, T> {
         using ret_t = Vec<N, T>;
         constexpr auto helper = [](T val) {
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());
-            return static_cast<T>(std::clamp(std::abs(static_cast<std::int64_t>(val)), min, max));
+            using type = std::conditional_t<std::is_signed_v<T>, std::int16_t, std::uint64_t>;
+            static constexpr auto min = static_cast<type>(std::numeric_limits<T>::min());
+            static constexpr auto max = static_cast<type>(std::numeric_limits<T>::max());
+            return static_cast<T>(std::clamp(std::abs(static_cast<type>(val)), min, max));
 
         };
         if constexpr (std::floating_point<T>) {

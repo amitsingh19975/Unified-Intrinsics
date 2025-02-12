@@ -385,7 +385,7 @@ namespace ui::arm::neon {
                 };
             }
             #endif
-            return { .val = (v.val == T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return { .val = (v.val >= T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -620,7 +620,7 @@ namespace ui::arm::neon {
                 };
             }
             #endif
-            return { .val = (v.val == T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return { .val = (v.val <= T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {

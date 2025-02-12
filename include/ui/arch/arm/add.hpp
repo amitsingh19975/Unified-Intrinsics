@@ -3,7 +3,6 @@
 
 #include "cast.hpp"
 #include <algorithm>
-#include <arm_neon.h>
 #include <bit>
 #include <cassert>
 #include <concepts>
@@ -12,8 +11,6 @@
 #include <limits>
 #include <type_traits>
 #include "basic.hpp"
-#include "ui/base.hpp"
-#include "ui/float.hpp"
 
 namespace ui::arm::neon { 
 
@@ -582,7 +579,7 @@ namespace ui::arm::neon {
             [](auto const& l, auto const& r) { return vhadd_u32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_s32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_u32(to_vec(l), to_vec(r)) ; },
-            
+ 
             [](auto const& l, auto const& r) { return vhaddq_s32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhaddq_u32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_s32(to_vec(l), to_vec(r)) ; },
@@ -593,7 +590,7 @@ namespace ui::arm::neon {
     namespace internal {
 
         template <std::size_t M, std::size_t N, std::integral T>
-        UI_ALWAYS_INLINE auto narrowing_add_helper(
+        UI_ALWAYS_INLINE auto high_narrowing_add_helper(
             Vec<N, T> const& lhs,
             Vec<N, T> const& rhs,
             auto&& signed_fn,
@@ -618,8 +615,8 @@ namespace ui::arm::neon {
                 }
             } else {
                 return join(
-                    narrowing_add_helper<M>(lhs.lo, rhs.lo, signed_fn, unsigned_fn),
-                    narrowing_add_helper<M>(lhs.hi, rhs.hi, signed_fn, unsigned_fn)
+                    high_narrowing_add_helper<M>(lhs.lo, rhs.lo, signed_fn, unsigned_fn),
+                    high_narrowing_add_helper<M>(lhs.hi, rhs.hi, signed_fn, unsigned_fn)
                 );
             }
         }
@@ -631,11 +628,11 @@ namespace ui::arm::neon {
     */
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
-    UI_ALWAYS_INLINE auto narrowing_add(
+    UI_ALWAYS_INLINE auto high_narrowing_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept {
-        return internal::narrowing_add_helper<8>(
+        return internal::high_narrowing_add_helper<8>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vaddhn_s16(to_vec(l), to_vec(r)); },
             [](auto const& l, auto const& r) { return vaddhn_u16(to_vec(l), to_vec(r)); }
@@ -647,11 +644,11 @@ namespace ui::arm::neon {
     */
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
-    UI_ALWAYS_INLINE auto narrowing_add(
+    UI_ALWAYS_INLINE auto high_narrowing_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept {
-        return internal::narrowing_add_helper<4>(
+        return internal::high_narrowing_add_helper<4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vaddhn_s32(to_vec(l), to_vec(r)); },
             [](auto const& l, auto const& r) { return vaddhn_u32(to_vec(l), to_vec(r)); }
@@ -663,11 +660,11 @@ namespace ui::arm::neon {
     */
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
-    UI_ALWAYS_INLINE auto narrowing_add(
+    UI_ALWAYS_INLINE auto high_narrowing_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept {
-        return internal::narrowing_add_helper<4>(
+        return internal::high_narrowing_add_helper<4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vaddhn_s64(to_vec(l), to_vec(r)); },
             [](auto const& l, auto const& r) { return vaddhn_u64(to_vec(l), to_vec(r)); }
@@ -1257,13 +1254,29 @@ namespace ui::arm::neon {
 // MARK: Widening Pairwise Addition
 
     template <std::size_t N, std::integral T>
+		requires (N == 1)
     UI_ALWAYS_INLINE auto widening_padd(
         Vec<N, T> const& v
     ) noexcept {
         using result_t = internal::widening_result_t<T>;
 
-        if constexpr (N == 1) {
-            return Vec<1, result_t>{ .val = static_cast<result_t>(v.val) };
+        if constexpr (N == 2) {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 4) {
+                    return from_vec<result_t>(
+                        vpaddl_s32(to_vec(v))
+                    );
+                }
+            } else {
+                if constexpr (sizeof(T) == 4) {
+                    return from_vec<result_t>(
+                        vpaddl_u32(to_vec(v))
+                    );
+                }
+            }
+            return Vec<1, result_t>{ 
+                .val = static_cast<result_t>(v.lo) + static_cast<result_t>(v.hi)
+            };
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -1287,11 +1300,7 @@ namespace ui::arm::neon {
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 2) {
-                        return from_vec<result_t>(
-                            vpaddl_s32(to_vec(v))
-                        );
-                    } else if constexpr (N == 4) {
+                    if constexpr (N == 4) {
                         return from_vec<result_t>(
                             vpaddl_s32(to_vec(v))
                         );
@@ -1319,11 +1328,7 @@ namespace ui::arm::neon {
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 2) {
-                        return from_vec<result_t>(
-                            vpaddl_u32(to_vec(v))
-                        );
-                    } else if constexpr (N == 4) {
+                    if constexpr (N == 4) {
                         return from_vec<result_t>(
                             vpaddl_u32(to_vec(v))
                         );

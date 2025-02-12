@@ -3,6 +3,7 @@
 
 #include "../../base_vec.hpp"
 #include "../../base.hpp"
+#include "../basic.hpp"
 #include "../../vec_headers.hpp"
 #include "../../float.hpp"
 #include "../../matrix.hpp"
@@ -190,7 +191,6 @@ namespace ui::arm::neon {
             auto&& fn1
         ) noexcept -> Vec<N, To> {
             using ret_t = Vec<N, To>;
-            
             if constexpr (M0 != 1 && N == 1) {
                 return {
                     .val = static_cast<To>(v.val)
@@ -1033,7 +1033,7 @@ namespace ui::arm::neon {
         return internal::CastImpl<To, false>{}(v);
     }
 
-    template <typename To, std::size_t N, typename From>
+    template <typename To, std::size_t N, std::integral From>
     UI_ALWAYS_INLINE auto sat_cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
         return internal::CastImpl<To, true>{}(v);
     }

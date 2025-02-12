@@ -118,8 +118,8 @@ namespace ui::arm::neon {
             #endif
             }
             return join(
-                negate(v.lo),
-                negate(v.hi)
+                sat_negate(v.lo),
+                sat_negate(v.hi)
             );
         }
     }

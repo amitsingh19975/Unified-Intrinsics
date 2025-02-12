@@ -2,8 +2,6 @@
 #define AMT_UI_ARCH_ARM_MANIPULATION_HPP
 
 #include "cast.hpp"
-#include "ui/float.hpp"
-#include <arm_neon.h>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -601,24 +599,48 @@ namespace ui::arm::neon {
 
 // MARK: Zip
     namespace internal {
-        template <std::size_t N, typename T>
-        UI_ALWAYS_INLINE auto zip_low_helper(
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
-        ) noexcept -> Vec<2 * N, T> {
-            if constexpr (N == 1) {
-                return { a.val, b.val };
-            } else {
+        struct zip_helper {
+            template <std::size_t N, typename T>
+                requires (N == 2)
+            UI_ALWAYS_INLINE auto low(
+                Vec<N, T> const& a,
+                Vec<N, T> const& b
+            ) const noexcept -> Vec<N, T> {
                 #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
-                    if constexpr (N == 2) {
-                        return from_vec<T>(vzip1_f32(to_vec(a), to_vec(b)));
-                    } else if constexpr (N == 4) {
-                        return from_vec<T>(vzip1q_f32(to_vec(a), to_vec(b)));
-                    }
+                    return from_vec<T>(vzip1_f32(to_vec(a), to_vec(b)));
                 } else if constexpr (std::same_as<T, double>) {
-                    if constexpr (N == 2) {
-                        return from_vec<T>(vzip1q_f64(to_vec(a), to_vec(b)));
+                    return from_vec<T>(vzip1q_f64(to_vec(a), to_vec(b)));
+                } else if constexpr (std::integral<T>) {
+                    if constexpr (std::is_signed_v<T>) {
+                        if constexpr (sizeof(T) == 4) {
+                            return from_vec<T>(vzip1_s32(to_vec(a), to_vec(b)));
+                        } else if constexpr (sizeof(T) == 8) {
+                            return from_vec<T>(vzip1q_s64(to_vec(a), to_vec(b)));
+                        }
+                    } else {
+                        if constexpr (sizeof(T) == 4) {
+                            return from_vec<T>(vzip1_u32(to_vec(a), to_vec(b)));
+                        } else if constexpr (sizeof(T) == 8) {
+                            return from_vec<T>(vzip1q_u64(to_vec(a), to_vec(b)));
+                        }
+                    }
+                }
+                #endif
+
+                return { a[0], b[0] };
+            }
+
+            template <std::size_t N, typename T>
+                requires (N > 2)
+            UI_ALWAYS_INLINE auto low(
+                Vec<N, T> const& a,
+                Vec<N, T> const& b
+            ) const noexcept {
+                #ifdef UI_CPU_ARM64
+                if constexpr (std::same_as<T, float>) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(vzip1q_f32(to_vec(a), to_vec(b)));
                     }
                 } else if constexpr (std::same_as<T, float16>) {
                     #ifndef UI_HAS_FLOAT_16
@@ -628,13 +650,13 @@ namespace ui::arm::neon {
                         return from_vec<T>(vzip1q_f16(to_vec(a), to_vec(b)));
                     }
                     #else
-                    return std::bit_cast<T>(zip_low_helper(
+                    return std::bit_cast<T>(low(
                         std::bit_cast<Vec<N, std::uint16_t>>(a),
                         std::bit_cast<Vec<N, std::uint16_t>>(b)
                     ));
                     #endif
                 } else if constexpr (std::same_as<T, bfloat16>) {
-                    return std::bit_cast<T>(zip_low_helper(
+                    return std::bit_cast<T>(low(
                         std::bit_cast<Vec<N, std::uint16_t>>(a),
                         std::bit_cast<Vec<N, std::uint16_t>>(b)
                     ));
@@ -652,14 +674,8 @@ namespace ui::arm::neon {
                             return from_vec<T>(vzip1q_s16(to_vec(a), to_vec(b)));
                         }
                     } else if constexpr (sizeof(T) == 4) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip1_s32(to_vec(a), to_vec(b)));
-                        } else if constexpr (N == 4) {
+                        if constexpr (N == 4) {
                             return from_vec<T>(vzip1q_s32(to_vec(a), to_vec(b)));
-                        }
-                    } else if constexpr (sizeof(T) == 8) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip1q_s64(to_vec(a), to_vec(b)));
                         }
                     }
                 } else {
@@ -676,59 +692,70 @@ namespace ui::arm::neon {
                             return from_vec<T>(vzip1q_u16(to_vec(a), to_vec(b)));
                         }
                     } else if constexpr (sizeof(T) == 4) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip1_u32(to_vec(a), to_vec(b)));
-                        } else if constexpr (N == 4) {
+                        if constexpr (N == 4) {
                             return from_vec<T>(vzip1q_u32(to_vec(a), to_vec(b)));
-                        }
-                    } else if constexpr (sizeof(T) == 8) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip1q_u64(to_vec(a), to_vec(b)));
                         }
                     }
                 }
                 #endif
-                return join(
-                    zip_low_helper(a.lo, b.lo),
-                    zip_low_helper(a.hi, b.hi)
-                );
             }
-        }
-        
-        template <std::size_t N, typename T>
-        UI_ALWAYS_INLINE auto zip_high_helper(
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
-        ) noexcept -> Vec<2 * N, T> {
-            if constexpr (N == 1) {
-                return { a.val, b.val };
-            } else {
+            template <std::size_t N, typename T>
+                requires (N == 2)
+            UI_ALWAYS_INLINE auto high(
+                Vec<N, T> const& a,
+                Vec<N, T> const& b
+            ) const noexcept -> Vec<N, T> {
                 #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
-                    if constexpr (N == 2) {
-                        return from_vec<T>(vzip2_f32(to_vec(a), to_vec(b)));
-                    } else if constexpr (N == 4) {
+                    return from_vec<T>(vzip2_f32(to_vec(a), to_vec(b)));
+                } else if constexpr (std::same_as<T, double>) {
+                    return from_vec<T>(vzip2q_f64(to_vec(a), to_vec(b)));
+                } else if constexpr (std::integral<T>) {
+                    if constexpr (std::is_signed_v<T>) {
+                        if constexpr (sizeof(T) == 4) {
+                            return from_vec<T>(vzip2_s32(to_vec(a), to_vec(b)));
+                        } else if constexpr (sizeof(T) == 8) {
+                            return from_vec<T>(vzip2q_s64(to_vec(a), to_vec(b)));
+                        }
+                    } else {
+                        if constexpr (sizeof(T) == 4) {
+                            return from_vec<T>(vzip2_u32(to_vec(a), to_vec(b)));
+                        } else if constexpr (sizeof(T) == 8) {
+                            return from_vec<T>(vzip2q_u64(to_vec(a), to_vec(b)));
+                        }
+                    }
+                }
+                #endif
+
+                return { a[1], b[1] };
+            }
+            
+            template <std::size_t N, typename T>
+                requires (N > 2)
+            UI_ALWAYS_INLINE auto high(
+                Vec<N, T> const& a,
+                Vec<N, T> const& b
+            ) const noexcept -> Vec<N, T> {
+                #ifdef UI_CPU_ARM64
+                if constexpr (std::same_as<T, float>) {
+                    if constexpr (N == 4) {
                         return from_vec<T>(vzip2q_f32(to_vec(a), to_vec(b)));
                     }
-                } else if constexpr (std::same_as<T, double>) {
-                    if constexpr (N == 2) {
-                        return from_vec<T>(vzip2q_f64(to_vec(a), to_vec(b)));
-                    }
                 } else if constexpr (std::same_as<T, float16>) {
-                    #ifdef UI_HAS_FLOAT_16
+                    #ifndef UI_HAS_FLOAT_16
                     if constexpr (N == 4) {
                         return from_vec<T>(vzip2_f16(to_vec(a), to_vec(b)));
                     } else if constexpr (N == 8) {
                         return from_vec<T>(vzip2q_f16(to_vec(a), to_vec(b)));
                     }
                     #else
-                    return std::bit_cast<T>(zip_high_helper(
+                    return std::bit_cast<T>(high(
                         std::bit_cast<Vec<N, std::uint16_t>>(a),
                         std::bit_cast<Vec<N, std::uint16_t>>(b)
                     ));
                     #endif
                 } else if constexpr (std::same_as<T, bfloat16>) {
-                    return std::bit_cast<T>(zip_high_helper(
+                    return std::bit_cast<T>(high(
                         std::bit_cast<Vec<N, std::uint16_t>>(a),
                         std::bit_cast<Vec<N, std::uint16_t>>(b)
                     ));
@@ -746,14 +773,8 @@ namespace ui::arm::neon {
                             return from_vec<T>(vzip2q_s16(to_vec(a), to_vec(b)));
                         }
                     } else if constexpr (sizeof(T) == 4) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip2_s32(to_vec(a), to_vec(b)));
-                        } else if constexpr (N == 4) {
+                        if constexpr (N == 4) {
                             return from_vec<T>(vzip2q_s32(to_vec(a), to_vec(b)));
-                        }
-                    } else if constexpr (sizeof(T) == 8) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip2q_s64(to_vec(a), to_vec(b)));
                         }
                     }
                 } else {
@@ -770,42 +791,76 @@ namespace ui::arm::neon {
                             return from_vec<T>(vzip2q_u16(to_vec(a), to_vec(b)));
                         }
                     } else if constexpr (sizeof(T) == 4) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip2_u32(to_vec(a), to_vec(b)));
-                        } else if constexpr (N == 4) {
+                        if constexpr (N == 4) {
                             return from_vec<T>(vzip2q_u32(to_vec(a), to_vec(b)));
-                        }
-                    } else if constexpr (sizeof(T) == 8) {
-                        if constexpr (N == 2) {
-                            return from_vec<T>(vzip2q_u64(to_vec(a), to_vec(b)));
                         }
                     }
                 }
                 #endif
-                return join(
-                    zip_high_helper(a.lo, b.lo),
-                    zip_high_helper(a.hi, b.hi)
-                );
+            }
+        };
+
+        template <std::size_t N, typename T>
+        UI_ALWAYS_INLINE auto zipping_helper(
+            Vec<N, T> const& a,
+            Vec<N, T> const& b
+        ) noexcept -> Vec<2 * N, T> {
+            auto const zip = internal::zip_helper{};
+            using ret_low_t = decltype(zip.low(a.lo, b.lo));
+            if constexpr (std::is_void_v<ret_low_t>) {
+                return join(zipping_helper(a.lo, b.lo), zipping_helper(a.hi, b.hi));
+            } else {
+                using ret_high_t = decltype(zip.high(a.hi, b.hi));
+                if constexpr (std::is_void_v<ret_high_t>) {
+                    return join(zip.low(a.lo, b.lo), zipping_helper(a.hi, b.hi));
+                } else {
+                    return join(
+                        join(zip.low(a.lo, b.lo), zip.high(a.lo, b.lo)),
+                        join(zip.low(a.hi, b.hi), zip.high(a.hi, b.hi))
+                    );
+                }
             }
         }
     } // namespace internal
 
+    /*
+     * @code
+     * auto a = Vec<4, int>::load(0, 1, 2, 3);
+     * auto b = Vec<4, int>::load(4, 5, 6, 7);
+     * assert(zip_low(a, b) == Vec<4, int>::load(0, 4, 1, 5))
+     * @codeend
+    */
     template <std::size_t N, typename T>
         requires (N > 1)
     UI_ALWAYS_INLINE auto zip_low(
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
-        return internal::zip_low_helper(a.lo, b.lo);
+        if constexpr (N == 2) {
+            return internal::zip_helper{}.low(a, b);
+        } else {
+            return internal::zipping_helper(a.lo, b.lo);
+        }
     }
 
+    /**
+     * @code
+     * auto a = Vec<4, int>::load(0, 1, 2, 3);
+     * auto b = Vec<4, int>::load(4, 5, 6, 7);
+     * assert(zip_low(a, b) == Vec<4, int>::load(2, 6, 3, 7))
+     * @codeend
+    */
     template <std::size_t N, typename T>
         requires (N > 1)
     UI_ALWAYS_INLINE auto zip_high(
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
-        return internal::zip_high_helper(a.hi, b.hi);
+        if constexpr (N == 2) {
+            return internal::zip_helper{}.low(a, b);
+        } else {
+            return internal::zipping_helper(a.hi, b.hi);
+        }
     }
 
     template <std::size_t N, typename T>
