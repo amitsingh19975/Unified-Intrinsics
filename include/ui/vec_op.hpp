@@ -5,10 +5,7 @@
 #include "features.hpp"
 #include <type_traits>
 #include "float.hpp"
-
-#ifdef UI_ARM_HAS_NEON
-    #include "arch/arm/arm.hpp"
-#endif
+#include "arch/arch.hpp"
 
 namespace ui {
     template <std::size_t N, typename T>
