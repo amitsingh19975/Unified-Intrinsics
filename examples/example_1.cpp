@@ -28,13 +28,13 @@ using namespace ui;
 
 int main() {
 
-    using type = float;
+    using type = int;
     std::array<type, 200> source;
     static constexpr auto N = 4ul;
     std::iota(source.begin(), source.end(), 1);
-    auto a = VecMat<N, N, type>::load(source.data(), N);
-    auto b = VecMat<N, N, type>::load(2);
+    auto a = Vec<N, type>::load(source.data(), N);
+    auto b = Vec<N, type>::load(2);
     std::println("A: {}\nB: {}\n", a, b);
-    std::println("ARM: {}", transpose(a));
+    std::println("ARM: {}", (b >> 1));
     return 0; 
 }
