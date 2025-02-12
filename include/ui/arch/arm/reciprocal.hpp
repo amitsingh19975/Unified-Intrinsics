@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <type_traits>
 #include "../../modular_inv.hpp"
-#include "ui/float.hpp"
 
 namespace ui::arm::neon {
 

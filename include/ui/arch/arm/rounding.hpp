@@ -2,19 +2,13 @@
 #define AMT_UI_ARCH_ARM_ROUNDING_HPP
 
 #include "cast.hpp"
-#include <algorithm>
-#include <bit>
 #include <cassert>
 #include <cfenv>
 #include <cmath>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <limits>
-#include <type_traits>
-#include "basic.hpp"
-#include "ui/float.hpp"
 
 namespace ui::arm::neon {
 
