@@ -2,6 +2,8 @@
 #define AMT_UI_ARCH_BASIC_HPP
 
 #include "../base.hpp"
+#include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 
@@ -173,6 +175,24 @@ namespace ui::internal {
         auto r = static_cast<Acc>(rhs);
         auto sum = op(l, r) + Round;
         return static_cast<From>(sum >> 1);
+    }
+
+    template <std::floating_point T>
+    UI_ALWAYS_INLINE static constexpr auto maxnm(T a, T b) noexcept -> T {
+        using namespace ui;
+        using namespace std;
+        if (isnan(a)) return { .val = b };
+        if (isnan(b)) return { .val = a };
+        return std::max(a, b);
+    }
+
+    template <std::floating_point T>
+    UI_ALWAYS_INLINE static constexpr auto minnm(T a, T b) noexcept -> T {
+        using namespace ui;
+        using namespace std;
+        if (isnan(a)) return { .val = b };
+        if (isnan(b)) return { .val = a };
+        return std::min(a, b);
     }
 } // namespace ui::internal
 

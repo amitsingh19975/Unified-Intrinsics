@@ -176,23 +176,7 @@ namespace ui::arm::neon {
     }
 
     namespace internal {
-        template <std::floating_point T>
-        UI_ALWAYS_INLINE static constexpr auto maxnm(T a, T b) noexcept -> T {
-            using namespace ui;
-            using namespace std;
-            if (isnan(a)) return { .val = b };
-            if (isnan(b)) return { .val = a };
-            return std::max(a, b);
-        }
-
-        template <std::floating_point T>
-        UI_ALWAYS_INLINE static constexpr auto minnm(T a, T b) noexcept -> T {
-            using namespace ui;
-            using namespace std;
-            if (isnan(a)) return { .val = b };
-            if (isnan(b)) return { .val = a };
-            return std::min(a, b);
-        }
+        using namespace ::ui::internal;
     } // namespace internal
 
     /**
