@@ -73,9 +73,9 @@ namespace std {
                         } else {
                             auto temp = static_cast<std::make_unsigned_t<T>>(v[i]);
                             if (v[i] < 0) {
-                                format_to(out, "-0x{:0{}x}", temp, sizeof(T) * 8);
+                                format_to(out, "-0x{:0{}x}", temp, sizeof(T) * 8 / 4);
                             } else {
-                                format_to(out, "0x{:0{}x}", temp, sizeof(T) * 8);
+                                format_to(out, "0x{:0{}x}", temp, sizeof(T) * 8 / 4);
                             }
                         }
                     } break;
