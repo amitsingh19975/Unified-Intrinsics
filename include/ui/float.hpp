@@ -336,32 +336,6 @@ namespace ui {
         }
     }
 
-    constexpr bool isnan(float16 val) noexcept {
-        return val.is_nan();
-    }
-
-    constexpr bool isinf(float16 val) noexcept {
-        return val.is_inf();
-    }
-
-    constexpr int fpclassify(float16 val) noexcept {
-        auto [s, e, m] = fp::decompose_fp(val);
-        if(e == -15) {
-            if (m == 0) return FP_ZERO;
-            else return FP_SUBNORMAL;
-        }
-
-        if (e == 16) {
-            if (m != 0) return FP_NAN;
-            else return FP_INFINITE;
-        }
-        return FP_NORMAL;
-    }
-
-    constexpr bool signbit(float16 val) noexcept {
-        return val.is_neg();
-    }
-
     struct alignas(sizeof(internal::bfloat16_t)) bfloat16 {
         using base_type = internal::bfloat16_t;
         using fp_rep = fp::FloatingPointRep<bfloat16>;
@@ -483,6 +457,57 @@ namespace ui {
     static inline constexpr auto cast_bfloat16_to_float32(
         Vec<N, bfloat16> const& v
     ) noexcept -> Vec<N, float>;
+
+    
+    constexpr bool isnan(float16 val) noexcept {
+        return val.is_nan();
+    }
+
+    constexpr bool isnan(bfloat16 val) noexcept {
+        return val.is_nan();
+    }
+
+    constexpr bool isinf(float16 val) noexcept {
+        return val.is_inf();
+    }
+
+    constexpr bool isinf(bfloat16 val) noexcept {
+        return val.is_inf();
+    }
+
+    constexpr int fpclassify(float16 val) noexcept {
+        auto [s, e, m] = fp::decompose_fp(val);
+        if(e == -15) {
+            if (m == 0) return FP_ZERO;
+            else return FP_SUBNORMAL;
+        }
+
+        if (e == 16) {
+            if (m != 0) return FP_NAN;
+            else return FP_INFINITE;
+        }
+        return FP_NORMAL;
+    }
+
+    constexpr int fpclassify(bfloat16 val) noexcept {
+        return std::fpclassify(float(val));
+    }
+
+    constexpr bool signbit(float16 val) noexcept {
+        return val.is_neg();
+    }
+
+    constexpr bool signbit(bfloat16 val) noexcept {
+        return val.is_neg();
+    }
+
+    constexpr float16 abs(float16 val) noexcept {
+        return val.abs();
+    }
+
+    constexpr bfloat16 abs(bfloat16 val) noexcept {
+        return val.abs();
+    }
 
 } // namespace ui
 
