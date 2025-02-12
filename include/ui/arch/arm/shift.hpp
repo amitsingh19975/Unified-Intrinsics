@@ -12,6 +12,7 @@
 #include <limits>
 #include <type_traits>
 #include "basic.hpp"
+#include "../emul/shift.hpp"
 
 namespace ui::arm::neon { 
 // MARK: Left Shift
@@ -261,12 +262,7 @@ namespace ui::arm::neon {
             }
             #endif
 
-            auto temp = static_cast<std::int64_t>(v.val) << s.val;
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
-            return {
-                .val = static_cast<T>(std::clamp(temp, min, max))
-            };
+            return ui::emul::sat_shift_left(v, s);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -396,12 +392,7 @@ namespace ui::arm::neon {
             }
             #endif
             
-            auto temp = static_cast<std::int64_t>(v.val) << Shift;
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
-            return {
-                .val = static_cast<T>(std::clamp(temp, min, max))
-            };
+            return emul::sat_shift_left<Shift>(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -503,17 +494,7 @@ namespace ui::arm::neon {
                 return from_vec<T>(vrshl_u64(to_vec(v), to_vec(s)));
             }
 
-            if (s.val < 0) {
-                auto temp = static_cast<std::int64_t>(v.val);
-                auto shift = -s.val;
-                temp += (1 << (shift - 1));
-                return {
-                    .val = static_cast<T>((temp >> shift))
-                };
-            }
-            return {
-                .val = static_cast<T>(v.val << s.val)
-            };
+            return emul::rounding_shift_left(v, s);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -645,19 +626,7 @@ namespace ui::arm::neon {
             }
             #endif
 
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
-            auto temp = static_cast<std::int64_t>(v.val);
-            if (s.val < 0) {
-                auto shift = -s.val;
-                temp += (1 << (shift - 1));
-                return {
-                    .val = static_cast<T>(std::clamp(temp >> shift, min, max))
-                };
-            }
-            return {
-                .val = static_cast<T>(std::clamp(temp << s.val, min, max))
-            };
+            return emul::sat_rounding_shift_left(v, s);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -753,10 +722,7 @@ namespace ui::arm::neon {
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         if constexpr (N == 1) {
-            auto temp = static_cast<result_t>(v.val);
-            return {
-                .val = temp << Shift
-            };
+            return emul::widening_shift_left<Shift>(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -829,16 +795,8 @@ namespace ui::arm::neon {
                 return from_vec<T>(vsli_n_s64(to_vec(a), to_vec(b), Shift));  
             } else if constexpr (std::same_as<T, std::uint64_t>) {
                 return from_vec<T>(vsli_n_u64(to_vec(a), to_vec(b), Shift));  
-            } else if constexpr (Shift + 1 == sizeof(T) * 8) {
-                static constexpr T mask = static_cast<T>(~T(0));
-                return {
-                    .val = static_cast<T>((b.val << Shift) | (a.val & mask))
-                };
             } else {
-                static constexpr T mask = static_cast<T>((std::size_t(1) << (Shift + 1)) - 1); 
-                return {
-                    .val = static_cast<T>((b.val << Shift) | (a.val & mask))
-                };
+                return emul::insert_shift_left<Shift>(a, b);
             }
         } else {
             if constexpr (std::is_signed_v<T>) {
@@ -1013,13 +971,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, std::uint64_t>) {
                 return from_vec<T>(vrshr_n_u64(to_vec(v), Shift));
             }
-            auto temp = static_cast<std::int64_t>(v.val);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return {
-                .val = static_cast<T>(temp >> Shift)
-            };
+            return emul::rounding_shift_right<Shift>(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -1120,13 +1072,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, std::uint64_t>) {
                 return from_vec<T>(vrsra_n_u64(to_vec(a), to_vec(v), Shift));
             }
-            auto temp = static_cast<std::int64_t>(v.val);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return {
-                .val = static_cast<T>(a.val + static_cast<T>(temp >> Shift))
-            };
+            return emul::rounding_shift_right_accumulate<Shift>(a, v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -1305,9 +1251,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return ret_t {
-                .val = static_cast<result_t>(v.val >> Shift)
-            };
+            return emul::sat_narrowing_shift_right<Shift>(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 2) {
@@ -1438,15 +1382,7 @@ namespace ui::arm::neon {
             }
             #endif
 
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
-            auto temp = static_cast<std::int64_t>(v.val);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return ret_t {
-                .val = static_cast<result_t>(std::clamp(temp >> Shift, min, max))
-            };
+            return emul::sat_rounding_narrowing_shift_right<Shift>(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 2) {
@@ -1515,15 +1451,7 @@ namespace ui::arm::neon {
             }
             #endif
 
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
-            auto temp = static_cast<std::int64_t>(v.val);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return ret_t {
-                .val = static_cast<result_t>(std::clamp(temp >> Shift, min, max))
-            };
+            return emul::sat_rounding_unsigned_narrowing_shift_right<Shift>(v);
         } else {
             if constexpr (sizeof(T) == 2) {
                 if constexpr (N == 8) {

@@ -11,6 +11,7 @@
 #include <limits>
 #include <type_traits>
 #include "basic.hpp"
+#include "../emul/sub.hpp"
 
 namespace ui::arm::neon { 
 
@@ -431,7 +432,6 @@ namespace ui::arm::neon {
 
 
 // MARK: Narrowing Subtraction
-
     namespace internal {
         template <std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto halving_sub_helper(
@@ -619,7 +619,6 @@ namespace ui::arm::neon {
 // !MARK
 
 // MARK: Saturating Subtraction
-
     namespace internal {
 
         template <typename To>
@@ -664,11 +663,8 @@ namespace ui::arm::neon {
                         return { .val = vqsubd_u64(lhs.val, rhs.val) };
                     }
                 }
-                #else
-                return {
-                    .val = sat_sub_helper_for_one<T>(lhs.val, rhs.val)
-                };
                 #endif
+                return emul::sat_sub(lhs, rhs);
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
                     return from_vec<T>(

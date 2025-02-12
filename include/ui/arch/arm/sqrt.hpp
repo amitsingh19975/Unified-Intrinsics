@@ -2,10 +2,8 @@
 #define AMT_UI_ARCH_ARM_SQRT_HPP
 
 #include "cast.hpp"
-#include "ui/float.hpp"
+#include "../emul/sqrt.hpp"
 #include <cassert>
-#include <cfenv>
-#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdlib>
@@ -17,15 +15,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            if constexpr (std::same_as<T, float16>) {
-                return {
-                    .val = T(std::sqrt(float(v.val)))
-                };
-            } else {
-                return {
-                    .val = static_cast<T>(std::sqrt(v.val))
-                };
-            }
+            return emul::sqrt(v);
         } else {
             #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
