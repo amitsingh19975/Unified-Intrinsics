@@ -6,12 +6,12 @@
 #include "logical.hpp"
 #include "minmax.hpp"
 #include "mul.hpp"
+#include "load.hpp"
 #include "add.hpp"
 #include "shift.hpp"
 #include "sub.hpp"
-#include "ui/arch/arm/bit.hpp"
-#include "ui/arch/arm/cmp.hpp"
-#include "ui/base.hpp"
+#include "bit.hpp"
+#include "cmp.hpp"
 #include <bit>
 #include <cstdint>
 
