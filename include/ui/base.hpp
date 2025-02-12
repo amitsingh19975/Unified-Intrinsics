@@ -93,6 +93,11 @@ namespace ui {
         using abs_greater_equal_t   = OpTag<20>;
         using abs_less_t            = OpTag<21>;
         using abs_less_equal_t      = OpTag<22>;
+
+        using pmax_t                 = OpTag<23>; // pairwise max
+        using pmin_t                 = OpTag<24>; // pairwise min
+        using pmaxnm_t               = OpTag<25>; // pairwise maxnm
+        using pminnm_t               = OpTag<26>; // pairwise minnm
     }
 
 } // namespace ui

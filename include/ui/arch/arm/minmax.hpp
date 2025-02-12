@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_ARM_MINMAX_HPP
 
 #include "cast.hpp"
+#include "ui/base.hpp"
 #include "ui/float.hpp"
 #include <bit>
 #include <cassert>
@@ -403,25 +404,27 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::floating_point T>
-        requires (N > 1)
-    UI_ALWAYS_INLINE auto pmax(
-        Vec<N, T> const& v
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::pmax_t op
     ) noexcept -> T {
-        if constexpr (N == 2) {
+        if constexpr (N == 1) {
+            return v.val;
+        } else if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpmaxs_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpmaxqd_f64(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(pmax(cast<float>(v)));
+                    return T(fold(cast<float>(v)));
                 }
             #endif
             return static_cast<T>(std::max(v.lo.val, v.hi.val));
         } else {
             return join(
-                pmax(v.lo),
-                pmax(v.hi)
+                fold(v.lo, op),
+                fold(v.hi, op)
             );
         }
     }
@@ -479,24 +482,27 @@ namespace ui::arm::neon {
     */
     template <std::size_t N, std::floating_point T>
         requires (N > 1)
-    UI_ALWAYS_INLINE auto pmaxnm(
-        Vec<N, T> const& v
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::pmaxnm_t op
     ) noexcept -> T {
-        if constexpr (N == 2) {
+        if constexpr (N == 1) {
+            return v.val;
+        } else if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpmaxnms_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpmaxnmqd_f64(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(pmaxnm(cast<float>(v)));
+                    return T(fold(cast<float>(v)));
                 }
             #endif
             return static_cast<T>(internal::maxnm(v.lo.val, v.hi.val));
         } else {
             return join(
-                pmaxnm(v.lo),
-                pmaxnm(v.hi)
+                fold(v.lo, op),
+                fold(v.hi, op)
             );
         }
     }
@@ -621,24 +627,27 @@ namespace ui::arm::neon {
 
     template <std::size_t N, std::floating_point T>
         requires (N > 1)
-    UI_ALWAYS_INLINE auto pmin(
-        Vec<N, T> const& v
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::pmin_t op
     ) noexcept -> T {
-        if constexpr (N == 2) {
+        if constexpr (N == 1) {
+            return v.val;
+        } else if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpmins_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpminqd_f64(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(pmin(cast<float>(v)));
+                    return T(fold(cast<float>(v)));
                 }
             #endif
             return static_cast<T>(std::min(v.lo.val, v.hi.val));
         } else {
             return join(
-                pmin(v.lo),
-                pmin(v.hi)
+                fold(v.lo, op),
+                fold(v.hi, op)
             );
         }
     }
@@ -696,24 +705,27 @@ namespace ui::arm::neon {
     */
     template <std::size_t N, std::floating_point T>
         requires (N > 1)
-    UI_ALWAYS_INLINE auto pminnm(
-        Vec<N, T> const& v
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::pminnm_t op
     ) noexcept -> T {
-        if constexpr (N == 2) {
+        if constexpr (N == 1) {
+            return v.val;
+        } else if constexpr (N == 2) {
             #ifdef UI_ALWAYS_INLINE
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpminnms_f32(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpminnmqd_f64(from_vec<T>(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(pminnm(cast<float>(v)));
+                    return T(fold(cast<float>(v)));
                 }
             #endif
             return static_cast<T>(internal::minnm(v.lo.val, v.hi.val));
         } else {
             return join(
-                pminnm(v.lo),
-                pminnm(v.hi)
+                fold(v.lo, op),
+                fold(v.hi, op)
             );
         }
     }
