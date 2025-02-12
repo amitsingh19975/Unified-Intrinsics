@@ -3,6 +3,7 @@
 
 #include "../base.hpp"
 #include <algorithm>
+#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -179,19 +180,17 @@ namespace ui::internal {
 
     template <std::floating_point T>
     UI_ALWAYS_INLINE static constexpr auto maxnm(T a, T b) noexcept -> T {
-        using namespace ui;
-        using namespace std;
-        if (isnan(a)) return { .val = b };
-        if (isnan(b)) return { .val = a };
+        using std::isnan;
+        if (isnan(a)) return b;
+        if (isnan(b)) return a;
         return std::max(a, b);
     }
 
     template <std::floating_point T>
     UI_ALWAYS_INLINE static constexpr auto minnm(T a, T b) noexcept -> T {
-        using namespace ui;
-        using namespace std;
-        if (isnan(a)) return { .val = b };
-        if (isnan(b)) return { .val = a };
+        using std::isnan;
+        if (isnan(a)) return b;
+        if (isnan(b)) return a;
         return std::min(a, b);
     }
 } // namespace ui::internal
