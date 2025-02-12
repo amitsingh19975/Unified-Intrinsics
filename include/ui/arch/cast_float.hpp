@@ -1,17 +1,7 @@
 #ifndef AMT_UI_ARCH_ARM_CAST_FLOAT_HPP
 #define AMT_UI_ARCH_ARM_CAST_FLOAT_HPP
 
-#include "cast.hpp"
-#include "../../float.hpp"
-#include "logical.hpp"
-#include "minmax.hpp"
-#include "mul.hpp"
-#include "load.hpp"
-#include "add.hpp"
-#include "shift.hpp"
-#include "sub.hpp"
-#include "bit.hpp"
-#include "cmp.hpp"
+#include "../float.hpp"
 #include <bit>
 #include <cstdint>
 
@@ -21,7 +11,6 @@ namespace ui {
     static inline auto cast_float32_to_float16(
         Vec<N, float> const& v
     ) noexcept -> Vec<N, float16> {
-        using namespace arm::neon;
         #define I(V) std::bit_cast<Vec<N, std::uint32_t>>(V)
         #define F(V) std::bit_cast<Vec<N, float>>(V)
 
@@ -57,7 +46,6 @@ namespace ui {
     static inline constexpr auto cast_float16_to_float32(
         Vec<N, float16> const& v
     ) noexcept -> Vec<N, float> {
-        using namespace arm::neon;
         #define I(V) std::bit_cast<Vec<N, std::uint32_t>>(V)
         #define F(V) std::bit_cast<Vec<N, float>>(V)
         auto wide = cast<std::uint32_t>(std::bit_cast<Vec<N, std::uint16_t>>(v));
@@ -91,7 +79,6 @@ namespace ui {
     static inline constexpr auto cast_float32_to_bfloat16(
         Vec<N, float> const& v
     ) noexcept -> Vec<N, bfloat16> {
-        using namespace arm::neon;
         auto temp = std::bit_cast<Vec<N, std::uint32_t>>(v);
         auto const m0 = load<N, std::uint32_t>(0x7FFFFF);
         auto shifted = shift_right<16>(temp);
@@ -112,7 +99,6 @@ namespace ui {
     static inline constexpr auto cast_bfloat16_to_float32(
         Vec<N, bfloat16> const& v
     ) noexcept -> Vec<N, float> {
-        using namespace arm::neon;
         auto temp = std::bit_cast<Vec<N, std::uint16_t>>(v);
         auto wide = cast<std::uint32_t>(temp);
         return std::bit_cast<Vec<N, float>>(

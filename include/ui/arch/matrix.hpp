@@ -1,18 +1,15 @@
 #ifndef AMT_UI_ARCH_ARM_MATRIX_HPP
 #define AMT_UI_ARCH_ARM_MATRIX_HPP
 
-#include "cast.hpp"
-#include "mul.hpp"
-#include "manip.hpp"
 #include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdlib>
 #include <utility>
 
-namespace ui::arm::neon {
+namespace ui {
 
-    template <std::size_t R, std::size_t C, std::integral T>
+    template <std::size_t R, std::size_t C, typename T>
         requires (R <= 4 && C <= 4)
     UI_ALWAYS_INLINE auto transpose(
         VecMat<R, C, T> const& m
@@ -71,7 +68,7 @@ namespace ui::arm::neon {
         }
     }
 
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
         requires (N > 4)
     UI_ALWAYS_INLINE auto transpose(
         VecMat<N, N, T> const& m
@@ -108,7 +105,7 @@ namespace ui::arm::neon {
         return join_rows(t01, t23);
     }
 
-    template <std::size_t R, std::size_t C, std::integral T>
+    template <std::size_t R, std::size_t C, typename T>
         requires ((R > 4 || C > 4) && (R != C) && maths::is_power_of_2(R))
     UI_ALWAYS_INLINE auto transpose(
         VecMat<R, C, T> const& m
@@ -186,7 +183,7 @@ namespace ui::arm::neon {
      * @param b Matrix with dims (K, M)
      * @return result of inner product or matrix multiplication with dims (N. M)
      */
-    template <std::size_t N, std::size_t M, std::size_t K, std::integral T>
+    template <std::size_t N, std::size_t M, std::size_t K, typename T>
     UI_ALWAYS_INLINE auto mul(
         VecMat<N, M, T> const& c,
         VecMat<N, K, T> const& a,
@@ -234,7 +231,7 @@ namespace ui::arm::neon {
      * @param b Matrix with dims (K, M)
      * @return result of inner product or matrix multiplication with dims (N. M)
      */
-    template <std::size_t N, std::size_t M, std::size_t K, std::integral T>
+    template <std::size_t N, std::size_t M, std::size_t K, typename T>
     UI_ALWAYS_INLINE auto mul2(
         VecMat<N, M, T> const& c,
         VecMat<N, K, T> const& a,
@@ -256,7 +253,7 @@ namespace ui::arm::neon {
             auto c0 = res.val[i];
             for (auto j = 0ul; j < M; ++j) {
                 auto b0 = bt.val[j];
-                c0[j] += fold(fmul(a0, b0), op::add_t{});
+                c0[j] += pfold(fmul(a0, b0), op::add_t{});
             }
             res.val[i] = c0;
         }
@@ -270,7 +267,7 @@ namespace ui::arm::neon {
      * @param b Matrix with dims (K, M)
      * @return result of inner product or matrix multiplication with dims (N. M)
      */
-    template <std::size_t N, std::size_t M, std::size_t K, std::integral T>
+    template <std::size_t N, std::size_t M, std::size_t K, typename T>
     UI_ALWAYS_INLINE auto mul2(
         VecMat<N, K, T> const& a,
         VecMat<K, M, T> const& b
@@ -286,13 +283,13 @@ namespace ui::arm::neon {
      * @param b Matrix with dims (K, M)
      * @return result of inner product or matrix multiplication with dims (N. M)
      */
-    template <std::size_t N, std::size_t M, std::size_t K, std::integral T>
+    template <std::size_t N, std::size_t M, std::size_t K, typename T>
     UI_ALWAYS_INLINE auto mul(
         VecMat<N, K, T> const& a,
         VecMat<K, M, T> const& b
     ) noexcept -> VecMat<N, M, T> {
         return mul({}, a, b);
     }
-} // namespace ui::arm::neon
+} // namespace ui
 
 #endif // AMT_UI_ARCH_ARM_MATRIX_HPP
