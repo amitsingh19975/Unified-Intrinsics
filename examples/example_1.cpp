@@ -7,7 +7,10 @@
 #include <numbers>
 #include <numeric>
 #include <print>
-#include "ui/arch/arm/arm.hpp"
+#include "ui/arch/arch.hpp"
+#include "ui/arch/emul/manip.hpp"
+#include "ui/arch/emul/minmax.hpp"
+#include "ui/arch/emul/shift.hpp"
 #include "ui/base.hpp"
 #include "ui/float.hpp"
 #include "ui/format.hpp"
@@ -36,14 +39,14 @@ using namespace ui;
 
 int main() {
 
-    using type = int32_t;
-    std::array<type, 100> source;
+    using type = std::int32_t;
+    std::array<type, 200> source;
+    static constexpr auto N = 4ul;
     std::iota(source.begin(), source.end(), 1);
-    auto f = Vec<4, float>::load(12.23f);
-    auto t = cast<bfloat16>(f);
-    auto r = cast<float>(t);
-    std::println("{}", bfloat16(f[0]));
-    std::println("VecT: {} | {}", t, to_name<decltype(t)>()); 
-    std::println("VecR: {} | {}", r, to_name<decltype(r)>()); 
+    auto a = Vec<N, type>::load(source.data(), N);
+    auto b = Vec<N, type>::load(2);
+    std::println("A: {}\nB: {}\n", a, b);
+    std::println("Emu: {}", emul::sub(a, b));
+    std::println("ARM: {}", sub(a, b));
     return 0; 
 }
