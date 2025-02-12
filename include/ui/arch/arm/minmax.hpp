@@ -396,8 +396,8 @@ namespace ui::arm::neon {
             }   
 
             return join(
-                pmax(x.lo, y.lo),
-                pmax(x.hi, y.hi)
+                pmax(x.lo, x.hi),
+                pmax(y.lo, y.hi)
             );
         }
     }
@@ -468,8 +468,8 @@ namespace ui::arm::neon {
             }
             #endif
             return join(
-                pmaxnm(x.lo, y.lo),
-                pmaxnm(x.hi, y.hi)
+                pmaxnm(x.lo, x.hi),
+                pmaxnm(y.lo, y.hi)
             );
         }
     }
