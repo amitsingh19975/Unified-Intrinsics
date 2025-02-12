@@ -115,8 +115,8 @@ namespace ui::arm::neon {
                 };
             }
             #endif
-            using namespace std;
-            using namespace ui;
+            using std::fpclassify;
+            using std::signbit;
             auto lc = fpclassify(lhs.val);
             auto rc = fpclassify(rhs.val);
             auto linf = lc == FP_INFINITE;
