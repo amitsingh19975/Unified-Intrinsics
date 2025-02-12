@@ -735,7 +735,7 @@ namespace ui::arm::neon {
             UI_ALWAYS_INLINE auto high(
                 Vec<N, T> const& a,
                 Vec<N, T> const& b
-            ) const noexcept -> Vec<N, T> {
+            ) const noexcept {
                 #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
                     if constexpr (N == 4) {
@@ -806,18 +806,25 @@ namespace ui::arm::neon {
             Vec<N, T> const& b
         ) noexcept -> Vec<2 * N, T> {
             auto const zip = internal::zip_helper{};
-            using ret_low_t = decltype(zip.low(a.lo, b.lo));
-            if constexpr (std::is_void_v<ret_low_t>) {
-                return join(zipping_helper(a.lo, b.lo), zipping_helper(a.hi, b.hi));
+            if constexpr (!(
+                std::is_void_v<decltype(zip.low(a,b))> ||
+                std::is_void_v<decltype(zip.high(a,b))>
+            )) {
+                return join(zip.low(a, b), zip.high(a, b));
             } else {
-                using ret_high_t = decltype(zip.high(a.hi, b.hi));
-                if constexpr (std::is_void_v<ret_high_t>) {
-                    return join(zip.low(a.lo, b.lo), zipping_helper(a.hi, b.hi));
+                using ret_low_t = decltype(zip.low(a.lo, b.lo));
+                if constexpr (std::is_void_v<ret_low_t>) {
+                    return join(zipping_helper(a.lo, b.lo), zipping_helper(a.hi, b.hi));
                 } else {
-                    return join(
-                        join(zip.low(a.lo, b.lo), zip.high(a.lo, b.lo)),
-                        join(zip.low(a.hi, b.hi), zip.high(a.hi, b.hi))
-                    );
+                    using ret_high_t = decltype(zip.high(a.hi, b.hi));
+                    if constexpr (std::is_void_v<ret_high_t>) {
+                        return join(zip.low(a.lo, b.lo), zipping_helper(a.hi, b.hi));
+                    } else {
+                        return join(
+                            join(zip.low(a.lo, b.lo), zip.high(a.lo, b.lo)),
+                            join(zip.low(a.hi, b.hi), zip.high(a.hi, b.hi))
+                        );
+                    }
                 }
             }
         }
@@ -836,7 +843,9 @@ namespace ui::arm::neon {
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
-        if constexpr (N == 2) {
+        auto const zip = internal::zip_helper{};
+        using ret_low_t = decltype(zip.low(a, b));
+        if constexpr (!std::is_void_v<ret_low_t>) {
             return internal::zip_helper{}.low(a, b);
         } else {
             return internal::zipping_helper(a.lo, b.lo);
@@ -856,8 +865,10 @@ namespace ui::arm::neon {
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
-        if constexpr (N == 2) {
-            return internal::zip_helper{}.low(a, b);
+        auto const zip = internal::zip_helper{};
+        using ret_low_t = decltype(zip.high(a, b));
+        if constexpr (!std::is_void_v<ret_low_t>) {
+            return internal::zip_helper{}.high(a, b);
         } else {
             return internal::zipping_helper(a.hi, b.hi);
         }
