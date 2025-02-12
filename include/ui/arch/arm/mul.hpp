@@ -1985,6 +1985,7 @@ namespace ui::arm::neon {
     }
 
     template <unsigned Lane, std::size_t N, std::size_t M, typename T>
+        requires (Lane < M)
     UI_ALWAYS_INLINE auto widening_mul(
         Vec<N, T> const& a,
         Vec<M, T> const& v

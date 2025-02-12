@@ -2,7 +2,6 @@
 #define AMT_UI_ARCH_ARM_BIT_HPP
 
 #include "cast.hpp"
-#include "ui/float.hpp"
 #include <bit>
 #include <cassert>
 #include <concepts>
