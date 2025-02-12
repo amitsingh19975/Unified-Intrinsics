@@ -37,7 +37,11 @@ namespace ui::arm::neon {
                     return std::bit_cast<ret_t>(vcombine_f16(std::bit_cast<float16x4_t>(x), std::bit_cast<float16x4_t>(y)));
                 }
                 #else
-                return cast<T>(join_impl(cast<std::uint16_t>(x), cast<std::uint16_t>(y)));
+                return std::bit_cast<ret_t>(join_impl(
+                    std::bit_cast<Vec<N, std::uint16_t>>(x),
+                    std::bit_cast<Vec<N, std::uint16_t>>(y)
+                    )
+                );
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 #ifdef UI_HAS_BFLOAT_16
