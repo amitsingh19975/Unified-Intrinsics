@@ -927,7 +927,7 @@ static constexpr auto operator+(ui::float16 lhs, ui::float16 rhs) noexcept -> ui
         using namespace ui::internal;
         return std::bit_cast<ui::float16>(get_first(vadd_f16(load_f16(lhs), load_f16(rhs))));
         #else
-        return std::bit_cast<ui::float16>((static_cast<ui::float16::base_type>(lhs.data + rhs.data));
+        return std::bit_cast<ui::float16>(static_cast<ui::float16::base_type>(lhs.data + rhs.data));
         #endif
     #endif
 }
@@ -972,7 +972,7 @@ static constexpr auto operator/(ui::float16 lhs, ui::float16 rhs) noexcept -> ui
         using namespace ui::internal;
         return std::bit_cast<ui::float16>(get_first(vdiv_f16(load_f16(lhs), load_f16(rhs))));
         #else
-        return std::bit_cast<ui::float16>({ static_cast<ui::float16::base_type>(lhs.data / rhs.data), ui::float16::internal_t{} };
+        return std::bit_cast<ui::float16>(static_cast<ui::float16::base_type>(lhs.data / rhs.data));
         #endif
     #endif
 }
