@@ -104,7 +104,7 @@ namespace ui::maths {
             if (n != n) return n;
 
             auto bits = std::bit_cast<std::uint32_t>(n);
-            bits = ( 0xBE6EB3BEul - bits ) >> 1;
+            bits = static_cast<std::uint32_t>(( 0xBE6EB3BEu - bits ) >> 1);
             auto temp = std::bit_cast<float>(bits);
             return temp * temp;
         }
@@ -116,7 +116,7 @@ namespace ui::maths {
             if (n != n) return n;
 
             auto bits = std::bit_cast<std::uint64_t>(n);
-            bits = ( 0XBFCDD6A18F6A6F52ull - bits ) >> 1;
+            bits = static_cast<std::uint32_t>(( 0XBFCDD6A18F6A6F52ul - bits ) >> 1);
             auto temp = std::bit_cast<double>(bits);
             return temp * temp;
         }
