@@ -3,6 +3,7 @@
 #include <numeric>
 #include <print>
 #include "ui.hpp"
+#include <memory>
 #include <cxxabi.h>
 
 template <typename T>
@@ -25,15 +26,11 @@ int main() {
 
     using type = int8_t;
     std::array<type, 200> source;
-    static constexpr auto N = 8ul;
+    static constexpr auto N = 32ul;
     std::iota(source.begin(), source.end(), 1);
     auto a = Vec<N, type>::load(source.data(), N);
     auto b = Vec<N, type>::load(source.data() + N, N);
-    auto c = Vec<N, type>{};
-    auto d = Vec<N, type>{};
-    strided_load(source.data(), a, b, c, d);
     std::println("A: {}\nB: {}\n", a, b);
-    std::println("C: {}\nD: {}", c, d);
-    /*std::println("ARM: {}", isfinite(a));*/
+    std::println("ARM: {}", shuffle<1, 0, 2, 3, 4, 5, 6, 7>(a));
     return 0; 
 }
