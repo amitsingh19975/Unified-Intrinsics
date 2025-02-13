@@ -202,8 +202,8 @@ namespace ui {
 
         constexpr auto iter = []<std::size_t... Ks>(
             std::index_sequence<Ks...>,
-            Vec<K, T> const& a,
-            VecMat<K, M, T> const& b
+            Vec<K, T> const& a_,
+            VecMat<K, M, T> const& b_
         ) {
             constexpr auto fmul = [](Vec<M, T> const& acc, Vec<M, T> const& a0, Vec<M, T> const& b0) {
                 if constexpr (std::floating_point<T>) {
@@ -213,7 +213,7 @@ namespace ui {
                 }
             };
             auto c = Vec<M, T>{};
-            ((c = fmul(c, load<M, Ks>(a), b.val[Ks])),...);
+            ((c = fmul(c, load<M, Ks>(a_), b_.val[Ks])),...);
             return c;
         };
         for (auto i = 0ul; i < N; ++i) {
