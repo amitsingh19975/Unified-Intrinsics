@@ -22,6 +22,8 @@ This library aims to unify vector intrinsics. If an instrinsic exists in arm but
     - [x] Subtraction
     - [x] Square-root
     - [x] Shuffle
+    - [x] Matrix support
+    - [x] Support for float16 and bfloat16
 - [x] Generic implementation (Let the compiler decide)
 - [ ] Write wrappers `x86` (`SSE`, `AVX`, `AVX2`, and `AVX512`)
 - [ ] Writing proper examples
