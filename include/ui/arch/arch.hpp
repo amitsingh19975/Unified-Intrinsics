@@ -21,6 +21,7 @@
 #include "arm/shift.hpp"
 #include "arm/sub.hpp"
 #include "arm/sqrt.hpp"
+#include "arm/permute.hpp"
 namespace ui {
     using namespace arm::neon;
 }
@@ -41,6 +42,7 @@ namespace ui {
 #include "emul/shift.hpp"
 #include "emul/sub.hpp"
 #include "emul/sqrt.hpp"
+#include "arm/permute.hpp"
 
 namespace ui {
     using namespace emul;
