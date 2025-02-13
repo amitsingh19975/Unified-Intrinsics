@@ -11,7 +11,7 @@ namespace ui::emul {
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto shift_left(
         Vec<N, T> const& v,
-        Vec<N, std::make_signed_t<T>> const& s
+        Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return map([](auto v, auto s) {
             return v << s;
@@ -158,7 +158,16 @@ namespace ui::emul {
     }
 // !MARK
 
-// MARK: Left Shift
+// MARK: Right Shift
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto shift_right(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        return map([](auto v, auto s) {
+            return v >> s;
+        }, v, s);
+    }
     template <unsigned Shift, std::size_t N, std::integral T>
         requires (Shift > 0 && Shift < sizeof(T) * 8)
     UI_ALWAYS_INLINE static constexpr auto shift_right(
