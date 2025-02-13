@@ -3,10 +3,11 @@
 
 #include "../base.hpp"
 #include <algorithm>
-#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
+#include <cfenv>
 
 namespace ui::internal {
 
@@ -192,6 +193,16 @@ namespace ui::internal {
         if (isnan(a)) return b;
         if (isnan(b)) return a;
         return std::min(a, b);
+    }
+
+    static inline constexpr auto convert_rounding_style(std::float_round_style mode) noexcept -> int {
+        switch (mode) {
+        case std::round_toward_zero: return FE_TOWARDZERO;
+        case std::round_to_nearest: return FE_TONEAREST;
+        case std::round_toward_infinity: return FE_UPWARD;
+        case std::round_toward_neg_infinity: return FE_DOWNWARD;
+        default: return FE_TONEAREST;
+        }
     }
 } // namespace ui::internal
 

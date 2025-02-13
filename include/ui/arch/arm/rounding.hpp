@@ -18,14 +18,14 @@ namespace ui::arm::neon {
         template <std::floating_point T>
         UI_ALWAYS_INLINE static auto round_helper(T val, std::float_round_style mode) noexcept -> T {
             auto const old = std::fegetround(); 
-            std::fesetround(mode);
-            auto res = std::round(val);
+            std::fesetround(::ui::internal::convert_rounding_style(mode));
+            auto res = std::nearbyint(val);
             std::fesetround(old);
             return res;
         }
     } // namespace internal
 
-    template <std::float_round_style mode = std::float_round_style::round_toward_zero, std::size_t N, std::floating_point T>
+    template <std::float_round_style mode = std::float_round_style::round_to_nearest, std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto round(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {

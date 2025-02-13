@@ -2,18 +2,19 @@
 #define AMT_ARCH_EMUL_ROUNDING_HPP
 
 #include "cast.hpp"
+#include <cmath>
 #include <concepts>
 #include <cfenv>
 
 namespace ui::emul {
-    template <std::float_round_style mode = std::float_round_style::round_toward_zero, std::size_t N, std::floating_point T>
+    template <std::float_round_style mode = std::float_round_style::round_to_nearest, std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto round(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         auto const old = std::fegetround(); 
-        std::fesetround(mode);
+        std::fesetround(::ui::internal::convert_rounding_style(mode));
         auto temp = map([](auto v) {
-            return std::round(v); 
+            return std::nearbyint(v); 
         }, v);
         std::fesetround(old);
         return temp;
