@@ -163,7 +163,7 @@ namespace ui {
             #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
                 return fp::compose_fp_helper(fp_rep{ .sign = true, .exponent = 0, .mantissa = 0xFFFF });
             #else
-                return static_cast<base_type>(__FLT16_MIN__);
+                return std::bit_cast<base_type>(__FLT16_MIN__);
             #endif
         }
 
@@ -171,7 +171,7 @@ namespace ui {
             #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
                 return fp::compose_fp_helper(fp_rep{ .sign = false, .exponent = 15, .mantissa = 0xFFFF });
             #else
-                return static_cast<base_type>(__FLT16_MAX__);
+                return std::bit_cast<base_type>(__FLT16_MAX__);
             #endif
         }
 
