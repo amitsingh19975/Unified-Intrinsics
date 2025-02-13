@@ -568,8 +568,8 @@ namespace std {
         static constexpr const int digits10     = 3;
         static constexpr const int max_digits10 = 2 + (digits * 30103l) / 100000l;
         #ifndef UI_HAS_CUSTOM_FLOAT16_IMPL
-        static constexpr type min() _NOEXCEPT { return __FLT16_MIN__; }
-        static constexpr type max() _NOEXCEPT { return __FLT16_MAX__; }
+        static constexpr type min() noexcept { return __FLT16_MIN__; }
+        static constexpr type max() noexcept { return __FLT16_MAX__; }
         #else
         static constexpr type min() noexcept { return std::bit_cast<type>(type::min_rep()); }
         static constexpr type max() noexcept { return std::bit_cast<type>(type::max_rep()); }
