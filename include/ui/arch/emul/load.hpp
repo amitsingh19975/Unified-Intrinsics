@@ -2,13 +2,14 @@
 #define AMT_ARCH_EMUL_LOAD_HPP
 
 #include "cast.hpp"
+#include <algorithm>
 
 namespace ui::emul {
 
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto load(T val) noexcept -> Vec<N, T> {
         auto res = Vec<N, T>{};
-        std::copy_n(res.data(), N, val);
+        std::fill_n(res.data(), N, val);
         return res;
     }
 
@@ -17,7 +18,7 @@ namespace ui::emul {
         Vec<M, T> const& v
     ) noexcept -> Vec<N, T> {
         auto res = Vec<N, T>{};
-        std::copy_n(res.data(), N, v[Lane]);
+        std::fill_n(res.data(), N, v[Lane]);
         return res;
     }
 
