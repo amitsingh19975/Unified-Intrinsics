@@ -24,4 +24,6 @@ This library aims to unify vector intrinsics. If an instrinsic exists in arm but
     - [x] Shuffle
 - [x] Generic implementation (Let the compiler decide)
 - [ ] Write wrappers `x86` (`SSE`, `AVX`, `AVX2`, and `AVX512`)
+- [ ] Writing proper examples
+- [ ] Writing tests
 
