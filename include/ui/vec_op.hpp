@@ -2,17 +2,7 @@
 #define AMT_UI_VEC_OP_HPP
 
 #include "base_vec.hpp"
-#include "features.hpp"
-#include <concepts>
-#include <cstdint>
-#include <limits>
-#include <type_traits>
-#include <utility>
-#include "float.hpp"
 #include "arch/arch.hpp"
-#include "ui/arch/arm/bit.hpp"
-#include "ui/arch/arm/shift.hpp"
-#include "ui/base.hpp"
 
 namespace ui {
     template <std::size_t N, typename T>
