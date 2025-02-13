@@ -61,7 +61,7 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::integral T>
-        requires (sizeof(T) == 16)
+        requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
