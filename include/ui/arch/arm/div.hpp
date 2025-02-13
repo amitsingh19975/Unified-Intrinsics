@@ -2,11 +2,14 @@
 #define AMT_UI_ARCH_ARM_DIV_HPP
 
 #include "cast.hpp"
-#include "ui/float.hpp"
+#include "sub.hpp"
+#include "mul.hpp"
+#include "rounding.hpp"
 #include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdlib>
+#include <limits>
 
 namespace ui::arm::neon {
     template <std::size_t N, std::floating_point T>
@@ -85,6 +88,25 @@ namespace ui::arm::neon {
                 return cast<T>(div(tn, td));
             }
         }
+    }
+
+    
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE auto rem(
+        Vec<N, T> const& num,
+        Vec<N, T> const& den
+    ) noexcept -> Vec<N, T> {
+        auto q = mul(round<std::float_round_style::round_toward_zero>(div(num, den)), den);
+        return sub(num, q);
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto rem(
+        Vec<N, T> const& num,
+        Vec<N, T> const& den
+    ) noexcept -> Vec<N, T> {
+        auto q = mul(div(num, den), den);
+        return sub(num, q);
     }
 } // namespace ui::arm::neon
 
