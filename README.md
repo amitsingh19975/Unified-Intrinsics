@@ -4,17 +4,24 @@
 This library aims to unify vector intrinsics. If an instrinsic exists in arm but does not exist in x86, it will be emulated using scaler or previously defined vector instrinsics.
 
 ## TODO
-- [ ] Write wrappers for `ARM Neon`
-    - [x] Addition
-    - [x] Subtraction
-    - [x] Multiplication
-    - [x] Division
-    - [x] Min-Max
+- [x] Write wrappers for `ARM Neon`
     - [x] Absolute Ops
+    - [x] Addition
+    - [x] Bit Manipulation
+    - [x] Casting
+    - [x] Comparision
+    - [x] Division
+    - [x] Loading
+    - [x] Logical Ops
+    - [x] Vector Manipulation
+    - [x] Min-Max
+    - [x] Multiplication
+    - [x] Reciprocal
     - [x] Rounding Ops
-    - [ ]  Reciprocal
+    - [x] Shifting
+    - [x] Subtraction
+    - [x] Square-root
+    - [x] Shuffle
+- [x] Generic implementation (Let the compiler decide)
 - [ ] Write wrappers `x86` (`SSE`, `AVX`, `AVX2`, and `AVX512`)
-- [ ] Write a compatability layer for both layers
-- [ ] Try to emulate float16 if it does not exist 
-- [ ] Try to emulate bfloat if it does not exist 
 
