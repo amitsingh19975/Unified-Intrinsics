@@ -7,7 +7,7 @@
 namespace ui {
 
     namespace internal {
-        #if defined(UI_COMPILER_CLANG) || defined(ASL_COMPILER_GCC)
+        #if defined(UI_COMPILER_CLANG) || defined(UI_COMPILER_GCC)
             #if defined(UI_COMPILER_CLANG)
                 template <std::size_t N, typename T>
                 using VecExt = T __attribute__((ext_vector_type(N)));
