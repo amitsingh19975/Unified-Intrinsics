@@ -7,6 +7,7 @@
 #include "../../vec_headers.hpp"
 #include "../../float.hpp"
 #include "../../matrix.hpp"
+#include <arm_neon.h>
 #include <bit>
 #include <concepts>
 #include <cstdint>
@@ -1279,141 +1280,245 @@ namespace ui::arm::neon {
         }
     }
 
-    template <std::integral T>
-        requires (sizeof(T) == 1)
+    namespace internal {
+        template <typename T>
+        struct is_8bit_vec_matrix: std::false_type{};
+        template <typename T>
+        struct is_16bit_vec_matrix: std::false_type{};
+        template <typename T>
+        struct is_32bit_vec_matrix: std::false_type{};
+        template <typename T>
+        struct is_64bit_vec_matrix: std::false_type{};
+
+        template <>
+        struct is_8bit_vec_matrix<int8x8x2_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<int8x8x3_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<int8x8x4_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<int8x16x2_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<int8x16x3_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<int8x16x4_t>: std::true_type{};
+
+        template <>
+        struct is_8bit_vec_matrix<uint8x8x2_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<uint8x8x3_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<uint8x8x4_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<uint8x16x2_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<uint8x16x3_t>: std::true_type{};
+        template <>
+        struct is_8bit_vec_matrix<uint8x16x4_t>: std::true_type{};
+
+
+        template <>
+        struct is_16bit_vec_matrix<int16x4x2_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<int16x4x3_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<int16x4x4_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<int16x8x2_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<int16x8x3_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<int16x8x4_t>: std::true_type{};
+
+        template <>
+        struct is_16bit_vec_matrix<uint16x4x2_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<uint16x4x3_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<uint16x4x4_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<uint16x8x2_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<uint16x8x3_t>: std::true_type{};
+        template <>
+        struct is_16bit_vec_matrix<uint16x8x4_t>: std::true_type{};
+
+        template <>
+        struct is_32bit_vec_matrix<int32x2x2_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<int32x2x3_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<int32x2x4_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<int32x4x2_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<int32x4x3_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<int32x4x4_t>: std::true_type{};
+
+        template <>
+        struct is_32bit_vec_matrix<uint32x2x2_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<uint32x2x3_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<uint32x2x4_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<uint32x4x2_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<uint32x4x3_t>: std::true_type{};
+        template <>
+        struct is_32bit_vec_matrix<uint32x4x4_t>: std::true_type{};
+
+        #ifdef UI_CPU_ARM64
+        template <>
+        struct is_64bit_vec_matrix<int64x1x2_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<int64x1x3_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<int64x1x4_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<int64x2x2_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<int64x2x3_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<int64x2x4_t>: std::true_type{};
+
+        template <>
+        struct is_64bit_vec_matrix<uint64x1x2_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<uint64x1x3_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<uint64x1x4_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<uint64x2x2_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<uint64x2x3_t>: std::true_type{};
+        template <>
+        struct is_64bit_vec_matrix<uint64x2x4_t>: std::true_type{};
+        #endif
+    }
+
+    template <typename T>
+        requires internal::is_8bit_vec_matrix<T>::value
     UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
-        if constexpr (std::is_signed_v<T>) {
-            if constexpr        (std::same_as<T, int8x8x2_t>) {
-                return std::bit_cast<VecMat<2,  8, std::int8_t>>(v);
-            } else if constexpr (std::same_as<T, int8x8x3_t>) {
-                return std::bit_cast<VecMat<3,  8, std::int8_t>>(v);
-            } else if constexpr (std::same_as<T, int8x8x4_t>) {
-                return std::bit_cast<VecMat<4,  8, std::int8_t>>(v);
-            } else if constexpr (std::same_as<T, int8x16x2_t>) {
-                return std::bit_cast<VecMat<2, 16, std::int8_t>>(v);
-            } else if constexpr (std::same_as<T, int8x16x3_t>) {
-                return std::bit_cast<VecMat<3, 16, std::int8_t>>(v);
-            } else if constexpr (std::same_as<T, int8x16x4_t>) {
-                return std::bit_cast<VecMat<4, 16, std::int8_t>>(v);
-            }
-        } else {
-            if constexpr        (std::same_as<T, uint8x8x2_t>) {
-                return std::bit_cast<VecMat<2,  8, std::uint8_t>>(v);
-            } else if constexpr (std::same_as<T, uint8x8x3_t>) {
-                return std::bit_cast<VecMat<3,  8, std::uint8_t>>(v);
-            } else if constexpr (std::same_as<T, uint8x8x4_t>) {
-                return std::bit_cast<VecMat<4,  8, std::uint8_t>>(v);
-            } else if constexpr (std::same_as<T, uint8x16x2_t>) {
-                return std::bit_cast<VecMat<2, 16, std::uint8_t>>(v);
-            } else if constexpr (std::same_as<T, uint8x16x3_t>) {
-                return std::bit_cast<VecMat<3, 16, std::uint8_t>>(v);
-            } else if constexpr (std::same_as<T, uint8x16x4_t>) {
-                return std::bit_cast<VecMat<4, 16, std::uint8_t>>(v);
-            }
+        if constexpr        (std::same_as<T, int8x8x2_t>) {
+            return std::bit_cast<VecMat<2,  8, std::int8_t>>(v);
+        } else if constexpr (std::same_as<T, int8x8x3_t>) {
+            return std::bit_cast<VecMat<3,  8, std::int8_t>>(v);
+        } else if constexpr (std::same_as<T, int8x8x4_t>) {
+            return std::bit_cast<VecMat<4,  8, std::int8_t>>(v);
+        } else if constexpr (std::same_as<T, int8x16x2_t>) {
+            return std::bit_cast<VecMat<2, 16, std::int8_t>>(v);
+        } else if constexpr (std::same_as<T, int8x16x3_t>) {
+            return std::bit_cast<VecMat<3, 16, std::int8_t>>(v);
+        } else if constexpr (std::same_as<T, int8x16x4_t>) {
+            return std::bit_cast<VecMat<4, 16, std::int8_t>>(v);
+        } else if constexpr (std::same_as<T, uint8x8x2_t>) {
+            return std::bit_cast<VecMat<2,  8, std::uint8_t>>(v);
+        } else if constexpr (std::same_as<T, uint8x8x3_t>) {
+            return std::bit_cast<VecMat<3,  8, std::uint8_t>>(v);
+        } else if constexpr (std::same_as<T, uint8x8x4_t>) {
+            return std::bit_cast<VecMat<4,  8, std::uint8_t>>(v);
+        } else if constexpr (std::same_as<T, uint8x16x2_t>) {
+            return std::bit_cast<VecMat<2, 16, std::uint8_t>>(v);
+        } else if constexpr (std::same_as<T, uint8x16x3_t>) {
+            return std::bit_cast<VecMat<3, 16, std::uint8_t>>(v);
+        } else if constexpr (std::same_as<T, uint8x16x4_t>) {
+            return std::bit_cast<VecMat<4, 16, std::uint8_t>>(v);
         }
     }
 
-    template <std::integral T>
-        requires (sizeof(T) == 2)
+    template <typename T>
+        requires internal::is_16bit_vec_matrix<T>::value
     UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
-        if constexpr (std::is_signed_v<T>) {
-            if constexpr        (std::same_as<T, int16x4x2_t>) {
-                return std::bit_cast<VecMat<2, 4, std::int16_t>>(v);
-            } else if constexpr (std::same_as<T, int16x4x3_t>) {
-                return std::bit_cast<VecMat<3, 4, std::int16_t>>(v);
-            } else if constexpr (std::same_as<T, int16x4x4_t>) {
-                return std::bit_cast<VecMat<4, 4, std::int16_t>>(v);
-            } else if constexpr (std::same_as<T, int16x8x2_t>) {
-                return std::bit_cast<VecMat<2, 8, std::int16_t>>(v);
-            } else if constexpr (std::same_as<T, int16x8x3_t>) {
-                return std::bit_cast<VecMat<3, 8, std::int16_t>>(v);
-            } else if constexpr (std::same_as<T, int16x8x4_t>) {
-                return std::bit_cast<VecMat<4, 8, std::int16_t>>(v);
-            }
-        } else {
-            if constexpr        (std::same_as<T, uint16x4x2_t>) {
-                return std::bit_cast<VecMat<2, 4, std::uint16_t>>(v);
-            } else if constexpr (std::same_as<T, uint16x4x3_t>) {
-                return std::bit_cast<VecMat<3, 4, std::uint16_t>>(v);
-            } else if constexpr (std::same_as<T, uint16x4x4_t>) {
-                return std::bit_cast<VecMat<4, 4, std::uint16_t>>(v);
-            } else if constexpr (std::same_as<T, uint16x8x2_t>) {
-                return std::bit_cast<VecMat<2, 8, std::uint16_t>>(v);
-            } else if constexpr (std::same_as<T, uint16x8x3_t>) {
-                return std::bit_cast<VecMat<3, 8, std::uint16_t>>(v);
-            } else if constexpr (std::same_as<T, uint16x8x4_t>) {
-                return std::bit_cast<VecMat<4, 8, std::uint16_t>>(v);
-            }
+        if constexpr        (std::same_as<T, int16x4x2_t>) {
+            return std::bit_cast<VecMat<2, 4, std::int16_t>>(v);
+        } else if constexpr (std::same_as<T, int16x4x3_t>) {
+            return std::bit_cast<VecMat<3, 4, std::int16_t>>(v);
+        } else if constexpr (std::same_as<T, int16x4x4_t>) {
+            return std::bit_cast<VecMat<4, 4, std::int16_t>>(v);
+        } else if constexpr (std::same_as<T, int16x8x2_t>) {
+            return std::bit_cast<VecMat<2, 8, std::int16_t>>(v);
+        } else if constexpr (std::same_as<T, int16x8x3_t>) {
+            return std::bit_cast<VecMat<3, 8, std::int16_t>>(v);
+        } else if constexpr (std::same_as<T, int16x8x4_t>) {
+            return std::bit_cast<VecMat<4, 8, std::int16_t>>(v);
+        } else if constexpr  (std::same_as<T, uint16x4x2_t>) {
+            return std::bit_cast<VecMat<2, 4, std::uint16_t>>(v);
+        } else if constexpr (std::same_as<T, uint16x4x3_t>) {
+            return std::bit_cast<VecMat<3, 4, std::uint16_t>>(v);
+        } else if constexpr (std::same_as<T, uint16x4x4_t>) {
+            return std::bit_cast<VecMat<4, 4, std::uint16_t>>(v);
+        } else if constexpr (std::same_as<T, uint16x8x2_t>) {
+            return std::bit_cast<VecMat<2, 8, std::uint16_t>>(v);
+        } else if constexpr (std::same_as<T, uint16x8x3_t>) {
+            return std::bit_cast<VecMat<3, 8, std::uint16_t>>(v);
+        } else if constexpr (std::same_as<T, uint16x8x4_t>) {
+            return std::bit_cast<VecMat<4, 8, std::uint16_t>>(v);
         }
     }
 
-    template <std::integral T>
-        requires (sizeof(T) == 4)
+    template <typename T>
+        requires internal::is_32bit_vec_matrix<T>::value
     UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
-        if constexpr (std::is_signed_v<T>) {
-            if constexpr        (std::same_as<T, int32x2x2_t>) {
-                return std::bit_cast<VecMat<2, 2, std::int32_t>>(v);
-            } else if constexpr (std::same_as<T, int32x2x3_t>) {
-                return std::bit_cast<VecMat<3, 2, std::int32_t>>(v);
-            } else if constexpr (std::same_as<T, int32x2x4_t>) {
-                return std::bit_cast<VecMat<4, 2, std::int32_t>>(v);
-            } else if constexpr (std::same_as<T, int32x4x2_t>) {
-                return std::bit_cast<VecMat<2, 4, std::int32_t>>(v);
-            } else if constexpr (std::same_as<T, int32x4x3_t>) {
-                return std::bit_cast<VecMat<3, 4, std::int32_t>>(v);
-            } else if constexpr (std::same_as<T, int32x4x4_t>) {
-                return std::bit_cast<VecMat<4, 4, std::int32_t>>(v);
-            }
-        } else {
-            if constexpr        (std::same_as<T, uint32x2x2_t>) {
-                return std::bit_cast<VecMat<2, 2, std::uint32_t>>(v);
-            } else if constexpr (std::same_as<T, uint32x2x3_t>) {
-                return std::bit_cast<VecMat<3, 2, std::uint32_t>>(v);
-            } else if constexpr (std::same_as<T, uint32x2x4_t>) {
-                return std::bit_cast<VecMat<4, 2, std::uint32_t>>(v);
-            } else if constexpr (std::same_as<T, uint32x4x2_t>) {
-                return std::bit_cast<VecMat<2, 4, std::uint32_t>>(v);
-            } else if constexpr (std::same_as<T, uint32x4x3_t>) {
-                return std::bit_cast<VecMat<3, 4, std::uint32_t>>(v);
-            } else if constexpr (std::same_as<T, uint32x4x4_t>) {
-                return std::bit_cast<VecMat<4, 4, std::uint32_t>>(v);
-            }
+        if constexpr        (std::same_as<T, int32x2x2_t>) {
+            return std::bit_cast<VecMat<2, 2, std::int32_t>>(v);
+        } else if constexpr (std::same_as<T, int32x2x3_t>) {
+            return std::bit_cast<VecMat<3, 2, std::int32_t>>(v);
+        } else if constexpr (std::same_as<T, int32x2x4_t>) {
+            return std::bit_cast<VecMat<4, 2, std::int32_t>>(v);
+        } else if constexpr (std::same_as<T, int32x4x2_t>) {
+            return std::bit_cast<VecMat<2, 4, std::int32_t>>(v);
+        } else if constexpr (std::same_as<T, int32x4x3_t>) {
+            return std::bit_cast<VecMat<3, 4, std::int32_t>>(v);
+        } else if constexpr (std::same_as<T, int32x4x4_t>) {
+            return std::bit_cast<VecMat<4, 4, std::int32_t>>(v);
+        } else if constexpr (std::same_as<T, uint32x2x2_t>) {
+            return std::bit_cast<VecMat<2, 2, std::uint32_t>>(v);
+        } else if constexpr (std::same_as<T, uint32x2x3_t>) {
+            return std::bit_cast<VecMat<3, 2, std::uint32_t>>(v);
+        } else if constexpr (std::same_as<T, uint32x2x4_t>) {
+            return std::bit_cast<VecMat<4, 2, std::uint32_t>>(v);
+        } else if constexpr (std::same_as<T, uint32x4x2_t>) {
+            return std::bit_cast<VecMat<2, 4, std::uint32_t>>(v);
+        } else if constexpr (std::same_as<T, uint32x4x3_t>) {
+            return std::bit_cast<VecMat<3, 4, std::uint32_t>>(v);
+        } else if constexpr (std::same_as<T, uint32x4x4_t>) {
+            return std::bit_cast<VecMat<4, 4, std::uint32_t>>(v);
         }
     }
 
-    template <std::integral T>
-        requires (sizeof(T) == 8)
+    #ifdef UI_CPU_ARM64
+    template <typename T>
+        requires internal::is_64bit_vec_matrix<T>::value
     UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
-        if constexpr (std::is_signed_v<T>) {
-            if constexpr        (std::same_as<T, int64x1x2_t>) {
-                return std::bit_cast<VecMat<2, 1, std::int64_t>>(v);
-            } else if constexpr (std::same_as<T, int64x1x3_t>) {
-                return std::bit_cast<VecMat<3, 1, std::int64_t>>(v);
-            } else if constexpr (std::same_as<T, int64x1x4_t>) {
-                return std::bit_cast<VecMat<4, 1, std::int64_t>>(v);
-            } else if constexpr (std::same_as<T, int64x2x2_t>) {
-                return std::bit_cast<VecMat<2, 2, std::int64_t>>(v);
-            } else if constexpr (std::same_as<T, int64x2x3_t>) {
-                return std::bit_cast<VecMat<3, 2, std::int64_t>>(v);
-            } else if constexpr (std::same_as<T, int64x2x4_t>) {
-                return std::bit_cast<VecMat<4, 2, std::int64_t>>(v);
-            }
-        } else {
-            if constexpr        (std::same_as<T, uint64x1x2_t>) {
-                return std::bit_cast<VecMat<2, 1, std::uint64_t>>(v);
-            } else if constexpr (std::same_as<T, uint64x1x3_t>) {
-                return std::bit_cast<VecMat<3, 1, std::uint64_t>>(v);
-            } else if constexpr (std::same_as<T, uint64x1x4_t>) {
-                return std::bit_cast<VecMat<4, 1, std::uint64_t>>(v);
-            } else if constexpr (std::same_as<T, uint64x2x2_t>) {
-                return std::bit_cast<VecMat<2, 2, std::uint64_t>>(v);
-            } else if constexpr (std::same_as<T, uint64x2x3_t>) {
-                return std::bit_cast<VecMat<3, 2, std::uint64_t>>(v);
-            } else if constexpr (std::same_as<T, uint64x2x4_t>) {
-                return std::bit_cast<VecMat<4, 2, std::uint64_t>>(v);
-            }
+        if constexpr        (std::same_as<T, int64x1x2_t>) {
+            return std::bit_cast<VecMat<2, 1, std::int64_t>>(v);
+        } else if constexpr (std::same_as<T, int64x1x3_t>) {
+            return std::bit_cast<VecMat<3, 1, std::int64_t>>(v);
+        } else if constexpr (std::same_as<T, int64x1x4_t>) {
+            return std::bit_cast<VecMat<4, 1, std::int64_t>>(v);
+        } else if constexpr (std::same_as<T, int64x2x2_t>) {
+            return std::bit_cast<VecMat<2, 2, std::int64_t>>(v);
+        } else if constexpr (std::same_as<T, int64x2x3_t>) {
+            return std::bit_cast<VecMat<3, 2, std::int64_t>>(v);
+        } else if constexpr (std::same_as<T, int64x2x4_t>) {
+            return std::bit_cast<VecMat<4, 2, std::int64_t>>(v);
+        } else if constexpr (std::same_as<T, uint64x1x2_t>) {
+            return std::bit_cast<VecMat<2, 1, std::uint64_t>>(v);
+        } else if constexpr (std::same_as<T, uint64x1x3_t>) {
+            return std::bit_cast<VecMat<3, 1, std::uint64_t>>(v);
+        } else if constexpr (std::same_as<T, uint64x1x4_t>) {
+            return std::bit_cast<VecMat<4, 1, std::uint64_t>>(v);
+        } else if constexpr (std::same_as<T, uint64x2x2_t>) {
+            return std::bit_cast<VecMat<2, 2, std::uint64_t>>(v);
+        } else if constexpr (std::same_as<T, uint64x2x3_t>) {
+            return std::bit_cast<VecMat<3, 2, std::uint64_t>>(v);
+        } else if constexpr (std::same_as<T, uint64x2x4_t>) {
+            return std::bit_cast<VecMat<4, 2, std::uint64_t>>(v);
         }
     }
+    #endif
 
     #ifdef UI_HAS_FLOAT_16
     UI_ALWAYS_INLINE constexpr auto from_vec(float16x4x2_t const& v) noexcept {
