@@ -1,10 +1,5 @@
 #include <array>
 #include <cfloat>
-#include <cmath>
-#include <cstdint>
-#include <functional>
-#include <limits>
-#include <numbers>
 #include <numeric>
 #include <print>
 #include "ui.hpp"
@@ -28,13 +23,17 @@ using namespace ui;
 
 int main() {
 
-    using type = int;
+    using type = int8_t;
     std::array<type, 200> source;
-    static constexpr auto N = 4ul;
+    static constexpr auto N = 8ul;
     std::iota(source.begin(), source.end(), 1);
     auto a = Vec<N, type>::load(source.data(), N);
-    auto b = Vec<N, type>::load(2);
+    auto b = Vec<N, type>::load(source.data() + N, N);
+    auto c = Vec<N, type>{};
+    auto d = Vec<N, type>{};
+    strided_load(source.data(), a, b, c, d);
     std::println("A: {}\nB: {}\n", a, b);
-    std::println("ARM: {}", (b >> 1));
+    std::println("C: {}\nD: {}", c, d);
+    /*std::println("ARM: {}", isfinite(a));*/
     return 0; 
 }
