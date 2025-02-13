@@ -3,36 +3,21 @@
 
 #include "base_vec.hpp"
 #include "features.hpp"
+#include <concepts>
+#include <cstdint>
+#include <limits>
 #include <type_traits>
 #include <utility>
 #include "float.hpp"
 #include "arch/arch.hpp"
+#include "ui/arch/arm/bit.hpp"
 #include "ui/arch/arm/shift.hpp"
 #include "ui/base.hpp"
 
 namespace ui {
     template <std::size_t N, typename T>
-        requires (std::is_arithmetic_v<T>)
-    static inline constexpr auto load(T val) noexcept -> Vec<N, T> {
-        #if defined(UI_ARM_HAS_NEON)
-            return arm::neon::load<N>(val);
-        #else
-            #error "not implemented"
-        #endif
-    }
-
-    template <std::size_t N, typename T>
     inline constexpr auto Vec<N, T>::load(T val) noexcept -> Vec<N, T> {
         return ui::load<N, T>(val);
-    }
-
-    template <std::size_t N, unsigned Lane, std::size_t M, typename T>
-    inline constexpr auto load(Vec<M, T> const& v) noexcept -> Vec<N, T> {
-        #if defined(UI_ARM_HAS_NEON)
-            return arm::neon::load<N, Lane>(v);
-        #else
-            #error "not implemented"
-        #endif
     }
 
     template <std::size_t N, typename T>
@@ -65,8 +50,8 @@ UI_ALWAYS_INLINE constexpr auto operator==(ui::Vec<N, T> const& lhs, ui::Vec<N, 
     return cmp(lhs, rhs, op::equal_t{});
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator==(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator==(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::mask_t<N, T> {
     return lhs == ui::Vec<N, T>::load(rhs);
 }
 
@@ -83,13 +68,13 @@ UI_ALWAYS_INLINE constexpr auto operator!=(ui::Vec<N, T> const& lhs, ui::Vec<N, 
     return !cmp(lhs, rhs, op::equal_t{});
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator!=(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::mask_t<N, T> {
-    return lhs != ui::Vec<N, T>::load(rhs);
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator!=(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::mask_t<N, T> {
+    return lhs != ui::Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator!=(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator!=(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
     return !(lhs == rhs);
 }
 // !MARK
@@ -101,16 +86,16 @@ UI_ALWAYS_INLINE constexpr auto operator<=(ui::Vec<N, T> const& lhs, ui::Vec<N, 
     return cmp(lhs, rhs, op::less_equal_t{});
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator<=(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator<=(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return lhs <= Vec<N, T>::load(rhs);
+    return lhs <= Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator<=(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator<=(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) <= rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) <= rhs;
 }
 // !MARK
 
@@ -121,16 +106,16 @@ UI_ALWAYS_INLINE constexpr auto operator<(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return cmp(lhs, rhs, op::less_t{});
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator<(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator<(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return lhs < Vec<N, T>::load(rhs);
+    return lhs < Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator<(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator<(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) < rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) < rhs;
 }
 // !MARK
 
@@ -141,16 +126,16 @@ UI_ALWAYS_INLINE constexpr auto operator>=(ui::Vec<N, T> const& lhs, ui::Vec<N, 
     return cmp(lhs, rhs, op::greater_equal_t{});
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator>=(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator>=(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return lhs >= Vec<N, T>::load(rhs);
+    return lhs >= Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator>=(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator>=(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) >= rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) >= rhs;
 }
 // !MARK
 
@@ -161,16 +146,16 @@ UI_ALWAYS_INLINE constexpr auto operator>(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return cmp(lhs, rhs, op::greater_t{});
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator>(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator>(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return lhs > Vec<N, T>::load(rhs);
+    return lhs > Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator>(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator>(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) > rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) > rhs;
 }
 // !MARK
 
@@ -190,16 +175,16 @@ UI_ALWAYS_INLINE constexpr auto operator^(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return bitwise_xor(lhs, rhs);
 }
 
-template <std::size_t N, std::integral T>
-UI_ALWAYS_INLINE constexpr auto operator^(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, std::integral T, std::integral U>
+UI_ALWAYS_INLINE constexpr auto operator^(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return lhs ^ Vec<N, T>::load(rhs);
+    return lhs ^ Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, std::integral T>
-UI_ALWAYS_INLINE constexpr auto operator^(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
+template <std::size_t N, std::integral T, std::integral U>
+UI_ALWAYS_INLINE constexpr auto operator^(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::mask_t<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) ^ rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) ^ rhs;
 }
 // !MARK
 
@@ -210,16 +195,16 @@ UI_ALWAYS_INLINE constexpr auto operator+(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return add(lhs, rhs);
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator+(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator+(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return lhs + Vec<N, T>::load(rhs);
+    return lhs + Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator+(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator+(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) + rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) + rhs;
 }
 // !MARK
 
@@ -230,16 +215,16 @@ UI_ALWAYS_INLINE constexpr auto operator-(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return sub(lhs, rhs);
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator-(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator-(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return lhs - Vec<N, T>::load(rhs);
+    return lhs - Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator-(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator-(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) - rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) - rhs;
 }
 // !MARK
 
@@ -250,37 +235,37 @@ UI_ALWAYS_INLINE constexpr auto operator*(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return mul(lhs, rhs);
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator*(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator*(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return lhs * Vec<N, T>::load(rhs);
+    return lhs * Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator*(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator*(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) * rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) * rhs;
 }
 // !MARK
 
 
 // MARK: /
-template <std::size_t N, std::integral T>
+template <std::size_t N, typename T>
 UI_ALWAYS_INLINE constexpr auto operator/(ui::Vec<N, T> const& lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
     return div(lhs, rhs);
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator/(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator/(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return lhs / Vec<N, T>::load(rhs);
+    return lhs / Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator/(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator/(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) / rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) / rhs;
 }
 // !MARK
 
@@ -291,16 +276,16 @@ UI_ALWAYS_INLINE constexpr auto operator&(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return bitwise_and(lhs, rhs);
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator&(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, std::integral T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator&(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return lhs & Vec<N, T>::load(rhs);
+    return lhs & Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator&(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, std::integral T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator&(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) & rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) & rhs;
 }
 // !MARK
 
@@ -311,101 +296,209 @@ UI_ALWAYS_INLINE constexpr auto operator|(ui::Vec<N, T> const& lhs, ui::Vec<N, T
     return bitwise_or(lhs, rhs);
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator|(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, std::integral T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator|(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return lhs | Vec<N, T>::load(rhs);
+    return lhs | Vec<N, T>::load(static_cast<T>(rhs));
 }
 
-template <std::size_t N, typename T>
-UI_ALWAYS_INLINE constexpr auto operator|(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, std::integral T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator|(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) | rhs;
+    return Vec<N, T>::load(static_cast<T>(lhs)) | rhs;
 }
 // !MARK
 
 // MARK: <<
 template <std::size_t N, std::integral T>
-UI_ALWAYS_INLINE constexpr auto operator<<(ui::Vec<N, T> const& lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+UI_ALWAYS_INLINE constexpr auto operator<<(ui::Vec<N, T> const& lhs, ui::Vec<N, std::make_unsigned_t<T>> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
     return shift_left(lhs, rhs);
 }
 
-template <std::size_t N, std::integral T>
-UI_ALWAYS_INLINE constexpr auto operator<<(ui::Vec<N, T> const& lhs, T const rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, std::integral T, std::convertible_to<std::make_unsigned_t<T>> U>
+UI_ALWAYS_INLINE constexpr auto operator<<(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return lhs << Vec<N, T>::load(rhs);
+    using type = std::make_unsigned_t<T>;
+    return lhs << Vec<N, T>::load(static_cast<type>(rhs));
 }
 
-template <std::size_t N, std::integral T>
-UI_ALWAYS_INLINE constexpr auto operator<<(T const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+template <std::size_t N, std::integral T, std::convertible_to<std::make_unsigned_t<T>> U>
+UI_ALWAYS_INLINE constexpr auto operator<<(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
     using namespace ui;
-    return Vec<N, T>::load(lhs) << rhs;
+    using type = std::make_unsigned_t<T>;
+    return Vec<N, T>::load(static_cast<type>(lhs)) << rhs;
 }
 // !MARK
 
 // MARK: >>
-namespace ui::internal {
-    template <unsigned I, std::size_t N, typename T>
-    UI_ALWAYS_INLINE constexpr auto shift_right_helper(Vec<N, T> const& lhs, unsigned const rhs) noexcept -> Vec<N, T> {
-        if constexpr (I < sizeof(T) * 8) {
-            switch (rhs) {
-                case I + 0: {
-                    if constexpr (I != 0) {
-                        return ::ui::shift_right<I + 0>(lhs);
-                    } else return lhs;
-                }
-                case I + 1: {
-                    if constexpr (I + 1 < sizeof(T) * 8) {
-                        return ::ui::shift_right<I + 1>(lhs);
-                    }
-                    break;
-                }
-                case I + 2: {
-                    if constexpr (I + 2 < sizeof(T) * 8) {
-                        return ::ui::shift_right<I + 2>(lhs);
-                    }
-                    break;
-                }
-                case I + 3: {
-                    if constexpr (I + 3 < sizeof(T) * 8) {
-                        return ::ui::shift_right<I + 3>(lhs);
-                    }
-                    break;
-                }
-                case I + 4: {
-                    if constexpr (I + 4 < sizeof(T) * 8) {
-                        return ::ui::shift_right<I + 4>(lhs);
-                    }
-                    break;
-                }
-                case I + 5: {
-                    if constexpr (I + 5 < sizeof(T) * 8) {
-                        return ::ui::shift_right<I + 5>(lhs);
-                    }
-                    break;
-                }
-                case I + 6: {
-                    if constexpr (I + 6 < sizeof(T) * 8) {
-                        return ::ui::shift_right<I + 6>(lhs);
-                    }
-                    break;
-                }
-                case I + 7: {
-                    if constexpr (I + 7 < sizeof(T) * 8) {
-                        return ::ui::shift_right<I + 7>(lhs);
-                    }
-                    break;
-                }
-                default: return shift_right_helper<I + 8>(lhs, rhs);
-            }
-        }
-        return {};
-    }
-} // namespace ui:internal
 template <std::size_t N, std::integral T>
-UI_ALWAYS_INLINE constexpr auto operator>>(ui::Vec<N, T> const& lhs, unsigned const rhs) noexcept -> ui::Vec<N, T> {
-    return ui::internal::shift_right_helper<0>(lhs, rhs);
+UI_ALWAYS_INLINE constexpr auto operator>>(ui::Vec<N, T> const& lhs, ui::Vec<N, std::make_unsigned_t<T>> const& rhs) noexcept -> ui::Vec<N, T> {
+    using namespace ui;
+    return shift_right(lhs, rhs);
+}
+
+template <std::size_t N, std::integral T, std::convertible_to<std::make_unsigned_t<T>> U>
+UI_ALWAYS_INLINE constexpr auto operator>>(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
+    using namespace ui;
+    using type = std::make_unsigned_t<T>;
+    return lhs >> Vec<N, T>::load(static_cast<type>(rhs));
+}
+
+template <std::size_t N, std::integral T, std::convertible_to<std::make_unsigned_t<T>> U>
+UI_ALWAYS_INLINE constexpr auto operator>>(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+    using namespace ui;
+    using type = std::make_unsigned_t<T>;
+    return Vec<N, T>::load(static_cast<type>(lhs)) >> rhs;
 }
 // !MARK
+
+// MARK: %
+template <std::size_t N, typename T>
+UI_ALWAYS_INLINE constexpr auto operator%(ui::Vec<N, T> const& lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+    using namespace ui;
+    return rem(lhs, rhs);
+}
+
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator%(ui::Vec<N, T> const& lhs, U const rhs) noexcept -> ui::Vec<N, T> {
+    using namespace ui;
+    return lhs % Vec<N, T>::load(static_cast<T>(rhs));
+}
+
+template <std::size_t N, typename T, std::convertible_to<T> U>
+UI_ALWAYS_INLINE constexpr auto operator%(U const lhs, ui::Vec<N, T> const& rhs) noexcept -> ui::Vec<N, T> {
+    using namespace ui;
+    return Vec<N, T>::load(static_cast<T>(lhs)) % rhs;
+}
+// !MARK
+
+
+namespace ui {
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE static constexpr auto if_then_else(
+        mask_t<N, T> const& cond,
+        Vec<N, T> const& then,
+        Vec<N, T> const& else_
+    ) noexcept -> Vec<N, T> {
+        return bitwise_select(cond, then, else_);
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE static constexpr auto any(
+        Vec<N, T> const& v
+    ) noexcept -> bool {
+        return fold(v > 0, op::max_t{}) > 0;
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE static constexpr auto all(
+        Vec<N, T> const& v
+    ) noexcept -> bool {
+        return fold(v > 0, op::min_t{}) > 0;
+    }
+
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE static constexpr auto ceil(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return round<std::float_round_style::round_toward_infinity>(v); 
+    }
+
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE static constexpr auto floor(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return round<std::float_round_style::round_toward_neg_infinity>(v); 
+    }
+
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE static constexpr auto trunc(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return round<std::float_round_style::round_toward_zero>(v); 
+    }
+
+    template <std::size_t N, std::floating_point T>
+    UI_ALWAYS_INLINE static constexpr auto frac(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return v - floor(v);
+    }
+
+    template <std::size_t N>
+    UI_ALWAYS_INLINE static constexpr auto div255(Vec<N, std::uint16_t> const& v) noexcept -> Vec<N, std::uint8_t> {
+        return cast<uint8_t>((v + 127) / 255);
+    }
+
+    template <std::size_t N>
+    UI_ALWAYS_INLINE static constexpr auto approx_scale(Vec<N, std::uint8_t> const& x, Vec<N, std::uint8_t> const& y) noexcept -> Vec<N, std::uint8_t> {
+        auto X = cast<std::uint16_t>(x);
+        auto Y = cast<std::uint16_t>(y);
+        return cast<std::uint8_t>((X * Y + X) / 256);
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE static constexpr auto dot(
+        Vec<N, T> const& x,
+        Vec<N, T> const& y
+    ) noexcept -> T {
+        return fold(x * y, op::add_t{});
+    }
+
+    template <typename T>
+    UI_ALWAYS_INLINE static constexpr auto cross(
+        Vec<2, T> const& x,
+        Vec<2, T> const& y
+    ) noexcept -> T {
+        auto res = x * shuffle<1,0>(y);
+        return res[0] - res[1];
+    }
+
+    template <std::size_t N, typename T>
+        requires (std::is_floating_point_v<T>)
+    UI_ALWAYS_INLINE static constexpr auto isfinite(
+        Vec<N, T> const& v
+    ) noexcept -> bool {
+        return std::isfinite(dot(v, Vec<N, T>::load(0)));
+    }
+
+    using float2  = Vec< 2, float>;
+    using float4  = Vec< 4, float>;
+    using float8  = Vec< 8, float>;
+
+    using half2  = Vec< 2, float16>;
+    using half4  = Vec< 4, float16>;
+    using half8  = Vec< 8, float16>;
+
+    using bhalf2  = Vec< 2, bfloat16>;
+    using bhalf4  = Vec< 4, bfloat16>;
+    using bhalf8  = Vec< 8, bfloat16>;
+
+    using double2 = Vec< 2, double>;
+    using double4 = Vec< 4, double>;
+    using double8 = Vec< 8, double>;
+
+    using byte2   = Vec< 2,  std::uint8_t>;
+    using byte4   = Vec< 4,  std::uint8_t>;
+    using byte8   = Vec< 8,  std::uint8_t>;
+    using byte16  = Vec< 16, std::uint8_t>;
+
+    using int2    = Vec< 2, std::int32_t>;
+    using int4    = Vec< 4, std::int32_t>;
+    using int8    = Vec< 8, std::int32_t>;
+
+    using ushort2 = Vec< 2, std::uint16_t>;
+    using ushort4 = Vec< 4, std::uint16_t>;
+    using ushort8 = Vec< 8, std::uint16_t>;
+
+    using uint2   = Vec< 2, std::uint32_t>;
+    using uint4   = Vec< 4, std::uint32_t>;
+    using uint8   = Vec< 8, std::uint32_t>;
+
+    using long2   = Vec< 2, std::int64_t>;
+    using long4   = Vec< 4, std::int64_t>;
+    using long8   = Vec< 8, std::int64_t>;
+}
+
 #endif // AMT_UI_VEC_OP_HPP
