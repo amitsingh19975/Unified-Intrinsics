@@ -51,11 +51,11 @@ namespace ui {
         {}
 
         UI_ALWAYS_INLINE constexpr Vec(
-            Vec<elements / 2, element_t> const& lo,
-            Vec<elements / 2, element_t> const& hi
+            Vec<elements / 2, element_t> const& low,
+            Vec<elements / 2, element_t> const& high
         ) noexcept requires (elements != 4)
-            : lo(lo)
-            , hi(hi)
+            : lo(low)
+            , hi(high)
         {}
 
         UI_ALWAYS_INLINE constexpr Vec(element_t val) noexcept
