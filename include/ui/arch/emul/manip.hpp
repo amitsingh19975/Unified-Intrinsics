@@ -38,9 +38,9 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) return v;
         else {
-            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v) {
+            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v_) {
                 auto res = Vec<N, T>{};
-                ((res[N - Is - 1] = v[Is]),...);
+                ((res[N - Is - 1] = v_[Is]),...);
                 return res;
             };
             return helper(std::make_index_sequence<N>{}, v);
