@@ -55,8 +55,8 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
 	using std::abs;
 	using ui::abs;
-	return map([](auto v) {
-	    return static_cast<T>(abs(v));
+	return map([](auto v_) {
+	    return static_cast<T>(abs(v_));
 	}, v);
     }
 
@@ -64,11 +64,11 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto sat_abs(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-	return map([](auto v) {
+	return map([](auto v_) {
             using type = std::conditional_t<std::is_signed_v<T>, std::int16_t, std::uint64_t>;
             static constexpr auto min = static_cast<type>(std::numeric_limits<T>::min());
             static constexpr auto max = static_cast<type>(std::numeric_limits<T>::max());
-            return static_cast<T>(std::clamp(std::abs(static_cast<type>(v)), min, max));
+            return static_cast<T>(std::clamp(std::abs(static_cast<type>(v_)), min, max));
 	}, v);
     }
 // !MARK

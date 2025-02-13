@@ -187,8 +187,8 @@ namespace ui::emul {
         T const c,
         [[maybe_unused]] op::add_t op
     ) noexcept -> Vec<N, T> {
-        return map([c](auto a, auto l) {
-            return static_cast<T>(a + (l * c));
+        return map([c](auto a_, auto l) {
+            return static_cast<T>(a_ + (l * c));
         }, a, b);
     }
 // !MARK
@@ -212,8 +212,8 @@ namespace ui::emul {
         T const c,
         [[maybe_unused]] op::sub_t op
     ) noexcept -> Vec<N, T> {
-        return map([c](auto a, auto l) {
-            return static_cast<T>(a - (l * c));
+        return map([c](auto a_, auto l) {
+            return static_cast<T>(a_ - (l * c));
         }, a, b);
     }
 // !MARK
@@ -224,8 +224,8 @@ namespace ui::emul {
         Vec<N, T> const& v,
         T const c
     ) noexcept -> Vec<N, T> {
-        return map([c](auto v) {
-            return static_cast<T>(v * c);
+        return map([c](auto v_) {
+            return static_cast<T>(v_ * c);
         }, v);
     }
 
@@ -246,8 +246,8 @@ namespace ui::emul {
         T const c
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        return map([c](auto v) -> result_t {
-            return static_cast<result_t>(static_cast<result_t>(v) * static_cast<result_t>(c));
+        return map([c](auto v_) -> result_t {
+            return static_cast<result_t>(static_cast<result_t>(v_) * static_cast<result_t>(c));
         }, v);
     }
 
@@ -270,8 +270,8 @@ namespace ui::emul {
         [[maybe_unused]] op::add_t op
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        return map([c](auto a, auto v) -> result_t {
-            return static_cast<result_t>(a + static_cast<result_t>(v) * static_cast<result_t>(c));
+        return map([c](auto a_, auto v_) -> result_t {
+            return static_cast<result_t>(a_ + static_cast<result_t>(v_) * static_cast<result_t>(c));
         }, a, v);
     }
 
@@ -283,8 +283,8 @@ namespace ui::emul {
         [[maybe_unused]] op::sub_t op
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        return map([c](auto a, auto v) -> result_t {
-            return static_cast<result_t>(a - static_cast<result_t>(v) * static_cast<result_t>(c));
+        return map([c](auto a_, auto v_) -> result_t {
+            return static_cast<result_t>(a_ - static_cast<result_t>(v_) * static_cast<result_t>(c));
         }, a, v);
     }
 // !MARK

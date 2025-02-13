@@ -27,7 +27,7 @@ namespace ui::emul {
                 .val = count
             };
 	};
-	return map([helper](auto v) { return helper(v); }, v);
+	return map([helper](auto v_) { return helper(v_); }, v);
     }
 // !MARK
 
@@ -36,8 +36,8 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto count_leading_zeros(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-	return map([](auto v) {
-	    return static_cast<T>(std::countl_zero(static_cast<std::make_unsigned_t<T>>(v)));
+	return map([](auto v_) {
+	    return static_cast<T>(std::countl_zero(static_cast<std::make_unsigned_t<T>>(v_)));
 	}, v);
     }
 // !MARK
@@ -47,8 +47,8 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto popcount(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-	return map([](auto v) {
-	    return static_cast<T>(std::popcount(static_cast<std::make_unsigned_t<T>>(v)));
+	return map([](auto v_) {
+	    return static_cast<T>(std::popcount(static_cast<std::make_unsigned_t<T>>(v_)));
 	}, v);
     }
 // !MARK
@@ -59,8 +59,8 @@ namespace ui::emul {
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
-	return map([](auto a, auto b){
-	    return static_cast<T>(a & (~b));
+	return map([](auto a_, auto b_){
+	    return static_cast<T>(a_ & (~b_));
 	}, a, b);
     }
 // !MARK
@@ -72,9 +72,9 @@ namespace ui::emul {
         Vec<N, T> const& b,
         Vec<N, T> const& c
     ) noexcept -> Vec<N, T> {
-	return map([](auto a, auto b, auto c) {
+	return map([](auto a_, auto b_, auto c_) {
             static constexpr auto max = std::numeric_limits<mask_inner_t<T>>::max();
-	    return static_cast<T>(a == max ? b : c);
+	    return static_cast<T>(a_ == max ? b_ : c_);
 	}, a, b, c);
     }
 // !MARK

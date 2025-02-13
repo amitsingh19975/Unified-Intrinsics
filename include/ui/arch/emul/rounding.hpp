@@ -13,8 +13,8 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         auto const old = std::fegetround(); 
         std::fesetround(::ui::internal::convert_rounding_style(mode));
-        auto temp = map([](auto v) {
-            return std::nearbyint(v); 
+        auto temp = map([](auto v_) {
+            return std::nearbyint(v_); 
         }, v);
         std::fesetround(old);
         return temp;

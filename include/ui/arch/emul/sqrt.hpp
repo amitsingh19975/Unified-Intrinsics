@@ -9,11 +9,11 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto sqrt(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        return map([](auto v) {
+        return map([](auto v_) {
             if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                return T(std::sqrt(float(v)));
+                return T(std::sqrt(float(v_)));
             } else {
-                return std::sqrt(v);
+                return std::sqrt(v_);
             }
         }, v);
     }

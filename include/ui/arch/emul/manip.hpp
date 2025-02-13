@@ -25,8 +25,8 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto reverse_bits(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        return map([](auto v) {
-            return maths::bit_reverse(v);
+        return map([](auto v_) {
+            return maths::bit_reverse(v_);
         }, v);
     }
 // !MARK
@@ -64,11 +64,11 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         constexpr auto helper = []<std::size_t... Is>(
             std::index_sequence<Is...>,
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
+            Vec<N, T> const& a_,
+            Vec<N, T> const& b_
         ) {
             auto res = Vec<N, T>{};
-            ((res[2 * Is] = a[Is], res[2 * Is + 1] = b[Is]), ...);
+            ((res[2 * Is] = a_[Is], res[2 * Is + 1] = b_[Is]), ...);
             return res;
         };
         return helper(std::make_index_sequence<N / 2>{}, a, b);
@@ -89,11 +89,11 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         constexpr auto helper = []<std::size_t... Is>(
             std::index_sequence<Is...>,
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
+            Vec<N, T> const& a_,
+            Vec<N, T> const& b_
         ) {
             auto res = Vec<N, T>{};
-            ((res[2 * Is] = a[N / 2 + Is], res[2 * Is + 1] = b[N / 2 + Is]), ...);
+            ((res[2 * Is] = a_[N / 2 + Is], res[2 * Is + 1] = b_[N / 2 + Is]), ...);
             return res;
         };
         return helper(std::make_index_sequence<N / 2>{}, a, b);
@@ -114,13 +114,13 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         constexpr auto helper = []<std::size_t... Is>(
             std::index_sequence<Is...>,
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
+            Vec<N, T> const& a_,
+            Vec<N, T> const& b_
         ) {
             auto res = Vec<N, T>{};
             ((
-                res[Is]         = a[2 * Is],
-                res[Is + N / 2] = b[2 * Is]
+                res[Is]         = a_[2 * Is],
+                res[Is + N / 2] = b_[2 * Is]
             ), ...);
             return res;
         };
@@ -142,13 +142,13 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         constexpr auto helper = []<std::size_t... Is>(
             std::index_sequence<Is...>,
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
+            Vec<N, T> const& a_,
+            Vec<N, T> const& b_
         ) {
             auto res = Vec<N, T>{};
             ((
-                res[Is]         = a[2 * Is + 1],
-                res[Is + N / 2] = b[2 * Is + 1]
+                res[Is]         = a_[2 * Is + 1],
+                res[Is + N / 2] = b_[2 * Is + 1]
             ), ...);
             return res;
         };
@@ -165,13 +165,13 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         constexpr auto helper = []<std::size_t... Is>(
             std::index_sequence<Is...>,
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
+            Vec<N, T> const& a_,
+            Vec<N, T> const& b_
         ) {
             auto res = Vec<N, T>{};
             ((
-                res[2 * Is]     = a[2 * Is],
-                res[2 * Is + 1] = b[2 * Is]
+                res[2 * Is]     = a_[2 * Is],
+                res[2 * Is + 1] = b_[2 * Is]
             ), ...);
             return res;
         };
@@ -186,13 +186,13 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         constexpr auto helper = []<std::size_t... Is>(
             std::index_sequence<Is...>,
-            Vec<N, T> const& a,
-            Vec<N, T> const& b
+            Vec<N, T> const& a_,
+            Vec<N, T> const& b_
         ) {
             auto res = Vec<N, T>{};
             ((
-                res[2 * Is]     = a[2 * Is + 1],
-                res[2 * Is + 1] = b[2 * Is + 1]
+                res[2 * Is]     = a_[2 * Is + 1],
+                res[2 * Is + 1] = b_[2 * Is + 1]
             ), ...);
             return res;
         };

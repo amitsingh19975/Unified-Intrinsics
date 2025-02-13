@@ -59,11 +59,11 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& lhs, auto const& rhs) {
+        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& l, auto const& r) {
             auto res = Vec<N, T>{};
             ((
-                res[Is] = std::max(lhs[2 * Is], lhs[2 * Is + 1]),
-                res[Is + N / 2] = std::max(rhs[2 * Is], rhs[2 * Is + 1])
+                res[Is] = std::max(l[2 * Is], l[2 * Is + 1]),
+                res[Is + N / 2] = std::max(r[2 * Is], r[2 * Is + 1])
             ),...);
             return res;
         };
@@ -85,11 +85,11 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& lhs, auto const& rhs) {
+        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& l, auto const& r) {
             auto res = Vec<N, T>{};
             ((
-                res[Is] = internal::maxnm(lhs[2 * Is], lhs[2 * Is + 1]),
-                res[Is + N / 2] = internal::maxnm(rhs[2 * Is], rhs[2 * Is + 1])
+                res[Is] = internal::maxnm(l[2 * Is], l[2 * Is + 1]),
+                res[Is + N / 2] = internal::maxnm(r[2 * Is], r[2 * Is + 1])
             ),...);
             return res;
         };
@@ -113,11 +113,11 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& lhs, auto const& rhs) {
+        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& l, auto const& r) {
             auto res = Vec<N, T>{};
             ((
-                res[Is] = std::min(lhs[2 * Is], lhs[2 * Is + 1]),
-                res[Is + N / 2] = std::min(rhs[2 * Is], rhs[2 * Is + 1])
+                res[Is] = std::min(l[2 * Is], l[2 * Is + 1]),
+                res[Is + N / 2] = std::min(r[2 * Is], r[2 * Is + 1])
             ),...);
             return res;
         };
@@ -139,11 +139,11 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& lhs, auto const& rhs) {
+        constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& l, auto const& r) {
             auto res = Vec<N, T>{};
             ((
-                res[Is] = internal::minnm(lhs[2 * Is], lhs[2 * Is + 1]),
-                res[Is + N / 2] = internal::minnm(rhs[2 * Is], rhs[2 * Is + 1])
+                res[Is] = internal::minnm(l[2 * Is], l[2 * Is + 1]),
+                res[Is + N / 2] = internal::minnm(r[2 * Is], r[2 * Is + 1])
             ),...);
             return res;
         };

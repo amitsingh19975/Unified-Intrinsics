@@ -87,8 +87,8 @@ namespace ui::emul {
     ) noexcept -> mask_t<N, T> {
         using result_t = mask_inner_t<T>;
 
-        return map([](auto v) {
-            return (v <= T{0}) ? std::numeric_limits<result_t>::max(): result_t{}; 
+        return map([](auto v_) {
+            return (v_ <= T{0}) ? std::numeric_limits<result_t>::max(): result_t{}; 
         }, v);
     }
 // !MARK
@@ -114,8 +114,8 @@ namespace ui::emul {
     ) noexcept -> mask_t<N, T> {
         using result_t = mask_inner_t<T>;
 
-        return map([](auto v) {
-            return (v > T{0}) ? std::numeric_limits<result_t>::max(): result_t{}; 
+        return map([](auto v_) {
+            return (v_ > T{0}) ? std::numeric_limits<result_t>::max(): result_t{}; 
         }, v);
     }
 // !MARK
@@ -141,8 +141,8 @@ namespace ui::emul {
     ) noexcept -> mask_t<N, T> {
         using result_t = mask_inner_t<T>;
 
-        return map([](auto v) {
-            return (v < T{0}) ? std::numeric_limits<result_t>::max(): result_t{}; 
+        return map([](auto v_) {
+            return (v_ < T{0}) ? std::numeric_limits<result_t>::max(): result_t{}; 
         }, v);
     }
 // !MARK

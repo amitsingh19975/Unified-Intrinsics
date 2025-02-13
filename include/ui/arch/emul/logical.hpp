@@ -12,7 +12,7 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto negate(
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
-        return map([](auto v) { return static_cast<T>(-v); }, v);
+        return map([](auto v_) { return static_cast<T>(-v_); }, v);
     }
 // !MARK
 
@@ -21,10 +21,10 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto sat_negate(
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
-        return map([](auto v) { 
+        return map([](auto v_) { 
             static constexpr auto min = std::numeric_limits<T>::min();
             static constexpr auto max = std::numeric_limits<T>::max();
-            return static_cast<T>((v.val == min) ? max : -v.val);
+            return static_cast<T>((v_.val == min) ? max : -v_.val);
         }, v);
     }
 
@@ -33,7 +33,7 @@ namespace ui::emul {
     UI_ALWAYS_INLINE static constexpr auto bitwise_not(
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
-        return map([](auto v) { return static_cast<T>(~v); }, v); 
+        return map([](auto v_) { return static_cast<T>(~v_); }, v); 
     }
 // !MARK
 

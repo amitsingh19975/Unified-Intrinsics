@@ -17,28 +17,28 @@
 namespace ui::emul {
     template <typename To, std::size_t N, typename From>
     UI_ALWAYS_INLINE auto cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
-        return map([](auto v) { return static_cast<To>(v); }, v);
+        return map([](auto v_) { return static_cast<To>(v_); }, v);
     }
 
     template <typename To, std::size_t N, std::integral From>
     UI_ALWAYS_INLINE auto sat_cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
-        return map([](auto v) {
+        return map([](auto v_) {
             if constexpr (std::is_signed_v<To>) {
                 static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<To>::min());
                 static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<To>::max());
                 if constexpr (sizeof(To) < 8) {
-                    auto temp = static_cast<std::int64_t>(v);
+                    auto temp = static_cast<std::int64_t>(v_);
                     return static_cast<To>(std::clamp(temp, min, max));
                 } 
             } else {
                 static constexpr auto min = static_cast<std::uint64_t>(std::numeric_limits<To>::min());
                 static constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<To>::max());
                 if constexpr (sizeof(To) < 8) {
-                    auto temp = static_cast<std::uint64_t>(v);
+                    auto temp = static_cast<std::uint64_t>(v_);
                     return static_cast<To>(std::clamp(temp, min, max));
                 } 
             }
-            return static_cast<To>(v);
+            return static_cast<To>(v_);
         }, v);
     }
 
