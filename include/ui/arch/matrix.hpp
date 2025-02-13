@@ -212,9 +212,9 @@ namespace ui {
                     return mul_acc(acc, a0, b0, op::add_t{});
                 }
             };
-            auto c = Vec<M, T>{};
-            ((c = fmul(c, load<M, Ks>(a_), b_.val[Ks])),...);
-            return c;
+            auto c_ = Vec<M, T>{};
+            ((c_ = fmul(c_, load<M, Ks>(a_), b_.val[Ks])),...);
+            return c_;
         };
         for (auto i = 0ul; i < N; ++i) {
             auto a0 = a.val[i];
