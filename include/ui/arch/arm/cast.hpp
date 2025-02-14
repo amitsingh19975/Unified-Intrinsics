@@ -276,7 +276,8 @@ namespace ui::arm::neon {
                         [](auto const& v) { return vcvt_f16_f32(to_vec(v)); }
                     ); 
                     #else
-                    return map([](auto v) { return float16(static_cast<float>(v)); }, v); 
+                    auto temp = CastImpl<float, Saturating>{}(v);
+                    return cast_float32_to_float16(temp);
                     #endif
                 } else if constexpr (std::same_as<To, bfloat16>) {
                     #ifdef UI_HAS_BFLOAT_16
