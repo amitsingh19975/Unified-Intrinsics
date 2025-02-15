@@ -11,16 +11,8 @@
 #include <concepts>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 
-//            #define UI_CPU_SSE_LEVEL_SSE1     10
-//            #define UI_CPU_SSE_LEVEL_SSE2     20
-//            #define UI_CPU_SSE_LEVEL_SSE3     30
-//            #define UI_CPU_SSE_LEVEL_SSSE3    31
-//            #define UI_CPU_SSE_LEVEL_SSE41    41
-//            #define UI_CPU_SSE_LEVEL_SSE42    42
-//            #define UI_CPU_SSE_LEVEL_AVX      51
-//            #define UI_CPU_SSE_LEVEL_AVX2     52
-//            #define UI_CPU_SSE_LEVEL_SKX      60
 namespace ui::x86 {
 
    template <std::size_t N, typename T>
@@ -97,6 +89,9 @@ namespace ui::x86 {
                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                 return std::bit_cast<__m512i>(v);
                 #endif
+            } else {
+                static_assert(bits >= 128, "N * sizeof(T) * 8 must be at least 128 bits");
+                static_assert(bits <= 512, "N * sizeof(T) * 8 must be at most 512 bits");
             }
         } 
    }
@@ -190,42 +185,44 @@ namespace ui::x86 {
          ) noexcept {
             if constexpr (N == 1) {
                if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                  return { .val = static_cast<To>(float(v.val)) };
+                  return Vec<N, To>{ .val = static_cast<To>(float(v.val)) };
                } else {
-                  return { .val = static_cast<To>(v.val) };
+                  return Vec<N, To>{ .val = static_cast<To>(v.val) };
                }
             } else {
-                static constexpr auto size = N * sizeof(To);
-                if (sizeof(T) < sizeof(To)) {
-                    if constexpr (size * 2 == sizeof(__m128)) {
-                        Vec<2 * N, T> vt(v, v);
-                        return from_vec<To>(fn(to_vec(vt)))
-                    } 
+                static constexpr auto size = N * sizeof(T);
+                if constexpr (
+                    sizeof(T) < sizeof(To) && 
+                    (size * 2 == sizeof(__m128)) && 
+                    std::invocable<Fn, decltype(to_vec(Vec<2 * N, T>{}))>)
+                {
+                    Vec<2 * N, T> vt(v, v);
+                    return from_vec<To>(fn(to_vec(vt)));
                 } else {
-                    if constexpr (size == sizeof(__m128)) {
+                    if constexpr (size == sizeof(__m128) && std::invocable<Fn, decltype(to_vec(v))>) {
                         // widening cast
                         if constexpr (sizeof(T) < sizeof(To)) {
                             return join(
-                                from_vec<To>(fn(to_vec(v.lo))),
-                                from_vec<To>(fn(to_vec(v.hi)))
+                                from_vec<To>(fn(to_vec(Vec<N, T>(v.lo, v.lo)))),
+                                from_vec<To>(fn(to_vec(Vec<N, T>(v.hi, v.hi))))
                             );
                         } else {
-                            return from_vec<To>(fn(to_vec(v))),
+                            return from_vec<To>(fn(to_vec(v)));
                         }
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                    } else if constexpr (size == sizeof(__m256)) {
-                         return from_vec<To>(fn(to_vec(v))),
+                    } else if constexpr (size == sizeof(__m256) && std::invocable<Fn, decltype(to_vec(v))>) {
+                         return from_vec<To>(fn(to_vec(v)));
                     #endif
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                    } else if constexpr (size == sizeof(__m512)) {
+                    } else if constexpr (size == sizeof(__m512) && std::invocable<Fn, decltype(to_vec(v)>) {
                          return from_vec<To>(fn(to_vec(v))),
                     #endif
                     }
+                    return join(
+                       cast_helper<To>(v.lo, fn),
+                       cast_helper<To>(v.hi, fn)
+                    );
                 }
-                return join(
-                   cast_helper<To>(v.lo),
-                   cast_helper<To>(v.hi)
-                );
             }
          }
 
@@ -250,7 +247,7 @@ namespace ui::x86 {
                         #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
                         , [](__m256i data) { return _mm256_cvtepi32_ps(data);  }
                         #endif
-                        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKV
+                        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                         , [](__m512i data) { return _mm512_cvtepi32_ps(data);  }
                         #endif
                      }
@@ -260,11 +257,13 @@ namespace ui::x86 {
                   return cast_helper<To>(
                      temp,
                      Overloaded {
+                        #if UI_CPU_SSE_LEVEL > UI_CPU_SSE_LEVEL_SSE41
                         [](__m128i data) { return _mm_cvtepi64_pd(data);  }
+                        #endif
                         #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
                         , [](__m256i data) { return _mm256_cvtepi64_pd(data);  }
                         #endif
-                        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKV
+                        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                         , [](__m512i data) { return _mm512_cvtepi64_pd(data);  }
                         #endif
                      }
@@ -280,7 +279,7 @@ namespace ui::x86 {
                               #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
                               , [](__m256i data) { return _mm256_cvtepi8_epi16(data);  }
                               #endif
-                              #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKV
+                              #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                               , [](__m512i data) { return _mm512_cvtepi8_epi16(data);  }
                               #endif
                            }
@@ -293,7 +292,7 @@ namespace ui::x86 {
                               #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
                               , [](__m256i data) { return _mm256_cvtepi8_epi32(data);  }
                               #endif
-                              #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKV
+                              #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                               , [](__m512i data) { return _mm512_cvtepi8_epi32(data);  }
                               #endif
                            }
@@ -306,7 +305,7 @@ namespace ui::x86 {
                               #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
                               , [](__m256i data) { return _mm256_cvtepi8_epi64(data);  }
                               #endif
-                              #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKV
+                              #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                               , [](__m512i data) { return _mm512_cvtepi8_epi64(data);  }
                               #endif
                            }
