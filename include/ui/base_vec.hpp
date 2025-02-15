@@ -358,6 +358,28 @@ namespace ui {
     template <std::size_t N, typename T>
     using mask_t = Vec<N, mask_inner_t<T>>;
 
+    template <std::size_t Len, std::size_t N, typename T>
+        requires (Len >= 2)
+    UI_ALWAYS_INLINE constexpr auto join(
+        std::span<Vec<N, T>> vs
+    ) noexcept -> Vec<Len * N, T> {
+        if constexpr (Len == 2) return join(vs[0], vs[1]);
+        else return join(
+            join<Len / 2, N, T>(vs),
+            join<Len / 2, N, T>({ vs.data() + Len / 2, Len / 2 })
+        );
+    }
+
+    template <internal::is_vec T0, internal::is_vec... Ts>
+        requires (maths::is_power_of_2(sizeof...(Ts) + 1) && (sizeof...(Ts) + 1 > 3))
+    UI_ALWAYS_INLINE constexpr auto join(
+        T0 const& v0,
+        Ts const&... vs
+    ) noexcept {
+        std::array<T0, sizeof...(Ts) + 1> temp = { v0, vs... };
+        return join<sizeof...(Ts) + 1, T0::elements, typename T0::element_t>({ temp.data(), temp.size() });
+    }
+
 } // namespace ui
 
 #endif // AMT_UI_BASE_VEC_HPP
