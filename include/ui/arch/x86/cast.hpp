@@ -75,7 +75,13 @@ namespace ui::x86 {
                     #endif
                 }
             } else {
-                static_assert(sizeof(T) == sizeof(float) || sizeof(T) == sizeof(double) || sizeof(T) == sizeof(float16) || sizeof(T) == sizeof(bfloat16), "Unknow floating-point type, expecting 'float', 'ui::float16', 'ui::bfloat16' or 'double'");
+                static_assert(
+                    sizeof(T) == sizeof(float)   ||
+                    sizeof(T) == sizeof(double)  ||
+                    sizeof(T) == sizeof(float16) || 
+                    sizeof(T) == sizeof(bfloat16),
+                    "Unknow floating-point type, expecting 'float', 'ui::float16', 'ui::bfloat16' or 'double'"
+                );
             }
         } else {
             static constexpr auto bits = N * sizeof(T) * 8;
@@ -200,7 +206,7 @@ namespace ui::x86 {
             static constexpr auto can_match_case = ((P == Cs::pattern) || ...);
 
             constexpr Matcher() noexcept = default;
-            constexpr Matcher(Cs&&... cs) noexcept
+            constexpr Matcher(Cs&&... cs) noexcept requires (sizeof...(Cs) > 1)
                 : cases(std::forward<Cs>(cs)...)
             {}
             constexpr Matcher(Matcher const& fn) noexcept = default;
@@ -245,20 +251,42 @@ namespace ui::x86 {
             { m.template match<P>(std::declval<Args>()...) } -> not_void;
         };
 
-        template <typename To, typename M, std::size_t N, typename T>
+        template <typename To, bool Saturating, typename M, std::size_t N, typename T>
         UI_ALWAYS_INLINE auto cast_iter_chunk(Vec<N, T> const& v, M const& m) noexcept -> Vec<N, To> {
             if constexpr (N == 1) {
                 std::println("Base Case of N == 1");
-               if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                  return Vec<N, To>{ .val = static_cast<To>(float(v.val)) };
-               } else {
-                  return Vec<N, To>{ .val = static_cast<To>(v.val) };
-               }
+                using type = std::conditional_t<std::is_signed_v<To>, std::int64_t, std::uint64_t>;
+                if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                    return Vec<N, To>{ .val = static_cast<To>(float(v.val)) };
+                } else if constexpr (std::floating_point<To>) {
+                    return Vec<N, To>{ .val = static_cast<To>(v.val) };
+                } else {
+                    if constexpr (Saturating && ((sizeof(T) > sizeof(To)) || (std::is_signed_v<To> != std::is_signed_v<T>))) {
+                        static constexpr auto min = static_cast<type>(std::numeric_limits<To>::min());
+                        static constexpr auto max = static_cast<type>(std::numeric_limits<To>::max());
+                        auto val = static_cast<type>(v.val);
+                        if constexpr (sizeof(To) == 8) {
+                            if (std::is_signed_v<To> && !std::is_signed_v<T>) {
+                                return Vec<N, To>{ .val = static_cast<To>(val > max ? max : val) };   
+                            } else if (!std::is_signed_v<To> && std::is_signed_v<T>) {
+                                return Vec<N, To>{ .val = static_cast<To>(val < 0 ? 0 : (val > max ? max : val)) };
+                            } else {
+                                return Vec<N, To>{ .val = static_cast<To>(std::clamp<type>(val, min, max)) };
+                            }
+                        } else {
+                            return Vec<N, To>{ .val = static_cast<To>(std::clamp<type>(val, min, max)) };
+                        }
+                    } else {
+                        return Vec<N, To>{ .val = static_cast<To>(v.val) };
+                    }
+                }
             } else {
                 if constexpr (is_case_invocable<N, M, decltype(v)>) {
-                    return m.template match<N>(v);
+                    auto temp = m.template match<N>(v);
+                    if constexpr (::ui::internal::is_vec<decltype(temp)>) return temp;
+                    else from_vec<To>(temp);
                 } else {
-                    return join(cast_iter_chunk<To>(v.lo, m), cast_iter_chunk<To>(v.hi, m));
+                    return join(cast_iter_chunk<To, Saturating>(v.lo, m), cast_iter_chunk<To, Saturating>(v.hi, m));
                 }
             }
         }
@@ -368,7 +396,7 @@ namespace ui::x86 {
             constexpr auto fn = [](auto const& v_) {
                 return signed_to_unsigned_saturating_cast_fn(v_);
             };
-            return cast_iter_chunk<To>(
+            return cast_iter_chunk<To, true>(
                  v,
                  Matcher {
                     case_maker<4> = [fn](auto const& v_) {
@@ -408,7 +436,7 @@ namespace ui::x86 {
             constexpr auto fn = [](auto const& v_) {
                 return unsigned_to_signed_saturating_cast_fn(v_);
             };
-            return cast_iter_chunk<To>(
+            return cast_iter_chunk<To, true>(
                  v,
                  Matcher {
                     case_maker<4> = [fn](auto const& v_) {
@@ -555,7 +583,7 @@ namespace ui::x86 {
                         }
                         #endif
                     };
-                   return cast_iter_chunk<To>(
+                   return cast_iter_chunk<To, Saturating>(
                         temp,
                         Matcher {
                             case_maker<2> = [os](auto const& v_) {
@@ -568,7 +596,7 @@ namespace ui::x86 {
                    );
                 } else if constexpr (std::same_as<To, double>) {
                    auto temp = CastImpl<std::int32_t>{}(v);
-                   return cast_iter_chunk<To>(
+                   return cast_iter_chunk<To, Saturating>(
                         temp,
                         Matcher {
                             case_maker<2> = [](auto const& v_) {
@@ -599,7 +627,7 @@ namespace ui::x86 {
                    if constexpr (sizeof(To) == 1) {
                       return v;
                    } else if constexpr (sizeof(To) == 2) {
-                         return cast_iter_chunk<To>(
+                         return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<8> = [](auto const& v_) {
@@ -630,7 +658,7 @@ namespace ui::x86 {
                              }
                          );
                    } else if constexpr (sizeof(To) == 4) {
-                         return cast_iter_chunk<To>(
+                         return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<8> = [](auto const& v_) {
@@ -658,7 +686,7 @@ namespace ui::x86 {
                              }
                          );
                    } else if constexpr (sizeof(To) == 8) {
-                         return cast_iter_chunk<To>(
+                         return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<8> = [](auto const& v_) {
@@ -688,8 +716,10 @@ namespace ui::x86 {
                    }
 
                 } else {
-                    if constexpr (sizeof(To) == 1 && Saturating) {
-                        return saturating_cast(v);
+                    if constexpr (sizeof(To) == 1) {
+                        if constexpr (Saturating) {
+                            return saturating_cast(v);
+                        } else return std::bit_cast<Vec<N, To>>(v);
                     }
                     return std::bit_cast<Vec<N, To>>(CastImpl<std::make_signed_t<To>>{}(v));
                 }
@@ -712,15 +742,17 @@ namespace ui::x86 {
                     auto temp = CastImpl<std::int32_t>{}(v);
                     return CastImpl<double>{}(temp);
                 } else if constexpr (std::is_signed_v<To>) {
-                    if constexpr (sizeof(To) == 1 && Saturating) {
-                        return saturating_cast(v);
+                    if constexpr (sizeof(To) == 1) {
+                        if constexpr (Saturating) {
+                            return saturating_cast(v);
+                        } else return std::bit_cast<Vec<N, To>>(v);
                     }
                     auto temp = CastImpl<std::make_unsigned_t<To>, Saturating>{}(v);
                     return std::bit_cast<Vec<N, To>>(temp);
                 } else {
                     if constexpr (sizeof(To) == 1) return v;
                     else if constexpr (sizeof(To) == 2) {
-                         return cast_iter_chunk<To>(
+                         return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<8> = [](auto const& v_) {
@@ -751,7 +783,7 @@ namespace ui::x86 {
                              }
                          );
                     } else if constexpr (sizeof(To) == 4) {
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<8> = [](auto const& v_) {
@@ -779,7 +811,7 @@ namespace ui::x86 {
                              }
                          );
                     } else if constexpr (sizeof(To) == 8) {
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<8> = [](auto const& v_) {
@@ -841,7 +873,7 @@ namespace ui::x86 {
                             #endif
                             } 
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                             v,
                             Matcher {
                                 case_maker<4> = [fn](auto const& v_) {
@@ -895,7 +927,7 @@ namespace ui::x86 {
                                 #endif
                             });
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<4> = [fn](auto const& v_) {
@@ -922,7 +954,7 @@ namespace ui::x86 {
                                 #endif
                             });
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<4> = [fn](auto const& v_) {
@@ -939,7 +971,7 @@ namespace ui::x86 {
                                 auto m = to_vec(v_);
                                 return from_vec<To>(_mm_packus_epi16(m, m)).lo; 
                             };
-                            return cast_iter_chunk<To>(
+                            return cast_iter_chunk<To, Saturating>(
                                 v,
                                 Matcher {
                                     case_maker<4> = [fn](auto const& v_) {
@@ -967,10 +999,7 @@ namespace ui::x86 {
 
                         } else if constexpr (sizeof(To) == 2) {
                             return saturating_cast(v);
-                        } else {
-                            auto temp = CastImpl<std::make_signed_t<To>, Saturating>{}(v);
-                            return std::bit_cast<Vec<N, To>>(temp);
-                        }
+                        } else return std::bit_cast<Vec<N, To>>(v);
                     } else {
                         auto temp = CastImpl<std::make_signed_t<To>, Saturating>{}(v);
                         return std::bit_cast<Vec<N, To>>(temp);
@@ -1010,7 +1039,7 @@ namespace ui::x86 {
                                 trunc = _mm_or_si128(masked_trunc, trunc);
                                 return from_vec<To>(_mm_packus_epi16(trunc, trunc)).lo;
                             };
-                            return cast_iter_chunk<To>(
+                            return cast_iter_chunk<To, Saturating>(
                                 v,
                                 Matcher {
                                     case_maker<4> = [fn](auto const& v_) {
@@ -1021,7 +1050,7 @@ namespace ui::x86 {
                             );
                         } else if constexpr (sizeof(To) == 2 && Saturating) {
                             return saturating_cast(v);
-                        }
+                        } else return std::bit_cast<Vec<N, To>>(v);
                     }
                     auto temp = CastImpl<To, Saturating>{}(std::bit_cast<Vec<N, std::int16_t>>(v));
                     return std::bit_cast<Vec<N, To>>(temp);
@@ -1050,7 +1079,7 @@ namespace ui::x86 {
                             #endif
                         });
                     };
-                    return cast_iter_chunk<To>(
+                    return cast_iter_chunk<To, Saturating>(
                          v,
                          Matcher {
                             case_maker<2> = [fn](auto const& v_) {
@@ -1077,7 +1106,7 @@ namespace ui::x86 {
                             #endif
                         });
                     };
-                    return cast_iter_chunk<To>(
+                    return cast_iter_chunk<To, Saturating>(
                          v,
                          Matcher {
                             case_maker<2> = [fn](auto const& v_) {
@@ -1110,7 +1139,7 @@ namespace ui::x86 {
                             #endif
                             } 
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                             v,
                             Matcher {
                                 case_maker<2> = [fn](auto const& v_) {
@@ -1166,7 +1195,7 @@ namespace ui::x86 {
                                 #endif
                             });
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<4> = [fn](auto const& v_) {
@@ -1194,7 +1223,7 @@ namespace ui::x86 {
                                         #endif
                                     });
                                 };
-                                return cast_iter_chunk<To>(
+                                return cast_iter_chunk<To, Saturating>(
                                      v,
                                      Matcher {
                                         case_maker<4> = [fn](auto const& v_) {
@@ -1206,7 +1235,7 @@ namespace ui::x86 {
                             }
                         } else if (sizeof(To) == 4 && Saturating) {
                             return saturating_cast(v);
-                        }
+                        } else return std::bit_cast<Vec<N, To>>(v);
                     }
                     auto temp = CastImpl<std::make_signed_t<To>, Saturating>{}(v);
                     return std::bit_cast<Vec<N, To>>(temp);
@@ -1227,7 +1256,7 @@ namespace ui::x86 {
                     constexpr auto fn = [](auto const& v_) {
                         return convert_unsigned_to_float(v_);
                     };
-                    return cast_iter_chunk<To>(
+                    return cast_iter_chunk<To, Saturating>(
                          v,
                          Matcher {
                             case_maker<2> = [fn](auto const& v_) {
@@ -1246,7 +1275,7 @@ namespace ui::x86 {
                     constexpr auto fn = [](auto const& v_) {
                         return convert_unsigned_to_double(v_);
                     };
-                    return cast_iter_chunk<To>(
+                    return cast_iter_chunk<To, Saturating>(
                          v,
                          Matcher {
                             case_maker<2> = [fn](auto const& v_) {
@@ -1265,7 +1294,7 @@ namespace ui::x86 {
                     if constexpr (Saturating) {
                         if constexpr (sizeof(To) == 4) {
                             return saturating_cast(v);
-                        }
+                        } else return std::bit_cast<Vec<N, To>>(v);
                     }
                     auto temp = CastImpl<std::make_signed<To>, Saturating>{}(v);
                     return std::bit_cast<Vec<N, To>>(temp);
@@ -1283,7 +1312,7 @@ namespace ui::x86 {
                                 return from_vec<To>(temp).lo;
                             } 
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                             v,
                             Matcher {
                                 case_maker<2> = [fn](auto const& v_) {
@@ -1325,7 +1354,7 @@ namespace ui::x86 {
                             return _mm512_cvtepu32_epi64(m);
                             #endif
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<2> = [fn](auto const& v_) {
@@ -1355,181 +1384,371 @@ namespace ui::x86 {
                    auto temp = CastImpl<float, Saturating>{}(v);
                    return cast_float32_to_bfloat16(temp);
                 } else if constexpr (std::same_as<To, float>) {
-                    constexpr auto fn = [](auto const& v_) {
+                    [[maybe_unused]] constexpr auto fn = [](auto const& v_) {
                         return cast_helper<To>(v_, [](auto m) {
-                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
-                            return _mm_cvtepi32_ps(m);
-                            #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                            return _mm256_cvtepi32_ps(m);
-                            #else
-                            return _mm512_cvtepi32_ps(m);
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            using type = std::decay_t<decltype(m)>;
+                            if constexpr (sizeof(type) * 8 == 128) {
+                                return from_vec<To>(_mm_cvtepi64_ps(m)).lo;
+                            } else if constexpr (sizeof(type) * 8 == 256) {
+                                return from_vec<To>(_mm256_cvtepi64_ps(m));
+                            } else {
+                                return from_vec<To>(_mm512_cvtepi64_ps(m));
+                            }
                             #endif
                         });
                     };
-                    return cast_iter_chunk<To>(
+                    return cast_iter_chunk<To, Saturating>(
                          v,
                          Matcher {
-                            case_maker<2> = [fn](auto const& v_) {
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            case_maker<1> = [fn](auto const& v_) {
                                 return fn(join(v_, v_));
                             },
-                            case_maker<4> = fn
-                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                            , case_maker<8> = fn
-                            #endif
-                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                            , case_maker<16> = fn
+                            case_maker<2> = fn,
+                            case_maker<4> = fn,
+                            case_maker<8> = fn
                             #endif
                         }
                      );
                 } else if constexpr (std::same_as<To, double>) {
-                    constexpr auto fn = [](auto const& v_) {
+                    [[maybe_unused]] constexpr auto fn = [](auto const& v_) {
                         return cast_helper<To>(v_, [](auto m) {
-                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
-                            return _mm_cvtepi32_pd(m);
-                            #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                            return _mm256_cvtepi32_pd(m);
-                            #else
-                            return _mm512_cvtepi32_pd(m);
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            using type = std::decay_t<decltype(m)>;
+                            if constexpr (sizeof(type) * 8 == 128) {
+                                return from_vec<To>(_mm_cvtepi64_pd(m)).lo;
+                            } else if constexpr (sizeof(type) * 8 == 256) {
+                                return from_vec<To>(_mm256_cvtepi64_pd(m));
+                            } else {
+                                return from_vec<To>(_mm512_cvtepi64_ps(m));
+                            }
                             #endif
                         });
                     };
-                    return cast_iter_chunk<To>(
+                    return cast_iter_chunk<To, Saturating>(
                          v,
                          Matcher {
-                            case_maker<2> = [fn](auto const& v_) {
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            case_maker<1> = [fn](auto const& v_) {
                                 return fn(join(v_, v_));
                             },
-                            case_maker<4> = fn
-                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                            , case_maker<8> = fn
+                            case_maker<2> = fn,
+                            case_maker<4> = fn,
+                            case_maker<8> = fn
                             #endif
+                        }
+                     );
+                } else if constexpr (std::is_signed_v<To>) {
+                    if constexpr (sizeof(To) == 8) return v;
+                    else {
+                        return cast_iter_chunk<To, Saturating>(
+                             v,
+                             Matcher {}
+                        );
+                    }
+                } else {
+                    if constexpr (sizeof(To) == 8) {
+                        if constexpr (Saturating) {
+                            return saturating_cast(v);
+                        } else return std::bit_cast<Vec<N, To>>(v);
+                    } else {
+                        return cast_iter_chunk<To, Saturating>(
+                             v,
+                             Matcher {}
+                        );
+                    }
+                }
+            }
+
+            template <std::size_t N>
+            UI_ALWAYS_INLINE auto operator()(
+               Vec<N, std::uint64_t> const& v
+            ) noexcept {
+                if constexpr (std::same_as<To, float16>) {
+                   auto temp = CastImpl<float, Saturating>{}(v);
+                   return cast_float32_to_float16(temp);
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                   auto temp = CastImpl<float, Saturating>{}(v);
+                   return cast_float32_to_bfloat16(temp);
+                } else if constexpr (std::same_as<To, float>) {
+                    [[maybe_unused]] constexpr auto fn = [](auto const& v_) {
+                        return cast_helper<To>(v_, [](auto m) {
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            using type = std::decay_t<decltype(m)>;
+                            if constexpr (sizeof(type) * 8 == 128) {
+                                return from_vec<To>(_mm_cvtepu64_ps(m)).lo;
+                            } else if constexpr (sizeof(type) * 8 == 256) {
+                                return from_vec<To>(_mm256_cvtepu64_ps(m));
+                            } else {
+                                return from_vec<To>(_mm512_cvtepu64_ps(m));
+                            }
+                            #endif
+                        });
+                    };
+                    return cast_iter_chunk<To, Saturating>(
+                         v,
+                         Matcher {
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            case_maker<1> = [fn](auto const& v_) {
+                                return fn(join(v_, v_));
+                            },
+                            case_maker<2> = fn,
+                            case_maker<4> = fn,
+                            case_maker<8> = fn
+                            #endif
+                        }
+                     );
+                } else if constexpr (std::same_as<To, double>) {
+                    [[maybe_unused]] constexpr auto fn = [](auto const& v_) {
+                        return cast_helper<To>(v_, [](auto m) {
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            using type = std::decay_t<decltype(m)>;
+                            if constexpr (sizeof(type) * 8 == 128) {
+                                return from_vec<To>(_mm_cvtepu64_pd(m)).lo;
+                            } else if constexpr (sizeof(type) * 8 == 256) {
+                                return from_vec<To>(_mm256_cvtepu64_pd(m));
+                            } else {
+                                return from_vec<To>(_mm512_cvtepu64_ps(m));
+                            }
+                            #endif
+                        });
+                    };
+                    return cast_iter_chunk<To, Saturating>(
+                         v,
+                         Matcher {
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            case_maker<1> = [fn](auto const& v_) {
+                                return fn(join(v_, v_));
+                            },
+                            case_maker<2> = fn,
+                            case_maker<4> = fn,
+                            case_maker<8> = fn
+                            #endif
+                        }
+                     );
+                } else if constexpr (std::is_signed_v<To>) {
+                    if constexpr (sizeof(To) == 8) return v;
+                    else {
+                        return cast_iter_chunk<To, Saturating>(
+                             v,
+                             Matcher {}
+                        );
+                    }
+                } else {
+                    if constexpr (sizeof(To) == 8) {
+                        if constexpr (Saturating) {
+                            return saturating_cast(v);
+                        } else return std::bit_cast<Vec<N, To>>(v);
+                    } else {
+                        return cast_iter_chunk<To, Saturating>(
+                             v,
+                             Matcher {}
+                        );
+                    }
+                }
+            }
+
+
+            template <std::size_t N>
+            UI_ALWAYS_INLINE auto operator()(
+               Vec<N, float> const& v
+            ) noexcept {
+                if constexpr (std::same_as<To, float16>) {
+                    return cast_float32_to_float16(v);
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    return cast_float32_to_bfloat16(v);
+                } else if constexpr (std::same_as<To, float>) {
+                    return v;
+                } else if constexpr (std::same_as<To, double>) {
+                    constexpr auto fn = [](auto const& v_) {
+                        return cast_helper<To>(v_, []<typename U>(U m) {
+                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                            return from_vec<To>(_mm_cvtps_pd(m)).lo;
+                            #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
+                            return from_vec<To>(_mm256_cvtps_pd(m));
+                            #else
+                            if constexpr (sizeof(U) * 8 == 128) {
+                                return from_vec<To>(_mm256_cvtps_pd(m));
+                            } else {
+                                return from_vec<To>(_mm512_cvtps_pd(m));
+                            }
+                            #endif
+                        });
+                    };
+                    return cast_iter_chunk<To, Saturating>(
+                         v,
+                         Matcher {
+                            case_maker<4> = [fn](auto const& v_) {
+                                return fn(join(v_, v_));
+                            },
+                            case_maker<8> = fn
                             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                             , case_maker<16> = fn
                             #endif
                         }
                      );
                 } else if constexpr (std::is_signed_v<To>) {
-                    if constexpr (sizeof(To) == 1) {
-                        auto temp = CastImpl<std::int16_t, Saturating>{}(v);
-                        return CastImpl<std::int8_t, Saturating>{}(temp);
-                    } else if constexpr (sizeof(To) == 2) {
+                    if constexpr (sizeof(To) == 4) {
                         constexpr auto fn = [](auto const& v_) {
-                            auto m = to_vec(v_);
-                            if constexpr (Saturating) {
-                                return from_vec<To>(_mm_packs_epi32(m, m)).lo;
-                            } else {
-                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                                auto temp = _mm_shuffle_epi8(m, *reinterpret_cast<__m128i const*>(constants::mask8_32_even_odd));
-                                return from_vec<To>(temp).lo;
-                            #else
-                                return from_vec<To>(_mm_cvtepi32_epi16(m)).lo;
-                            #endif
-                            } 
-                        };
-                        return cast_iter_chunk<To>(
-                            v,
-                            Matcher {
-                                case_maker<2> = [fn](auto const& v_) {
-                                    return fn(join(v_,v_)).lo;
-                                },
-                                case_maker<4> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                                , case_maker<8> = [](auto const& v_) {
-                                    auto m = to_vec(v_);
-                                    if constexpr (Saturating) {
-                                        auto vec = from_vec<To>(_mm256_packs_epi32(m, m));
-                                        return join(
-                                            vec.lo.lo,
-                                            vec.hi.lo
-                                        );
-                                    } else {
-                                    #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                                        auto temp = _mm256_shuffle_epi8(m, *reinterpret_cast<__m256i const*>(constants::mask8_32_even_odd));
-                                        auto vec = from_vec<To>(temp);
-                                        return join(
-                                            vec.lo.lo,
-                                            vec.hi.lo
-                                        );
-                                    #else
-                                        return from_vec<To>(_mm256_cvtepi32_epi16(m));
-                                    #endif
-                                    } 
-                                }
-                                #endif
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                                , case_maker<16> = [](auto const& v_) {
-                                    auto m = to_vec(v_);
-                                    if constexpr (Saturating) {
-                                        return from_vec<To>(_mm512_packs_epi32(m, m)).lo;
-                                    } else {
-                                        return from_vec<To>(_mm512_cvtepi32_epi16(m));
-                                    } 
-                                }
-                                #endif
-                            }
-                        );
-                    } else if constexpr (sizeof(To) == 4) {
-                        return v;
-                    } else if constexpr (sizeof(To) == 8) {
-                        constexpr auto fn = [](auto const& v_) {
-                            return cast_helper<To>(v_, [](__m128i m) {
+                            return cast_helper<To>(v_, []<typename U>(U m) {
                                 #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
-                                return _mm_cvtepi32_epi64(m);
+                                return from_vec<To>(_mm_cvtps_epi32(m)).lo;
                                 #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                                return _mm256_cvtepi32_epi64(m);
+                                return from_vec<To>(_mm256_cvtps_epi32(m));
                                 #else
-                                return _mm512_cvtepi32_epi64(m);
+                                if constexpr (sizeof(U) * 8 == 128) {
+                                    return from_vec<To>(_mm256_cvtps_epi32(m));
+                                } else {
+                                    return from_vec<To>(_mm512_cvtps_epi32(m));
+                                }
                                 #endif
                             });
                         };
-                        return cast_iter_chunk<To>(
+                        return cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
                                 case_maker<4> = [fn](auto const& v_) {
                                     return fn(join(v_, v_));
                                 },
                                 case_maker<8> = fn
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                , case_maker<16> = fn
+                                #endif
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                                , case_maker<32> = fn
+                                #endif
                             }
                          );
+                    } else {
+                        auto temp = CastImpl<std::int32_t>{}(v);
+                        return CastImpl<To>{}(temp);
                     }
                 } else {
-                    if constexpr (Saturating) {
-                        if constexpr (sizeof(To) == 1) {
-                            auto temp = CastImpl<std::uint16_t>{}(v); 
-                            return CastImpl<std::uint8_t>{}(temp);
-                        } else if constexpr (sizeof(To) == 2) {
-                            if constexpr (Saturating) {
-                                constexpr auto fn = [](auto const& v_) {
-                                    return cast_helper<To>(v_, [](auto m) {
-                                        #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
-                                        return _mm_packus_epi32(m, m);
-                                        #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                                        return _mm_packus_epi32(m, m);
-                                        #else
-                                        return _mm_packus_epi32(m, m);
-                                        #endif
-                                    });
-                                };
-                                return cast_iter_chunk<To>(
-                                     v,
-                                     Matcher {
-                                        case_maker<4> = [fn](auto const& v_) {
-                                            return fn(join(v_, v_));
-                                        },
-                                        case_maker<8> = fn
-                                    }
-                                 );
+                    auto temp = CastImpl<std::int32_t>{}(v);
+                    return CastImpl<To>{}(temp);
+                }  
+            }
+
+            template <std::size_t N>
+            UI_ALWAYS_INLINE auto operator()(
+               Vec<N, double> const& v
+            ) noexcept {
+                if constexpr (std::same_as<To, float16>) {
+                    auto temp = CastImpl<float>{}(v);
+                    return cast_float32_to_float16(temp);
+                } else if constexpr (std::same_as<To, bfloat16>) {
+                    auto temp = CastImpl<float>{}(v);
+                    return cast_float32_to_bfloat16(temp);
+                } else if constexpr (std::same_as<To, double>) {
+                    return v;
+                } else if constexpr (std::same_as<To, float>) {
+                    constexpr auto fn = [](auto const& v_) {
+                        return cast_helper<To>(v_, []<typename U>(U m) {
+                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                            return from_vec<To>(_mm_cvtpd_ps(m)).lo;
+                            #elif UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            if constexpr (sizeof(U) * 8 == 128) {
+                                return from_vec<To>(_mm256_cvtpd_ps(m));
+                            } else {
+                                return from_vec<To>(_mm512_cvtpd_ps(m));
                             }
-                        } else if (sizeof(To) == 4 && Saturating) {
-                            return saturating_cast(v);
+                            #endif
+                        });
+                    };
+                    return cast_iter_chunk<To, Saturating>(
+                         v,
+                         Matcher {
+                            case_maker<2> = [fn](auto const& v_) {
+                                return fn(join(v_, v_));
+                            },
+                            case_maker<4> = fn
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            , case_maker<8> = fn
+                            , case_maker<16> = fn
+                            #endif
                         }
+                     );
+                } else if constexpr (std::is_signed_v<To>) {
+                    if constexpr (sizeof(To) == 4) {
+                        constexpr auto fn = [](auto const& v_) {
+                            return cast_helper<To>(v_, []<typename U>(U m) {
+                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                                return from_vec<To>(_mm_cvtpd_epi32(m)).lo;
+                                #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
+                                if constexpr (sizeof(U) * 8 == 128) {
+                                    return from_vec<To>(_mm_cvtpd_epi32(m));
+                                } else {
+                                    return from_vec<To>(_mm256_cvtpd_epi32(m));
+                                }
+                                #else
+                                if constexpr (sizeof(U) * 8 == 128) {
+                                    return from_vec<To>(_mm_cvtpd_epi32(m));
+                                } else if constexpr (sizeof(U) * 8 == 256) {
+                                    return from_vec<To>(_mm256_cvtpd_epi32(m));
+                                } else {
+                                    return from_vec<To>(_mm512_cvtpd_epi32(m));
+                                }
+                                #endif
+                            });
+                        };
+                        return cast_iter_chunk<To, Saturating>(
+                             v,
+                             Matcher {
+                                case_maker<2> = [fn](auto const& v_) {
+                                    return fn(join(v_, v_));
+                                },
+                                case_maker<4> = fn
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                , case_maker<8> = fn
+                                #endif
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                                , case_maker<16> = fn
+                                #endif
+                            }
+                         );
+                    } else if constexpr (sizeof(To) == 8) {
+                        return cast_iter_chunk<To, Saturating>(
+                            v,
+                            Matcher {}
+                        );
+                    } else {
+                        auto temp = CastImpl<std::int32_t>{}(v);
+                        return CastImpl<To>{}(temp);
                     }
-                    auto temp = CastImpl<std::make_signed_t<To>, Saturating>{}(v);
-                    return std::bit_cast<Vec<N, To>>(temp);
+                } else {
+                    auto temp = CastImpl<std::int32_t>{}(v);
+                    return CastImpl<To>{}(temp);
+                }  
+            }
+
+            template <std::size_t N>
+            UI_ALWAYS_INLINE auto operator()(
+               Vec<N, float16> const& v
+            ) noexcept {
+                if constexpr (std::same_as<To, float16>) {
+                    return v;
+                } else if constexpr (std::same_as<To, float>) {
+                    return cast_float16_to_float32(v);
+                } else {
+                    auto temp = CastImpl<float>{}(v);
+                    return CastImpl<To>{}(temp);
                 }
             }
 
-
+            template <std::size_t N>
+            UI_ALWAYS_INLINE auto operator()(
+               Vec<N, bfloat16> const& v
+            ) noexcept {
+                if constexpr (std::same_as<To, bfloat16>) {
+                    return v;
+                } else if constexpr (std::same_as<To, float>) {
+                    return cast_bfloat16_to_float32(v);
+                } else {
+                    auto temp = CastImpl<float>{}(v);
+                    return CastImpl<To>{}(temp);
+                }
+            }
          }; 
     } // namespace internal
 
