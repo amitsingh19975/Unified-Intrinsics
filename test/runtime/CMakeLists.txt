@@ -1,2 +1,9 @@
-# add_catch_test(basic_integer_test.cpp)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|i[3-6]86)$")
+  add_subdirectory(x86)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm|aarch64|arm64)$")
+  add_subdirectory(arm)
+else()
+  add_subdirectory(emul)
+endif()
 
+add_catch_test(cast_test.cpp TRUE)
