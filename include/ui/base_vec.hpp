@@ -179,7 +179,7 @@ namespace ui {
         template <typename... Us>
             requires ((... && (std::convertible_to<Us, element_t> || std::same_as<Us, element_t>)) && (sizeof...(Us) > 1) && (sizeof...(Us) <= N))
         UI_ALWAYS_INLINE static constexpr auto load(Us... args) noexcept -> Vec {
-            std::array<element_t, elements> res = { args... };
+            std::array<element_t, elements> res = { static_cast<element_t>(args)... };
             return load(res);
         }
 
