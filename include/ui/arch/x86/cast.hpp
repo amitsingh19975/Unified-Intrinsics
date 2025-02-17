@@ -255,30 +255,13 @@ namespace ui::x86 {
         UI_ALWAYS_INLINE auto cast_iter_chunk(Vec<N, T> const& v, M const& m) noexcept -> Vec<N, To> {
             if constexpr (N == 1) {
                 std::println("Base Case of N == 1");
-                using type = std::conditional_t<std::is_signed_v<To>, std::int64_t, std::uint64_t>;
+                using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
                 if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return Vec<N, To>{ .val = static_cast<To>(float(v.val)) };
                 } else if constexpr (std::floating_point<To>) {
                     return Vec<N, To>{ .val = static_cast<To>(v.val) };
                 } else {
-                    if constexpr (Saturating && ((sizeof(T) > sizeof(To)) || (std::is_signed_v<To> != std::is_signed_v<T>))) {
-                        static constexpr auto min = static_cast<type>(std::numeric_limits<To>::min());
-                        static constexpr auto max = static_cast<type>(std::numeric_limits<To>::max());
-                        auto val = static_cast<type>(v.val);
-                        if constexpr (sizeof(To) == 8) {
-                            if (std::is_signed_v<To> && !std::is_signed_v<T>) {
-                                return Vec<N, To>{ .val = static_cast<To>(val > max ? max : val) };   
-                            } else if (!std::is_signed_v<To> && std::is_signed_v<T>) {
-                                return Vec<N, To>{ .val = static_cast<To>(val < 0 ? 0 : (val > max ? max : val)) };
-                            } else {
-                                return Vec<N, To>{ .val = static_cast<To>(std::clamp<type>(val, min, max)) };
-                            }
-                        } else {
-                            return Vec<N, To>{ .val = static_cast<To>(std::clamp<type>(val, min, max)) };
-                        }
-                    } else {
-                        return Vec<N, To>{ .val = static_cast<To>(v.val) };
-                    }
+                    return { .val = ::ui::internal::saturating_cast_helper<To, true>(v.val) };
                 }
             } else {
                 if constexpr (is_case_invocable<N, M, decltype(v)>) {

@@ -2,9 +2,7 @@
 #define AMT_UI_ARCH_ARM_MUL_HPP
 
 #include "cast.hpp"
-#include "basic.hpp"
-#include "ui/base.hpp"
-#include "ui/float.hpp"
+#include "../basic.hpp"
 #include <cassert>
 #include <cmath>
 #include <concepts>
@@ -567,6 +565,10 @@ namespace ui::arm::neon {
             );
         }
     }
+
+    namespace internal {
+        using namespace ::ui::internal;
+    } // namespace internal
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto mul_acc(

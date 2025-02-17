@@ -3,7 +3,7 @@
 
 #include "../vec_headers.hpp"
 
-#if defined(UI_ARM_HAS_NEON)
+#if defined(UI_ARM_HAS_NEON) && !defined(UI_NO_NATIVE_VECTOR)
 #include "arm/abs.hpp"
 #include "arm/add.hpp"
 #include "arm/bit.hpp"

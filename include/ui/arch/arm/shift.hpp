@@ -11,7 +11,7 @@
 #include <cstdlib>
 #include <limits>
 #include <type_traits>
-#include "basic.hpp"
+#include "../basic.hpp"
 #include "../emul/shift.hpp"
 
 namespace ui::arm::neon { 

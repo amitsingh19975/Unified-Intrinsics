@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_BASIC_HPP
 
 #include "../base.hpp"
+#include "../base_vec.hpp"
 #include <algorithm>
 #include <concepts>
 #include <cstddef>
@@ -203,6 +204,49 @@ namespace ui::internal {
         case std::round_toward_neg_infinity: return FE_DOWNWARD;
         default: return FE_TONEAREST;
         }
+    }
+
+    template <typename To, bool Saturating, typename T>
+    UI_ALWAYS_INLINE static constexpr auto saturating_cast_helper(
+        T v
+    ) noexcept -> To {
+        if constexpr (std::is_signed_v<To> == std::is_signed_v<T>) {
+            if constexpr (Saturating) {
+                if (sizeof(To) < sizeof(T)) {
+                    return static_cast<To>(
+                        std::clamp<T>(
+                            v,
+                            std::numeric_limits<To>::min(),
+                            std::numeric_limits<To>::max()
+                        )
+                    );
+                }
+            }
+        } else if constexpr (Saturating) {
+            if (std::is_signed_v<To>) {
+                // L: Sint, R: UInt
+                // L = min(R, maxOf(L))
+                if constexpr (sizeof(To) == sizeof(T)) {
+                    static constexpr auto max = std::numeric_limits<To>::max();
+                    return static_cast<To>(std::min<T>(v, max));
+                } else if constexpr (sizeof(To) < sizeof(T)) {
+                    static constexpr auto max = static_cast<T>(std::numeric_limits<To>::max());
+                    return static_cast<To>(std::min(v, max));
+                }
+            } else {
+                // L: Uint, R: SInt
+                // L = min(max(R, 0), maxOf(L)) => clamp(R, 0, min(maxOf(L), maxOf(R)))
+                if constexpr (sizeof(To) == sizeof(T)) {
+                    return static_cast<To>(std::max<T>(v, 0));
+                } else if constexpr (sizeof(To) < sizeof(T)) {
+                    static constexpr auto max = static_cast<T>(std::numeric_limits<To>::max());
+                    return static_cast<To>(std::clamp<T>(v, 0, max));
+                } else {
+                    return std::max<To>(static_cast<To>(v), 0);
+                }
+            }
+        }
+        return static_cast<To>(v);
     }
 } // namespace ui::internal
 

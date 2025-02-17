@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <limits>
 #include <type_traits>
-#include "basic.hpp"
+#include "../basic.hpp"
 
 namespace ui::arm::neon { 
 
@@ -292,6 +292,8 @@ namespace ui::arm::neon {
 
 // MARK: Widening Addition
     namespace internal {
+        using namespace ::ui::internal;
+
         template <std::size_t M, std::size_t N, std::integral T, std::integral U>
         UI_ALWAYS_INLINE auto widening_add_helper(
             Vec<N, T> const& lhs,
