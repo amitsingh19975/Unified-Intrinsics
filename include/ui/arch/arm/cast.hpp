@@ -620,6 +620,9 @@ namespace ui::arm::neon {
             ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     auto temp = CastImpl<std::uint8_t, Saturating>{}(v); 
+                    if constexpr (Saturating) {
+                        return sat_cast_helper<To>(temp);
+                    }
                     return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int16_t>) {
                     if constexpr (Saturating) {
@@ -805,6 +808,9 @@ namespace ui::arm::neon {
             ) noexcept -> Vec<N, To> {
                 if constexpr (std::same_as<To, std::int8_t>) {
                     auto temp = CastImpl<std::uint8_t, Saturating>{}(v); 
+                    if constexpr (Saturating) {
+                        return sat_cast_helper<To>(temp);
+                    }
                     return std::bit_cast<Vec<N, To>>(temp); 
                 } else if constexpr (std::same_as<To, std::int16_t>) {
                     auto temp = CastImpl<std::uint16_t, Saturating>{}(v); 

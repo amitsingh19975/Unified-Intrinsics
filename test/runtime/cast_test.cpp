@@ -1148,7 +1148,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 			auto res = sat_cast<int8_t>(v);
 			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
-			REQUIRE(res[1]  == max);
+			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
 			REQUIRE(res[3]  == 4);
 			REQUIRE(res[4]  == 5);
@@ -1161,7 +1161,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 			auto res = cast<uint8_t>(v);
 			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
-			REQUIRE(res[1]  == max);
+			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
 			REQUIRE(res[3]  == 4);
 			REQUIRE(res[4]  == 5);
@@ -1446,7 +1446,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 			auto res = cast<uint8_t>(v);
 			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
-			REQUIRE(res[1]  == max);
+			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
 			REQUIRE(res[3]  == 4);
 			REQUIRE(res[4]  == 5);
@@ -1667,7 +1667,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 			auto res = sat_cast<int8_t>(v);
 			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
-			REQUIRE(res[1]  == max);
+			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
 			REQUIRE(res[3]  == 4);
 		}

@@ -230,6 +230,7 @@ namespace ui::internal {
                     static constexpr auto max = std::numeric_limits<To>::max();
                     return static_cast<To>(std::min<T>(v, max));
                 } else if constexpr (sizeof(To) < sizeof(T)) {
+                    // Narrowing casting
                     static constexpr auto max = static_cast<T>(std::numeric_limits<To>::max());
                     return static_cast<To>(std::min(v, max));
                 }
@@ -242,7 +243,7 @@ namespace ui::internal {
                     static constexpr auto max = static_cast<T>(std::numeric_limits<To>::max());
                     return static_cast<To>(std::clamp<T>(v, 0, max));
                 } else {
-                    return std::max<To>(static_cast<To>(v), 0);
+                    return static_cast<To>(std::max<T>(v, 0));
                 }
             }
         }

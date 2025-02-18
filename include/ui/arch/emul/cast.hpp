@@ -17,11 +17,28 @@
 namespace ui::emul {
     template <typename To, std::size_t N, typename From>
     UI_ALWAYS_INLINE auto cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
-        return map([](auto v_) { return static_cast<To>(v_); }, v);
+        if constexpr (std::same_as<To, From>) return v;
+        return map([](auto v_) { 
+            if constexpr (std::floating_point<From>) {
+                static constexpr auto min = std::numeric_limits<To>::min();
+                static constexpr auto max = std::numeric_limits<To>::max();
+                if constexpr (std::integral<To>) {
+                    return static_cast<To>(std::clamp<float>(
+                        float(v_), 
+                        static_cast<float>(min),
+                        static_cast<float>(max)
+                    ));
+                } else {
+                    return static_cast<To>(float(v_));
+                }
+            }
+            return static_cast<To>(v_);
+        }, v);
     }
 
     template <typename To, std::size_t N, std::integral From>
     UI_ALWAYS_INLINE auto sat_cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
+        if constexpr (std::same_as<To, From>) return v;
         return map([](auto v_) {
             return ::ui::internal::saturating_cast_helper<To, true>(v_);
         }, v);
