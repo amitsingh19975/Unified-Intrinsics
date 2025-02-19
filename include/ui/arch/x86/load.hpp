@@ -1,0 +1,26 @@
+#ifndef AMT_ARCH_X86_LOAD_HPP
+#define AMT_ARCH_X86_LOAD_HPP
+
+#include "cast.hpp"
+#include <algorithm>
+#include <utility>
+
+namespace ui::x86 {
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE static constexpr auto load(T val) noexcept -> Vec<N, T> {
+        auto res = Vec<N, T>{};
+        std::fill_n(res.data(), N, val);
+        return res;
+    }
+
+    template <std::size_t N, unsigned Lane, std::size_t M, typename T>
+    UI_ALWAYS_INLINE static constexpr auto load(
+        Vec<M, T> const& v
+    ) noexcept -> Vec<N, T> {
+        auto res = Vec<N, T>{};
+        std::fill_n(res.data(), N, v[Lane]);
+        return res;
+    }
+} // namespace ui::x86
+
+#endif // AMT_ARCH_X86_LOAD_HPP
