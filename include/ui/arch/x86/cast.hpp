@@ -758,120 +758,6 @@ namespace ui::x86 {
             }
         }
 
-        template <std::integral To, std::size_t N, std::floating_point T>
-        UI_ALWAYS_INLINE auto apply_infinity_mask_helper(Vec<N, T> const& v, Vec<N, To> const& f) noexcept -> Vec<N, To> {
-            auto m = to_vec(v);
-            static constexpr auto inf = std::numeric_limits<T>::infinity();
-            static constexpr auto ninf = -std::numeric_limits<T>::infinity();
-            if constexpr (std::same_as<T, float>) {
-                if constexpr (sizeof(m) == sizeof(__m128)) {
-                    auto mi = _mm_set1_ps(ninf);
-                    auto mx = _mm_set1_ps(inf);
-                    auto mi_mask = _mm_cmp_ps(m, mi, _CMP_EQ_UQ);
-                    auto mx_mask = _mm_cmp_ps(m, mx, _CMP_EQ_UQ);
-                    auto temp = _mm_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::min())),
-                        _mm_castps_si128(mi_mask)
-                    );
-                    return from_vec<To>(_mm_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::max())),
-                        _mm_castps_si128(mx_mask)
-                    ));
-                }
-                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                if constexpr (sizeof(m) == sizeof(__m256i)) {
-                    auto mi = _mm256_set1_ps(ninf);
-                    auto mx = _mm256_set1_ps(inf);
-                    auto mi_mask = _mm256_cmp_ps(m, mi, _CMP_EQ_UQ);
-                    auto mx_mask = _mm256_cmp_ps(m, mx, _CMP_EQ_UQ);
-                    auto temp = _mm256_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::min())),
-                        _mm256_castps_si128(mi_mask)
-                    );
-                    return from_vec<To>(_mm256_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::max())),
-                        _mm256_castps_si128(mx_mask)
-                    ));
-                }
-                #endif
-                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                if constexpr (sizeof(m) == sizeof(__m512i)) {
-                    auto mi = _mm512_set1_ps(ninf);
-                    auto mx = _mm512_set1_ps(inf);
-                    auto mi_mask = _mm512_cmp_ps(m, mi, _CMP_EQ_UQ);
-                    auto mx_mask = _mm512_cmp_ps(m, mx, _CMP_EQ_UQ);
-                    auto temp = _mm512_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::min())),
-                        _mm512_castps_si128(mi_mask)
-                    );
-                    return from_vec<To>(_mm512_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::max())),
-                        _mm512_castps_si128(mx_mask)
-                    ));
-                }
-                #endif
-            } else {
-                if constexpr (sizeof(m) == sizeof(__m128)) {
-                    auto mi = _mm_set1_pd(ninf);
-                    auto mx = _mm_set1_pd(inf);
-                    auto mi_mask = _mm_cmp_pd(m, mi, _CMP_EQ_UQ);
-                    auto mx_mask = _mm_cmp_pd(m, mx, _CMP_EQ_UQ);
-                    auto temp = _mm_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::min())),
-                        _mm_castpd_si128(mi_mask)
-                    );
-                    return from_vec<To>(_mm_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::max())),
-                        _mm_castpd_si128(mx_mask)
-                    ));
-                }
-                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                if constexpr (sizeof(m) == sizeof(__m256i)) {
-                    auto mi = _mm256_set1_pd(ninf);
-                    auto mx = _mm256_set1_pd(inf);
-                    auto mi_mask = _mm256_cmp_pd(m, mi, _CMP_EQ_UQ);
-                    auto mx_mask = _mm256_cmp_pd(m, mx, _CMP_EQ_UQ);
-                    auto temp = _mm256_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::min())),
-                        _mm256_castpd_si128(mi_mask)
-                    );
-                    return from_vec<To>(_mm256_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::max())),
-                        _mm256_castpd_si128(mx_mask)
-                    ));
-                }
-                #endif
-                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                if constexpr (sizeof(m) == sizeof(__m512i)) {
-                    auto mi = _mm512_set1_pd(ninf);
-                    auto mx = _mm512_set1_pd(inf);
-                    auto mi_mask = _mm512_cmp_pd(m, mi, _CMP_EQ_UQ);
-                    auto mx_mask = _mm512_cmp_pd(m, mx, _CMP_EQ_UQ);
-                    auto temp = _mm512_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::min())),
-                        _mm512_castpd_si128(mi_mask)
-                    );
-                    return from_vec<To>(_mm512_blendv_epi8(
-                        to_vec(f),
-                        to_vec(Vec<N, To>::load(std::numeric_limits<To>::max())),
-                        _mm512_castpd_si128(mx_mask)
-                    ));
-                }
-                #endif
-            }
-        }
-
         template <typename To, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto saturating_helper(Vec<N, T> const& v) noexcept -> Vec<N, T> {
             if constexpr (std::is_signed_v<T> == std::is_signed_v<To>) {
@@ -909,30 +795,13 @@ namespace ui::x86 {
         }
 
         template <typename To, std::size_t N, std::floating_point T>
-        UI_ALWAYS_INLINE auto apply_infinity_mask(Vec<N, T> const& v, Vec<N, To> const& f) noexcept -> Vec<N, To> {
-            if constexpr (std::floating_point<To>) return v;
-            if constexpr (N == 1) {
-                if (v.val == std::numeric_limits<T>::infinity()) {
-                    return { .val = std::numeric_limits<To>::max() };
-                }
-                if (v.val == -std::numeric_limits<T>::infinity()) {
-                    return { .val = std::numeric_limits<To>::min() };
-                }
-                return f;
-            } else if constexpr (N == (128 / (sizeof(T) * 8 * 2))) {
-                return apply_infinity_mask_helper(join(v, v), join(f, f));
-            } else if constexpr (N == (128 / (sizeof(T) * 8))) {
-                return apply_infinity_mask_helper(v, f);
-            } else if constexpr (N == (256 / (sizeof(T) * 8))) {
-                return apply_infinity_mask_helper(v, f);
-            } else if constexpr (N == (512 / (sizeof(T) * 8))) {
-                return apply_infinity_mask_helper(v, f);
-            } else {
-                return join(
-                    apply_infinity_mask(v.lo, f.lo),
-                    apply_infinity_mask(v.hi, f.hi)
-                );
-            }
+        UI_ALWAYS_INLINE auto apply_infinity_mask(Vec<N, T> const& v, Vec<N, To> const& t) noexcept -> Vec<N, To> {
+            if constexpr (std::floating_point<To>) return t;
+            return map([](auto v_, auto t_) {
+                return v_ == std::numeric_limits<T>::infinity()
+                    ? std::numeric_limits<To>::max()
+                    : (v_ == -std::numeric_limits<T>::infinity() ? std::numeric_limits<To>::min() : t_);
+            }, v, t);
         }
 
         template <std::size_t N, typename T>
@@ -1078,7 +947,7 @@ namespace ui::x86 {
             }
         }
 
-        template <typename To, bool Saturating = false>
+        template <typename To, bool Saturating = false, bool ClampFp = true>
         struct CastImpl {
             template <std::size_t N>
             UI_ALWAYS_INLINE auto operator()(
@@ -2365,17 +2234,21 @@ namespace ui::x86 {
                                 #endif
                             }
                          );
-                         return apply_infinity_mask(v, temp);
-                    } else {
-                         auto t0 = CastImpl<std::int32_t, Saturating>{}(v);
-                         auto t1 = CastImpl<To, Saturating>{}(t0);
-                         return apply_infinity_mask(v, t1);
+                        if constexpr (ClampFp) {
+                            return apply_infinity_mask(v, temp);
+                        } else {
+                            return temp;
+                        }
                     }
+                }
+
+                auto t0 = CastImpl<std::int32_t, Saturating, false>{}(v);
+                auto t1 = CastImpl<To, Saturating, false>{}(t0);
+                if constexpr (ClampFp) {
+                    return apply_infinity_mask(v, t1);
                 } else {
-                     auto t0 = CastImpl<std::int32_t, Saturating>{}(v);
-                     auto t1 = CastImpl<To, Saturating>{}(t0);
-                     return apply_infinity_mask(v, t1);
-                }  
+                    return t1;
+                }
             }
 
             template <std::size_t N>
@@ -2392,82 +2265,125 @@ namespace ui::x86 {
                     return v;
                 } else if constexpr (std::same_as<To, float>) {
                     constexpr auto fn = [](auto const& v_) {
-                        return cast_helper<To>(v_, []<typename U>(U m) {
-                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                        auto m = to_vec(v_);
+                        #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                        if constexpr (sizeof(v_) == sizeof(__m128)) {
                             return from_vec<To>(_mm_cvtpd_ps(m)).lo;
-                            #elif UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                            if constexpr (sizeof(U) * 8 == 128) {
-                                return from_vec<To>(_mm256_cvtpd_ps(m));
-                            } else {
-                                return from_vec<To>(_mm512_cvtpd_ps(m));
-                            }
-                            #endif
-                        });
+                        }
+                        #else
+                        if constexpr (sizeof(v_) == sizeof(__m128)) {
+                            return from_vec<To>(_mm256_cvtpd_ps(m));
+                        }
+                        #endif
+                        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                        if constexpr (sizeof(v_) == sizeof(__m256)) {
+                            return from_vec<To>(_mm512_cvtpd_ps(m));
+                        }
+                        #endif
                     };
                     return cast_iter_chunk<To, Saturating>(
                          v,
                          Matcher {
-                            case_maker<2> = [fn](auto const& v_) {
-                                return fn(join(v_, v_));
+                            case_maker<1> = [fn](auto const& v_) {
+                                return Vec<1, To>{ .val = static_cast<To>(v_.val) };
                             },
-                            case_maker<4> = fn
+                            case_maker<2> = fn
                             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                            , case_maker<8> = fn
-                            , case_maker<16> = fn
+                            , case_maker<4> = fn
+                            , case_maker8> = fn
                             #endif
                         }
                      );
                 } else if constexpr (std::is_signed_v<To>) {
                     if constexpr (sizeof(To) == 4) {
                         constexpr auto fn = [](auto const& v_) {
-                            return cast_helper<To>(v_, []<typename U>(U m) {
-                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
-                                return from_vec<To>(_mm_cvtpd_epi32(m)).lo;
-                                #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                                if constexpr (sizeof(U) * 8 == 128) {
-                                    return from_vec<To>(_mm_cvtpd_epi32(m));
-                                } else {
-                                    return from_vec<To>(_mm256_cvtpd_epi32(m));
-                                }
-                                #else
-                                if constexpr (sizeof(U) * 8 == 128) {
-                                    return from_vec<To>(_mm_cvtpd_epi32(m));
-                                } else if constexpr (sizeof(U) * 8 == 256) {
-                                    return from_vec<To>(_mm256_cvtpd_epi32(m));
-                                } else {
-                                    return from_vec<To>(_mm512_cvtpd_epi32(m));
-                                }
-                                #endif
-                            });
+                            auto m = to_vec(v_);
+                            if constexpr (sizeof(m) == sizeof(__m128)) {
+                                return from_vec<To>(_mm_cvtpd_epi32(m));
+                            }
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                            if constexpr (sizeof(m) == sizeof(__m256)) {
+                                return from_vec<To>(_mm256_cvtpd_epi32(m));
+                            }
+                            #endif
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                            if constexpr (sizeof(m) == sizeof(__m256)) {
+                                return from_vec<To>(_mm512_cvtpd_epi32(m));
+                            }
+                            #endif
                         };
-                        return cast_iter_chunk<To, Saturating>(
+                        auto temp = cast_iter_chunk<To, Saturating>(
                              v,
                              Matcher {
-                                case_maker<2> = [fn](auto const& v_) {
-                                    return fn(join(v_, v_));
+                                case_maker<1> = [fn](auto const& v_) {
+                                    return Vec<1, To>{ .val = static_cast<To>(v_.val) };
                                 },
-                                case_maker<4> = fn
+                                case_maker<2> = fn
                                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                                , case_maker<8> = fn
+                                , case_maker<4> = fn
                                 #endif
                                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                                , case_maker<16> = fn
+                                , case_maker<8> = fn
                                 #endif
                             }
                          );
+                        if constexpr (ClampFp) {
+                            return apply_infinity_mask(v, temp);
+                        } else {
+                            return temp;
+                        }
                     } else if constexpr (sizeof(To) == 8) {
-                        return cast_iter_chunk<To, Saturating>(
-                            v,
-                            Matcher {}
-                        );
-                    } else {
-                        auto temp = CastImpl<std::int32_t>{}(v);
-                        return CastImpl<To>{}(temp);
+                        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                        constexpr auto fn = [](auto const& v_) {
+                            auto m = to_vec(v_);
+                            if constexpr (sizeof(m) == sizeof(__m128)) {
+                                return from_vec<To>(_mm_cvtpd_epi64(m));
+                            }
+                            if constexpr (sizeof(m) == sizeof(__m256)) {
+                                return from_vec<To>(_mm256_cvtpd_epi64(m));
+                            }
+                            if constexpr (sizeof(m) == sizeof(__m256)) {
+                                return from_vec<To>(_mm512_cvtpd_epi64(m));
+                            }
+                        };
+                        auto temp = cast_iter_chunk<To, Saturating>(
+                             v,
+                             Matcher {
+                                case_maker<1> = [fn](auto const& v_) {
+                                    return Vec<1, To>{ .val = static_cast<To>(v_.val) };
+                                },
+                                case_maker<2> = fn,
+                                case_maker<4> = fn,
+                                case_maker<8> = fn
+                            }
+                         );
+                        if constexpr (ClampFp) {
+                            return apply_infinity_mask(v, temp);
+                        } else {
+                            return temp;
+                        }
+                        #else
+                        return map([](auto v_) {
+                            if constexpr (ClampFp) {
+                                if (v_ == INFINITY) {
+                                    return std::numeric_limits<To>::max();
+                                } else if (v_ == -INFINITY) {
+                                    return std::numeric_limits<To>::min();
+                                }
+                            }
+                            return static_cast<To>(v_);
+                        }, v);
+                        #endif
                     }
+                }
+
+                auto t0 = CastImpl<std::int64_t, Saturating, false>{}(v);
+                auto t1 = CastImpl<To, Saturating, false>{}(t0);
+                if constexpr (ClampFp) {
+                    return apply_infinity_mask(v, t1);
                 } else {
-                    auto temp = CastImpl<std::int32_t>{}(v);
-                    return CastImpl<To>{}(temp);
-                }  
+                    return t1;
+                }
             }
 
             template <std::size_t N>
