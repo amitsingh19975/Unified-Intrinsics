@@ -2433,7 +2433,7 @@ namespace ui::x86 {
 
     template <std::size_t R, std::size_t C, typename T>
     UI_ALWAYS_INLINE constexpr auto to_vec(VecMat<R, C, T> const& m) noexcept {
-        if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat> || std::integeral<T>) {
+        if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16> || std::integral<T>) {
             if constexpr (sizeof(m) == sizeof(__m128)) {
                 return std::bit_cast<__m128i>(m); // 16bit integers for (b)float16
             }
@@ -2481,16 +2481,16 @@ namespace ui::x86 {
     template <unsigned R, unsigned C, typename T>
     UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
         if constexpr (sizeof(T) * R * C == sizeof(__m128)) {
-            return std::bit_cast<VecMat<R, C, T>>(m);
+            return std::bit_cast<VecMat<R, C, T>>(v);
         }
         #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
         if constexpr (sizeof(T) * R * C == sizeof(__m256)) {
-            return std::bit_cast<VecMat<R, C, T>>(m);
+            return std::bit_cast<VecMat<R, C, T>>(v);
         }
         #endif
         #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
         if constexpr (sizeof(T) * R * C == sizeof(__m256)) {
-            return std::bit_cast<VecMat<R, C, T>>(m);
+            return std::bit_cast<VecMat<R, C, T>>(v);
         }
         #endif
     }
