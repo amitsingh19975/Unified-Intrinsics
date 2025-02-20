@@ -16,7 +16,6 @@
 #include "basic.hpp"
 
 namespace ui::x86 {
-
    template <std::size_t N, typename T>
    UI_ALWAYS_INLINE constexpr auto to_vec(Vec<N, T> const& v) noexcept {
       if constexpr (std::floating_point<T>) {
@@ -2430,6 +2429,70 @@ namespace ui::x86 {
     template <typename To, std::size_t N, typename From>
     UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
         return std::bit_cast<Vec<N, To>>(v);
+    }
+
+    template <std::size_t R, std::size_t C, typename T>
+    UI_ALWAYS_INLINE constexpr auto to_vec(VecMat<R, C, T> const& m) noexcept {
+        if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat> || std::integeral<T>) {
+            if constexpr (sizeof(m) == sizeof(__m128)) {
+                return std::bit_cast<__m128i>(m); // 16bit integers for (b)float16
+            }
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+            if constexpr (sizeof(m) == sizeof(__m256)) {
+                return std::bit_cast<__m256i>(m);
+            }
+            #endif
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+            if constexpr (sizeof(m) == sizeof(__m256)) {
+                return std::bit_cast<__m512i>(m);
+            }
+            #endif
+        } else if constexpr (std::same_as<T, float>) {
+            if constexpr (sizeof(m) == sizeof(__m128)) {
+                return std::bit_cast<__m128>(m);
+            }
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+            if constexpr (sizeof(m) == sizeof(__m256)) {
+                return std::bit_cast<__m256>(m);
+            }
+            #endif
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+            if constexpr (sizeof(m) == sizeof(__m256)) {
+                return std::bit_cast<__m512>(m);
+            }
+            #endif
+        } else if constexpr (std::same_as<T, double>) {
+            if constexpr (sizeof(m) == sizeof(__m128)) {
+                return std::bit_cast<__m128d>(m);
+            }
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+            if constexpr (sizeof(m) == sizeof(__m256)) {
+                return std::bit_cast<__m256d>(m);
+            }
+            #endif
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+            if constexpr (sizeof(m) == sizeof(__m256)) {
+                return std::bit_cast<__m512d>(m);
+            }
+            #endif
+        }
+    }
+
+    template <unsigned R, unsigned C, typename T>
+    UI_ALWAYS_INLINE constexpr auto from_vec(T const& v) noexcept {
+        if constexpr (sizeof(T) * R * C == sizeof(__m128)) {
+            return std::bit_cast<VecMat<R, C, T>>(m);
+        }
+        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+        if constexpr (sizeof(T) * R * C == sizeof(__m256)) {
+            return std::bit_cast<VecMat<R, C, T>>(m);
+        }
+        #endif
+        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+        if constexpr (sizeof(T) * R * C == sizeof(__m256)) {
+            return std::bit_cast<VecMat<R, C, T>>(m);
+        }
+        #endif
     }
 } // namespace ui:x86
 
