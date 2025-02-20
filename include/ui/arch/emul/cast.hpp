@@ -23,11 +23,12 @@ namespace ui::emul {
                 static constexpr auto min = std::numeric_limits<To>::min();
                 static constexpr auto max = std::numeric_limits<To>::max();
                 if constexpr (std::integral<To>) {
-                    return static_cast<To>(std::clamp<float>(
-                        float(v_), 
-                        static_cast<float>(min),
-                        static_cast<float>(max)
-                    ));
+					if (v_ == std::numeric_limits<From>::infinity()) {
+						return max;
+					} else if (v_ == -std::numeric_limits<From>::infinity()) {
+						return min;
+					}
+					return static_cast<To>(v_);
                 } else {
                     return static_cast<To>(float(v_));
                 }
