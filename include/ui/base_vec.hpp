@@ -21,6 +21,10 @@
     #include "arch/arm/join.hpp"
 #endif
 
+#if UI_CPU_SSE_LEVEL > UI_CPU_SSE_LEVEL_SSE41
+    #include "arch/x86/join.hpp"
+#endif
+
 namespace ui {
 
     template <std::size_t... Is, std::size_t N, typename T>
@@ -274,6 +278,8 @@ namespace ui {
     ) noexcept -> Vec<2 * N, T> {
         #ifdef UI_ARM_HAS_NEON
         return arm::neon::join_impl(x, y); 
+        #elif UI_CPU_SSE_LEVEL > UI_CPU_SSE_LEVEL_SSE41
+        return x86::join_impl(x, y); 
         #else
         return { x, y };
         #endif
