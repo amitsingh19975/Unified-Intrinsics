@@ -62,15 +62,15 @@ namespace ui::x86 {
                 if constexpr (std::same_as<T, float>) {
                     auto x0 = std::bit_cast<__m256>(x);
                     auto y0 = std::bit_cast<__m256>(y);
-                    return cast(_mm512_insertf32x8(_mm512_castps256_ps512(x0), y0));
+                    return cast(_mm512_insertf32x8(_mm512_castps256_ps512(x0), y0, 0));
                 } else if constexpr (std::same_as<T, double>) {
                     auto x0 = std::bit_cast<__m256d>(x);
                     auto y0 = std::bit_cast<__m256d>(y);
-                    return cast(_mm512_insertf64x4(_mm512_castpd256_pd512(x0), y0));
+                    return cast(_mm512_insertf64x4(_mm512_castpd256_pd512(x0), y0, 0));
                 } else {
                     auto x0 = std::bit_cast<__m256i>(x);
                     auto y0 = std::bit_cast<__m256i>(y);
-                    return cast(_mm512_inserti64x4(_mm512_castsi256_si512(x0), y0));
+                    return cast(_mm512_inserti64x4(_mm512_castsi256_si512(x0), y0, 0));
                 }
             }
             #endif
