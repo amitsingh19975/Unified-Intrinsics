@@ -67,13 +67,13 @@ namespace ui::emul {
     }
 // !MARK
 //
-// MARK: Bitwise Not-OR
+// MARK: Bitwise Not-OR (~lhs) | rhs
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto bitwise_nor(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return map([](auto l, auto r) { return static_cast<T>(~(l | r)); }, lhs, rhs);
+        return map([](auto l, auto r) { return static_cast<T>((~l) | r); }, lhs, rhs);
     }
 // !MARK
 } // namespace ui::emul
