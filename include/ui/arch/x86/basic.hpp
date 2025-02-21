@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace ui {
+namespace ui::x86 {
     namespace constants {
         alignas(16) static constexpr std::int8_t mask8_16_even_odd[32] = {
             0,  2,  4,  6,  8,  10, 12, 14,
@@ -22,6 +22,6 @@ namespace ui {
 
         static constexpr auto swap_hi_low32 = 0b01'00'11'10; // (2 | (3 << 2) | (0 << 4) | (1 << 6));
     }
-}
+} // namespace ui::x86
 
 #endif // AMT_UI_ARCH_X86_BASIC_HPP
