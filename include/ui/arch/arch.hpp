@@ -30,6 +30,8 @@
 #elif (UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE41) && !defined(UI_NO_NATIVE_VECTOR)
     #include "x86/cast.hpp"
     #include "x86/load.hpp"
+    #include "x86/cmp.hpp"
+    #include "x86/logical.hpp"
     namespace ui {
         using namespace x86;
     }

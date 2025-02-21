@@ -16,90 +16,171 @@
 #include "basic.hpp"
 
 namespace ui::x86 {
-   template <std::size_t N, typename T>
-   UI_ALWAYS_INLINE constexpr auto to_vec(Vec<N, T> const& v) noexcept {
-      if constexpr (std::floating_point<T>) {
-            if constexpr (std::same_as<T, float>) {
-                if constexpr (N == 4) {
-                    return std::bit_cast<__m128>(v);
-                } else if constexpr (N == 8) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                    return std::bit_cast<__m256>(v);
-                    #endif
-                } else if constexpr (N == 16) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                    return std::bit_cast<__m512>(v);
-                    #endif
-                }
-            } else if constexpr (std::same_as<T, double>) {
-                if constexpr (N == 2) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE2
-                    return std::bit_cast<__m128d>(v);
-                    #endif
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE constexpr auto to_vec(Vec<N, T> const& v) noexcept {
+       if constexpr (std::floating_point<T>) {
+             if constexpr (std::same_as<T, float>) {
+                 if constexpr (N == 4) {
+                     return std::bit_cast<__m128>(v);
+                 } else if constexpr (N == 8) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                     return std::bit_cast<__m256>(v);
+                     #endif
+                 } else if constexpr (N == 16) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                     return std::bit_cast<__m512>(v);
+                     #endif
+                 }
+             } else if constexpr (std::same_as<T, double>) {
+                 if constexpr (N == 2) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE2
+                     return std::bit_cast<__m128d>(v);
+                     #endif
+                 } else if constexpr (N == 4) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                     return std::bit_cast<__m256d>(v);
+                     #endif
+                 } else if constexpr (N == 8) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                     return std::bit_cast<__m512d>(v);
+                     #endif
+                 }
+             } else if constexpr (std::same_as<T, float16>) {
+                 if constexpr (N == 8) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE2
+                     return std::bit_cast<__m128i>(v);
+                     #endif
+                 } else if constexpr (N == 16) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                     return std::bit_cast<__m256i>(v);
+                     #endif
+                 } else if constexpr (N == 32) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                     return std::bit_cast<__m512i>(v);
+                     #endif
+                 }
+             } else if constexpr (std::same_as<T, bfloat16>) {
+                 if constexpr (N == 8) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE2
+                     return std::bit_cast<__m128i>(v);
+                     #endif
+                 } else if constexpr (N == 16) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                     return std::bit_cast<__m256i>(v);
+                     #endif
+                 } else if constexpr (N == 32) {
+                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                     return std::bit_cast<__m512i>(v);
+                     #endif
+                 }
+             } else {
+                 static_assert(
+                     sizeof(T) == sizeof(float)   ||
+                     sizeof(T) == sizeof(double)  ||
+                     sizeof(T) == sizeof(float16) || 
+                     sizeof(T) == sizeof(bfloat16),
+                     "Unknow floating-point type, expecting 'float', 'ui::float16', 'ui::bfloat16' or 'double'"
+                 );
+             }
+         } else {
+             static constexpr auto bits = N * sizeof(T) * 8;
+             if constexpr (bits == 128) {
+                 return std::bit_cast<__m128i>(v);
+             } else if constexpr (bits == 256) {
+                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                 return std::bit_cast<__m256i>(v);
+                 #endif
+             } else if constexpr (bits == 512) {
+                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                 return std::bit_cast<__m512i>(v);
+                 #endif
+             } else {
+                 static_assert(bits >= 128, "N * sizeof(T) * 8 must be at least 128 bits");
+                 static_assert(bits <= 512, "N * sizeof(T) * 8 must be at most 512 bits");
+             }
+         } 
+    }
+    
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE constexpr auto fit_to_vec(Vec<N, T> const& v) noexcept {
+       if constexpr (std::floating_point<T>) {
+             if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 1) {
+                    return _mm_castsi128_ps(_mm_cvtsi32_si128(std::bit_cast<std::int32_t>(v)));
+                } else if constexpr (N == 2) {
+                    return _mm_castsi128_ps(_mm_cvtsi64_si128(std::bit_cast<std::int64_t>(v)));
                 } else if constexpr (N == 4) {
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                    return std::bit_cast<__m256d>(v);
+                    return _mm256_castps128_ps256(to_vec(v));
                     #endif
                 } else if constexpr (N == 8) {
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                    return std::bit_cast<__m512d>(v);
+                    return _mm512_castps256_ps512(to_vec(v));
                     #endif
                 }
-            } else if constexpr (std::same_as<T, float16>) {
-                if constexpr (N == 8) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE2
-                    return std::bit_cast<__m128i>(v);
+             } else if constexpr (std::same_as<T, double>) {
+                if constexpr (N == 1) {
+                    return _mm_castsi128_pd(_mm_cvtsi64_si128(std::bit_cast<std::int64_t>(v)));
+                } else if constexpr (N == 2) {
+                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                    return _mm256_castpd128_pd256(to_vec(v));
+                    #endif
+                } else if constexpr (N == 4) {
+                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                    return _mm512_castpd256_pd512(to_vec(v));
+                    #endif
+                }
+             } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                if constexpr (N == 4) {
+                    return _mm_cvtsi64_si128(std::bit_cast<std::int64_t>(v));
+                } else if constexpr (N == 8) {
+                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                    return _mm256_castsi128_si256(to_vec(v));
                     #endif
                 } else if constexpr (N == 16) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                    return std::bit_cast<__m256i>(v);
-                    #endif
-                } else if constexpr (N == 32) {
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                    return std::bit_cast<__m512i>(v);
+                    return _mm512_castsi256_si512(to_vec(v));
                     #endif
                 }
-            } else if constexpr (std::same_as<T, bfloat16>) {
-                if constexpr (N == 8) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE2
-                    return std::bit_cast<__m128i>(v);
-                    #endif
-                } else if constexpr (N == 16) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                    return std::bit_cast<__m256i>(v);
-                    #endif
-                } else if constexpr (N == 32) {
-                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                    return std::bit_cast<__m512i>(v);
-                    #endif
-                }
-            } else {
-                static_assert(
-                    sizeof(T) == sizeof(float)   ||
-                    sizeof(T) == sizeof(double)  ||
-                    sizeof(T) == sizeof(float16) || 
-                    sizeof(T) == sizeof(bfloat16),
-                    "Unknow floating-point type, expecting 'float', 'ui::float16', 'ui::bfloat16' or 'double'"
-                );
-            }
-        } else {
+             } else {
+                 static_assert(
+                     sizeof(T) == sizeof(float)   ||
+                     sizeof(T) == sizeof(double)  ||
+                     sizeof(T) == sizeof(float16) || 
+                     sizeof(T) == sizeof(bfloat16),
+                     "Unknow floating-point type, expecting 'float', 'ui::float16', 'ui::bfloat16' or 'double'"
+                 );
+             }
+         } else {
             static constexpr auto bits = N * sizeof(T) * 8;
-            if constexpr (bits == 128) {
-                return std::bit_cast<__m128i>(v);
-            } else if constexpr (bits == 256) {
+            if constexpr (sizeof(T) == 2) {
+                if constexpr (N == 1) {
+                   return _mm_cvtsi16_si128(std::bit_cast<std::int16_t>(v));
+                } if constexpr (N == 2) {
+                   return _mm_cvtsi32_si128(std::bit_cast<std::int32_t>(v));
+                }
+            } else if constexpr (sizeof(T) == 4) {
+                if constexpr (N == 1) {
+                   return _mm_cvtsi32_si128(std::bit_cast<std::int16_t>(v));
+                }
+            }
+            if constexpr (bits * 2 == 128) {
+                return _mm_cvtsi64_si128(std::bit_cast<std::int64_t>(v));
+            } else if constexpr (bits * 2 == 256) {
                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
-                return std::bit_cast<__m256i>(v);
+                return _mm256_castsi128_si256(to_vec(v));
                 #endif
-            } else if constexpr (bits == 512) {
+            } else if constexpr (bits * 2 == 512) {
                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                return std::bit_cast<__m512i>(v);
+                return _mm512_castsi256_si512(to_vec(v));
                 #endif
             } else {
-                static_assert(bits >= 128, "N * sizeof(T) * 8 must be at least 128 bits");
-                static_assert(bits <= 512, "N * sizeof(T) * 8 must be at most 512 bits");
+                static_assert(bits >= 64, "N * sizeof(T) * 8 must be at least 64 bits");
+                static_assert(bits <= 256, "N * sizeof(T) * 8 must be at most 256 bits");
             }
-        } 
-   }
+         } 
+    }
+
 
     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE2
     template <typename T, std::size_t N = sizeof(__m128i) / sizeof(T)>
