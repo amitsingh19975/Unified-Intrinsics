@@ -54,7 +54,7 @@ namespace ui::emul {
     }
 
 // MARK: Pairwise Maximum
-    template <std::size_t N, std::floating_point T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto pmax(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -108,7 +108,7 @@ namespace ui::emul {
 // !MARK
 
 // MARK: Pairwise Minimum
-    template <std::size_t N, std::floating_point T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto pmin(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
