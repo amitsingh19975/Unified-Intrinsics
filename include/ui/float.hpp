@@ -578,7 +578,7 @@ namespace std {
 
         static constexpr const bool is_integer = false;
         static constexpr const bool is_exact   = false;
-        static constexpr const int radix       = FLT_RADIX;
+        static constexpr const int radix       = std::numeric_limits<float>::radix;
         #ifndef UI_HAS_CUSTOM_FLOAT16_IMPL
         static constexpr type epsilon() noexcept { return __FLT16_EPSILON__; }
         static constexpr const int min_exponent   = __FLT16_MIN_EXP__;

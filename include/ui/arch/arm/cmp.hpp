@@ -138,7 +138,7 @@ namespace ui::arm::neon {
     }
     
     /**
-     * @return (lhs & rhs) == 0
+     * @return (lhs & rhs) != 0
      */
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto cmp(

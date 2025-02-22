@@ -1,6 +1,7 @@
 #ifndef AMT_UI_ARCH_ARM_JOIN_HPP
 #define AMT_UI_ARCH_ARM_JOIN_HPP
 
+#include "../../forward.hpp"
 #include "../../vec_headers.hpp"
 #include "../../float.hpp"
 #include <bit>
@@ -10,11 +11,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <type_traits>
-
-namespace ui {
-    template<std::size_t N, typename T>
-    struct alignas(N * sizeof(T)) Vec;
-}
 
 namespace ui::arm::neon { 
     template <std::size_t N, typename T>
