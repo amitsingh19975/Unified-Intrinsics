@@ -32,6 +32,7 @@
     #include "x86/load.hpp"
     #include "x86/cmp.hpp"
     #include "x86/logical.hpp"
+    #include "x86/minmax.hpp"
     namespace ui {
         using namespace x86;
     }
