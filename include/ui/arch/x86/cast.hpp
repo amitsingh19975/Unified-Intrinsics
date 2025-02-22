@@ -254,8 +254,6 @@ namespace ui::x86 {
         template <typename To, bool Saturating, typename M, std::size_t N, typename T>
         UI_ALWAYS_INLINE auto cast_iter_chunk(Vec<N, T> const& v, M const& m) noexcept -> Vec<N, To> {
             if constexpr (N == 1) {
-                std::println("Base Case of N == 1");
-                using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
                 if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return Vec<N, To>{ .val = static_cast<To>(float(v.val)) };
                 } else if constexpr (std::floating_point<To>) {
