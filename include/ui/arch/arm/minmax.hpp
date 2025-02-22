@@ -412,7 +412,7 @@ namespace ui::arm::neon {
         if constexpr (N == 1) {
             return v.val;
         } else if constexpr (N == 2) {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpmaxs_f32(to_vec(v)));
                 } else if constexpr (std::same_as<T, double>) {
@@ -440,7 +440,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& y
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 2) {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
                     return from_vec<T>(vpmaxnm_f32(to_vec(x), to_vec(y)));
                 } else if constexpr (std::same_as<T, double>) {
@@ -452,7 +452,7 @@ namespace ui::arm::neon {
                 {.val = internal::maxnm(y.lo.val, y.hi.val)}
             };
         } else {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 4) {
                     return from_vec<T>(vpmaxnmq_f32(to_vec(x), to_vec(y)));
@@ -490,7 +490,7 @@ namespace ui::arm::neon {
         if constexpr (N == 1) {
             return v.val;
         } else if constexpr (N == 2) {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpmaxnms_f32(to_vec(v)));
                 } else if constexpr (std::same_as<T, double>) {
@@ -635,7 +635,7 @@ namespace ui::arm::neon {
         if constexpr (N == 1) {
             return v.val;
         } else if constexpr (N == 2) {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpmins_f32(to_vec(v)));
                 } else if constexpr (std::same_as<T, double>) {
@@ -663,7 +663,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& y
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 2) {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
                     return from_vec<T>(vpminnm_f32(to_vec(x), to_vec(y)));
                 } else if constexpr (std::same_as<T, double>) {
@@ -675,7 +675,7 @@ namespace ui::arm::neon {
                 {.val = internal::minnm(y.lo.val, y.hi.val)}
             };
         } else {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 4) {
                     return from_vec<T>(vpminnmq_f32(to_vec(x), to_vec(y)));
@@ -713,7 +713,7 @@ namespace ui::arm::neon {
         if constexpr (N == 1) {
             return v.val;
         } else if constexpr (N == 2) {
-            #ifdef UI_ALWAYS_INLINE
+            #ifdef UI_CPU_ARM64
                 if constexpr (std::same_as<T, float>) {
                     return static_cast<T>(vpminnms_f32(to_vec(v)));
                 } else if constexpr (std::same_as<T, double>) {
