@@ -2,7 +2,6 @@
 #define AMT_ARCH_EMUL_MINMAX_HPP
 
 #include "cast.hpp"
-#include "ui/base.hpp"
 #include <concepts>
 #include <utility>
 
