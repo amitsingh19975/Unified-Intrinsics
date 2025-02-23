@@ -61,34 +61,36 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
-        auto sum = static_cast<std::int64_t>(lhs) + static_cast<std::int64_t>(rhs);
-        static constexpr auto min = static_cast<type>(std::numeric_limits<T>::min());
-        static constexpr auto max = static_cast<type>(std::numeric_limits<T>::max());
-        return static_cast<T>(
-            std::clamp<type>(sum, min, max)
-        );
+        return map([](auto l, auto r) {
+			using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+			auto sum = static_cast<type>(l) + static_cast<type>(r);
+			static constexpr auto min = static_cast<type>(std::numeric_limits<T>::min());
+			static constexpr auto max = static_cast<type>(std::numeric_limits<T>::max());
+			return static_cast<T>(
+				std::clamp<type>(sum, min, max)
+			);
+		}, lhs, rhs);
     }
 // !MAKR
 
 // MARK: Pairwise Addition
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
         requires (N != 1)
     UI_ALWAYS_INLINE static constexpr auto padd(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 2) {
-            return { lhs[0] + lhs[1], rhs[0] + rhs[1] };
+			return { static_cast<T>(lhs[0] + lhs[1]), static_cast<T>(rhs[0] + rhs[1]) };
         } else {
             return join(
-                padd(lhs.lo, rhs.lo),
-                padd(lhs.hi, rhs.hi)
+                padd(lhs.lo, lhs.hi),
+                padd(rhs.lo, rhs.hi)
             );
         }
     }
 
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto padd(
         Vec<N, T> const& v
     ) noexcept -> T {
