@@ -39,7 +39,7 @@ namespace ui::emul {
             if constexpr (sizeof(T) == 8) {
                 static constexpr auto max = std::numeric_limits<T>::max();
                 using type = std::make_unsigned_t<T>;
-                if (static_cast<type>(max) - (type(1) << s_) >= v_) return (v_ << s_);
+                if (static_cast<type>(max) - (type(1) << s_) >= v_) return static_cast<T>(v_ << s_);
                 return max;
             } else {
                 auto temp = static_cast<std::int64_t>(v_) << s_;
@@ -59,7 +59,7 @@ namespace ui::emul {
             if constexpr (sizeof(T) == 8) {
                 static constexpr auto max = std::numeric_limits<T>::max();
                 using type = std::make_unsigned_t<T>;
-                if (static_cast<type>(max) - (type(1) << Shift) >= v_) return (v_ << Shift);
+                if (static_cast<type>(max) - (type(1) << Shift) >= v_) return static_cast<T>(v_ << Shift);
                 return max;
             } else {
                 auto temp = static_cast<std::int64_t>(v_) << Shift;
@@ -82,9 +82,9 @@ namespace ui::emul {
                 auto temp = static_cast<std::int64_t>(v_);
                 auto shift = -s_;
                 temp += (1 << (shift - 1));
-                return temp >> shift;
+                return static_cast<T>(temp >> shift);
             }
-            return v_ >> s_;
+            return static_cast<T>(v_ >> s_);
         }, v, s);
     }
 // !MARK
@@ -107,7 +107,7 @@ namespace ui::emul {
             if constexpr (sizeof(T) == 8) {
                 static constexpr auto max = std::numeric_limits<T>::max();
                 using type = std::make_unsigned_t<T>;
-                if (static_cast<type>(max) - (type(1) << s_) >= v_) return (v_ << s_);
+                if (static_cast<type>(max) - (type(1) << s_) >= v_) return static_cast<T>(v_ << s_);
                 return max;
             } else {
                 auto temp = static_cast<std::int64_t>(v_) << s_;
@@ -126,7 +126,7 @@ namespace ui::emul {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
-        return map([](auto v_) { return static_cast<result_t>(v_) << Shift; }, v);
+        return map([](auto v_) { return static_cast<result_t>(static_cast<result_t>(v_) << Shift); }, v);
     }
 // !MARK
 
@@ -165,7 +165,7 @@ namespace ui::emul {
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return map([](auto v_, auto s_) {
-            return v_ >> s_;
+            return static_cast<T>(v_ >> s_);
         }, v, s);
     }
     template <unsigned Shift, std::size_t N, std::integral T>
@@ -174,7 +174,7 @@ namespace ui::emul {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         return map([](auto v_) {
-            return v_ >> Shift;
+            return static_cast<T>(v_ >> Shift);
         }, v);
     }
 // !MARK
