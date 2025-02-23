@@ -33,6 +33,7 @@
     #include "x86/cmp.hpp"
     #include "x86/logical.hpp"
     #include "x86/add.hpp"
+    #include "x86/shift.hpp"
     #include "x86/sub.hpp"
     #include "x86/abs.hpp"
     #include "x86/minmax.hpp"
