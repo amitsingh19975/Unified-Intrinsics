@@ -740,7 +740,7 @@ namespace ui::x86 {
                     ).lo;
                 }
                 #endif
-                
+
                 // TODO: Add avx 512 implementation
                 return join(
                     pminmax_helper<false>(lhs.lo, lhs.hi, fn),
@@ -748,7 +748,7 @@ namespace ui::x86 {
                 );
             }
         }
-        
+
         template <bool Merge = true, typename O, std::size_t N, typename T>
             requires (N > 1)
         UI_ALWAYS_INLINE auto fold_helper(
@@ -940,7 +940,7 @@ namespace ui::x86 {
         requires (N > 1)
     UI_ALWAYS_INLINE auto fold(
         Vec<N, T> const& v,
-        op::pmax_t op
+        op::max_t op
     ) noexcept -> T {
         return internal::fold_helper(v, op::pmax_t{});
     }
