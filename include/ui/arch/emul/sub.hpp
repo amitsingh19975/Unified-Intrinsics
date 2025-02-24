@@ -67,13 +67,17 @@ namespace ui::emul {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         return map([](auto l, auto r) {
-            using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
-            auto diff = static_cast<type>(l) - static_cast<type>(r);
-            static constexpr auto min = static_cast<type>(std::numeric_limits<T>::min());
-            static constexpr auto max = static_cast<type>(std::numeric_limits<T>::max());
-            return static_cast<T>(
-                std::clamp<type>(diff, min, max)
-            );
+            auto res = static_cast<T>(l - r);
+            static constexpr auto bits = sizeof(T) * 8 - 1;
+            static constexpr auto sign_bit = T(1) << bits;
+            if constexpr (std::is_signed_v<T>) {
+                if (((res ^ l) & sign_bit) && ((l ^ r) & sign_bit)) {
+                    return static_cast<T>((l >> bits) ^ ~sign_bit);
+                }
+                return res;
+            } else {
+                return res > l ? T(0) : res;
+            }
         }, lhs, rhs);
     }
 // !MARK

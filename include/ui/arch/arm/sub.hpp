@@ -622,16 +622,6 @@ namespace ui::arm::neon {
 // MARK: Saturating Subtraction
     namespace internal {
 
-        template <typename To>
-        UI_ALWAYS_INLINE constexpr auto sat_sub_helper_for_one(auto lhs, auto rhs) noexcept -> To {
-            auto sum = static_cast<std::int64_t>(lhs) - static_cast<std::int64_t>(rhs);
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<To>::min());
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<To>::max());
-            return static_cast<To>(
-                std::clamp<std::int64_t>(sum, min, max)
-            );
-        } 
-    
         template <std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto sat_sub_helper(
             Vec<N, T> const& lhs,

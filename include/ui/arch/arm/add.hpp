@@ -11,6 +11,7 @@
 #include <limits>
 #include <type_traits>
 #include "../basic.hpp"
+#include "../emul/add.hpp"
 
 namespace ui::arm::neon { 
 
@@ -451,9 +452,8 @@ namespace ui::arm::neon {
             auto&& unsigned_fn1_round
         ) noexcept -> Vec<N, T> {
             using ret_t = Vec<N, T>;
-            using acc_t = widening_result_t<T>;
             if constexpr (N == 1) {
-                return { .val = halving_round_helper<Round, acc_t>(lhs.val, rhs.val, op::add_t{})};
+                return emul::halving_add(lhs, rhs);
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
                     if constexpr (!Round) {
@@ -678,16 +678,6 @@ namespace ui::arm::neon {
 
     namespace internal {
 
-        template <typename To>
-        UI_ALWAYS_INLINE constexpr auto sat_add_helper_for_one(auto lhs, auto rhs) noexcept -> To {
-            auto sum = static_cast<std::int64_t>(lhs) + static_cast<std::int64_t>(rhs);
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<To>::min());
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<To>::max());
-            return static_cast<To>(
-                std::clamp<std::int64_t>(sum, min, max)
-            );
-        } 
-    
         template <std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto sat_add_helper(
             Vec<N, T> const& lhs,
@@ -723,9 +713,7 @@ namespace ui::arm::neon {
                     }
                 }
                 #else
-                return {
-                    .val = sat_add_helper_for_one<T>(lhs.val, rhs.val)
-                };
+                return emul::sat_add(lhs, rhs);
                 #endif
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
@@ -783,9 +771,7 @@ namespace ui::arm::neon {
                     return { .val = vuqaddd_s64(lhs.val, rhs.val) };
                 }
                 #else
-                    return ret_t {
-                        .val = sat_helper_for_one<T>(lhs.val, rhs.val)
-                    }; 
+                    return emul::sat_add(lhs, rhs);
                 #endif
             #ifdef UI_CPU_ARM64
             } else if constexpr (N == M0) {
@@ -833,9 +819,7 @@ namespace ui::arm::neon {
                     return { .val = vsqaddd_u64(lhs.val, rhs.val) };
                 }
                 #else
-                return ret_t {
-                    .val = sat_helper_for_one<T>(lhs.val, rhs.val)
-                }; 
+                    return emul::sat_add(lhs, rhs);
                 #endif
             #ifdef UI_CPU_ARM64
             } else if constexpr (N == M0) {
@@ -1219,9 +1203,70 @@ namespace ui::arm::neon {
         }
     }
 
-    template <std::size_t N, typename T>
-    UI_ALWAYS_INLINE auto padd(
+    template <std::size_t N, std::integral T>
+        requires (N > 1)
+    UI_ALWAYS_INLINE auto widening_padd(
         Vec<N, T> const& v
+    ) noexcept -> Vec<N / 2, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        if constexpr (N == 2) {
+            if constexpr (sizeof(T) == 4) {
+                if constexpr (std::is_signed_v<T>) {
+                    return from_vec<result_t>(vpaddl_s32(to_vec(v)));
+                } else {
+                    return from_vec<result_t>(vpaddl_u32(to_vec(v)));
+                }
+            }
+            return emul::widening_padd(v);
+        } else {
+            if constexpr (std::is_signed_v<T>) {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return from_vec<result_t>(vpaddl_s8(to_vec(v)));
+                    } else if constexpr (N == 16) {
+                        return from_vec<result_t>(vpaddlq_s8(to_vec(v)));
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(vpaddl_s16(to_vec(v)));
+                    } else if constexpr (N == 8) {
+                        return from_vec<result_t>(vpaddlq_s16(to_vec(v)));
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(vpaddlq_s32(to_vec(v)));
+                    }
+                }
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 8) {
+                        return from_vec<result_t>(vpaddl_u8(to_vec(v)));
+                    } else if constexpr (N == 16) {
+                        return from_vec<result_t>(vpaddlq_u8(to_vec(v)));
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(vpaddl_u16(to_vec(v)));
+                    } else if constexpr (N == 8) {
+                        return from_vec<result_t>(vpaddlq_u16(to_vec(v)));
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<result_t>(vpaddlq_u32(to_vec(v)));
+                    }
+                }
+            }
+            return join(
+                widening_padd(v.lo),
+                widening_padd(v.hi)
+            );
+        }
+    }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::padd_t op
     ) noexcept -> T {
         if constexpr (N == 1) {
             return v.val;
@@ -1248,7 +1293,7 @@ namespace ui::arm::neon {
             }
             #endif
 
-            return padd(v.lo) + padd(v.hi);
+            return fold(v.lo, op) + fold(v.hi, op);
         }
     }
 // !Mark
