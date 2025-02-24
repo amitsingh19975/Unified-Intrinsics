@@ -108,6 +108,37 @@ namespace ui::x86 {
         return load(v[Lane]);
     }
 
+	template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE static constexpr auto load(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N * 2, T> {
+        using ret_t = Vec<2 * N, T>;
+        static constexpr auto size = sizeof(v);
+		if constexpr (size * 2 == sizeof(__m128)) {
+			return std::bit_cast<ret_t>(_mm_set1_epi64x(std::bit_cast<std::int64_t>(v)));
+		#if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+		} else if constexpr (size * 2 == sizeof(__m256)) {
+			auto temp = _mm256_broadcastsi128_si256(std::bit_cast<__m128i>(v));
+			return std::bit_cast<ret_t>(temp);
+		#endif
+		#if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+		} else if constexpr (size * 2 == sizeof(__m512)) {
+			if constexpr (std::same_as<T, float>) {
+				auto temp = _mm512_broadcast_f32x8(std::bit_cast<__m256>(v));
+				return std::bit_cast<ret_t>(temp);
+			} else if constexpr (std::same_as<T, double>) {
+				auto temp = _mm512_broadcast_f64x4(std::bit_cast<__m256d>(v));
+				return std::bit_cast<ret_t>(temp);
+			} else {
+				auto temp = _mm512_broadcast_i64x4(std::bit_cast<__m256i>(v));
+				return std::bit_cast<ret_t>(temp);
+			}
+		#endif
+		}
+
+		return ret_t(v, v);
+    }
+
     // https://android.googlesource.com/platform/external/neon_2_sse/+/48fc208e1a0026f2b9a64638eaaa83f1bc8408aa/NEON_2_SSE.h
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto strided_load(
