@@ -98,6 +98,8 @@ namespace ui {
         using pmin_t                 = OpTag<24>; // pairwise min
         using pmaxnm_t               = OpTag<25>; // pairwise maxnm
         using pminnm_t               = OpTag<26>; // pairwise minnm
+
+        using padd_t                 = OpTag<27>; // pairwise add
     }
 
 } // namespace ui
