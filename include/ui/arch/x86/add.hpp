@@ -108,7 +108,7 @@ namespace ui::x86 {
             #endif
             return join(
                 add<false>(lhs.lo, rhs.lo),
-                add<false>(lhs.hi, rhs.lo)
+                add<false>(lhs.hi, rhs.hi)
             );
         }
     }
@@ -193,7 +193,7 @@ namespace ui::x86 {
             // TODO: Add AVX512 implementation
             return join(
                 high_narrowing_add<false>(lhs.lo, rhs.lo),
-                high_narrowing_add<false>(lhs.hi, rhs.lo)
+                high_narrowing_add<false>(lhs.hi, rhs.hi)
             );
         }
     }
@@ -333,7 +333,7 @@ namespace ui::x86 {
             // TODO: Add AVX512
             return join(
                 sat_add<false>(lhs.lo, rhs.lo),
-                sat_add<false>(lhs.hi, rhs.lo)
+                sat_add<false>(lhs.hi, rhs.hi)
             );
         }
     }
@@ -531,8 +531,8 @@ namespace ui::x86 {
         op::add_t op
     ) noexcept -> internal::widening_result_t<T> {
         using result_t = internal::widening_result_t<T>;
-        auto v = cast<result_t>(v);
-        return fold(v, op);
+        auto vt = cast<result_t>(v);
+        return fold(vt, op);
     }
 // !MARK
 } // namespace ui::x86
