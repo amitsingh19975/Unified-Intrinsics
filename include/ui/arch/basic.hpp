@@ -177,7 +177,7 @@ namespace ui::internal {
         auto l = static_cast<Acc>(lhs);
         auto r = static_cast<Acc>(rhs);
         auto sum = op(l, r) + Round;
-        return static_cast<From>(sum >> 1);
+        return static_cast<From>(sum / 2);
     }
 
     template <std::floating_point T>

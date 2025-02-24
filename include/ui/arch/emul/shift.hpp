@@ -14,7 +14,7 @@ namespace ui::emul {
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return map([](auto v_, auto s_) {
-            return v_ << s_;
+            return static_cast<T>(v_ << s_);
         }, v, s);
     }
 
@@ -24,7 +24,7 @@ namespace ui::emul {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         return map([](auto v_) {
-            return v_ << Shift;
+            return static_cast<T>(v_ << Shift);
         }, v);
     }
 // !MARK

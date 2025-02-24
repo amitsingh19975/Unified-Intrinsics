@@ -41,7 +41,7 @@ namespace ui::emul {
     ) noexcept -> Vec<N, T> {
         using acc_t = internal::widening_result_t<T>;
         return map([](auto l, auto r) {
-            return internal::halving_round_helper<Round, acc_t>(l, r, op::sub_t{});
+            return internal::halving_round_helper<Round, acc_t>(l, r, std::minus<>{});
         }, lhs, rhs);
     }
 
