@@ -15,6 +15,66 @@
 namespace ui::x86 {
 
 // MARK: Left shift
+    template <bool Merge = true, std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto shift_left(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return emul::shift_left(v, s);
+        } else {
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+            if constexpr (size == sizeof(__m128)) {
+                if constexpr (sizeof(T) == 1) {
+                    return emul::shift_left(v, s);
+                } else if constexpr (sizeof(T) == 2) {
+                    return from_vec<T>(_mm_sllv_epi16(to_vec(v), to_vec(s)));
+                } else if constexpr (sizeof(T) == 4) {
+                    return from_vec<T>(_mm_sllv_epi32(to_vec(v), to_vec(s)));
+                } else if constexpr (sizeof(T) == 8) {
+                    return from_vec<T>(_mm_sllv_epi64(to_vec(v), to_vec(s)));
+                }
+            } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
+                return shift_left(from_vec<T>(fit_to_vec(v)), from_vec<T>(fit_to_vec(v))).lo;
+            }
+
+            if constexpr (size == sizeof(__m256)) {
+                if constexpr (sizeof(T) == 1) {
+                    return emul::shift_left(v, s);
+                } else if constexpr (sizeof(T) == 2) {
+                    return from_vec<T>(_mm256_sllv_epi16(to_vec(v), to_vec(s)));
+                } else if constexpr (sizeof(T) == 4) {
+                    return from_vec<T>(_mm256_sllv_epi32(to_vec(v), to_vec(s)));
+                } else if constexpr (sizeof(T) == 8) {
+                    return from_vec<T>(_mm256_sllv_epi64(to_vec(v), to_vec(s)));
+                }
+            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
+                return shift_left(from_vec<T>(fit_to_vec(v)), from_vec<T>(fit_to_vec(v))).lo;
+            }
+
+            if constexpr (size == sizeof(__m512)) {
+                if constexpr (sizeof(T) == 1) {
+                    return emul::shift_left(v, s);
+                } else if constexpr (sizeof(T) == 2) {
+                    return from_vec<T>(_mm512_sllv_epi16(to_vec(v), to_vec(s)));
+                } else if constexpr (sizeof(T) == 4) {
+                    return from_vec<T>(_mm512_sllv_epi32(to_vec(v), to_vec(s)));
+                } else if constexpr (sizeof(T) == 8) {
+                    return from_vec<T>(_mm512_sllv_epi64(to_vec(v), to_vec(s)));
+                }
+            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
+                return shift_left(from_vec<T>(fit_to_vec(v)), from_vec<T>(fit_to_vec(v))).lo;
+            }
+            return join(
+                shift_left<false>(lhs.lo, s.lo),
+                shift_left<false>(lhs.hi, s.lo)
+            );
+            #else
+            return emul::shift_left(v, s);
+            #endif
+        }
+    }
+
     template <unsigned Shift, bool Merge = true, std::size_t N, std::integral T>
         requires (Shift > 0 && Shift < sizeof(T) * 8)
     UI_ALWAYS_INLINE auto shift_left(
@@ -113,13 +173,102 @@ namespace ui::x86 {
 // !MARK
 
 // MARK: Right shift
-    /*template <std::size_t N, std::integral T>*/
-    /*UI_ALWAYS_INLINE auto shift_right(*/
-    /*    Vec<N, T> const& v,*/
-    /*    Vec<N, std::make_unsigned_t<T>> const& s*/
-    /*) noexcept -> Vec<N, T> {*/
-    /*    return internal::shift_left_right_helper(v, negate(rcast<std::make_signed_t<T>>(s)));*/
-    /*}*/
+    template <bool Merge = true, std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto shift_right(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        if constexpr (N == 1) {
+            return emul::shift_right(v, s);
+        } else {
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+            if constexpr (size == sizeof(__m128)) {
+                if constexpr (std::is_signed_v<T>) {
+                    if constexpr (sizeof(T) == 1) {
+                        return emul::shift_right(v, s);
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<T>(_mm_srav_epi16(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<T>(_mm_srav_epi32(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 8) {
+                        return from_vec<T>(_mm_srav_epi64(to_vec(v), to_vec(s)));
+                    }
+                } else {
+                    if constexpr (sizeof(T) == 1) {
+                        return emul::shift_right(v, s);
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<T>(_mm_srlv_epi16(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<T>(_mm_srlv_epi32(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 8) {
+                        return from_vec<T>(_mm_srlv_epi64(to_vec(v), to_vec(s)));
+                    }
+                }
+            } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
+                return shift_right(from_vec<T>(fit_to_vec(v)), from_vec<T>(fit_to_vec(v))).lo;
+            }
+
+            if constexpr (size == sizeof(__m256)) {
+                if constexpr (std::is_signed_v<T>) {
+                    if constexpr (sizeof(T) == 1) {
+                        return emul::shift_right(v, s);
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<T>(_mm256_srav_epi16(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<T>(_mm256_srav_epi32(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 8) {
+                        return from_vec<T>(_mm256_srav_epi64(to_vec(v), to_vec(s)));
+                    }
+                } else {
+                    if constexpr (sizeof(T) == 1) {
+                        return emul::shift_right(v, s);
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<T>(_mm256_srlv_epi16(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<T>(_mm256_srlv_epi32(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 8) {
+                        return from_vec<T>(_mm256_srlv_epi64(to_vec(v), to_vec(s)));
+                    }
+                }
+            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
+                return shift_right(from_vec<T>(fit_to_vec(v)), from_vec<T>(fit_to_vec(v))).lo;
+            }
+
+            if constexpr (size == sizeof(__m512)) {
+                if constexpr (std::is_signed_v<T>) {
+                    if constexpr (sizeof(T) == 1) {
+                        return emul::shift_right(v, s);
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<T>(_mm512_srav_epi16(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<T>(_mm512_srav_epi32(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 8) {
+                        return from_vec<T>(_mm512_srav_epi64(to_vec(v), to_vec(s)));
+                    }
+                } else {
+                    if constexpr (sizeof(T) == 1) {
+                        return emul::shift_right(v, s);
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<T>(_mm512_srlv_epi16(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<T>(_mm512_srlv_epi32(to_vec(v), to_vec(s)));
+                    } else if constexpr (sizeof(T) == 8) {
+                        return from_vec<T>(_mm512_srlv_epi64(to_vec(v), to_vec(s)));
+                    }
+                }
+            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
+                return shift_right(from_vec<T>(fit_to_vec(v)), from_vec<T>(fit_to_vec(v))).lo;
+            }
+            return join(
+                shift_right<false>(lhs.lo, s.lo),
+                shift_right<false>(lhs.hi, s.lo)
+            );
+            #else
+            return emul::shift_right(v, s);
+            #endif
+        }
+    }
+
     
     template <unsigned Shift, bool Merge = true, std::size_t N, std::integral T>
         requires (Shift > 0 && Shift < sizeof(T) * 8)
