@@ -1203,6 +1203,43 @@ namespace ui::arm::neon {
         }
     }
 
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::padd_t op
+    ) noexcept -> T {
+        if constexpr (N == 1) {
+            return v.val;
+        } else {
+            #ifdef UI_CPU_ARM64 
+            if constexpr (std::same_as<T, float>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpadds_f32(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                return cast<T>(padd(cast<float>(v)));
+            } else if constexpr (std::same_as<T, double>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpaddd_f64(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, std::uint64_t>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpaddd_u64(to_vec(v)));
+                }
+            } else if constexpr (std::same_as<T, std::int64_t>) {
+                if constexpr (N == 2) {
+                    return static_cast<T>(vpaddd_s64(to_vec(v)));
+                }
+            }
+            #endif
+
+            return fold(v.lo, op) + fold(v.hi, op);
+        }
+    }
+// !Mark
+
+// MARK: Widening Pairwise Addition
+
     template <std::size_t N, std::integral T>
         requires (N > 1)
     UI_ALWAYS_INLINE auto widening_padd(
@@ -1263,132 +1300,6 @@ namespace ui::arm::neon {
         }
     }
 
-    template <std::size_t N, typename T>
-    UI_ALWAYS_INLINE auto fold(
-        Vec<N, T> const& v,
-        op::padd_t op
-    ) noexcept -> T {
-        if constexpr (N == 1) {
-            return v.val;
-        } else {
-            #ifdef UI_CPU_ARM64 
-            if constexpr (std::same_as<T, float>) {
-                if constexpr (N == 2) {
-                    return static_cast<T>(vpadds_f32(to_vec(v)));
-                }
-            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                return cast<T>(padd(cast<float>(v)));
-            } else if constexpr (std::same_as<T, double>) {
-                if constexpr (N == 2) {
-                    return static_cast<T>(vpaddd_f64(to_vec(v)));
-                }
-            } else if constexpr (std::same_as<T, std::uint64_t>) {
-                if constexpr (N == 2) {
-                    return static_cast<T>(vpaddd_u64(to_vec(v)));
-                }
-            } else if constexpr (std::same_as<T, std::int64_t>) {
-                if constexpr (N == 2) {
-                    return static_cast<T>(vpaddd_s64(to_vec(v)));
-                }
-            }
-            #endif
-
-            return fold(v.lo, op) + fold(v.hi, op);
-        }
-    }
-// !Mark
-
-// MARK: Widening Pairwise Addition
-
-    template <std::size_t N, std::integral T>
-		requires (N == 1)
-    UI_ALWAYS_INLINE auto widening_padd(
-        Vec<N, T> const& v
-    ) noexcept {
-        using result_t = internal::widening_result_t<T>;
-
-        if constexpr (N == 2) {
-            if constexpr (std::is_signed_v<T>) {
-                if constexpr (sizeof(T) == 4) {
-                    return from_vec<result_t>(
-                        vpaddl_s32(to_vec(v))
-                    );
-                }
-            } else {
-                if constexpr (sizeof(T) == 4) {
-                    return from_vec<result_t>(
-                        vpaddl_u32(to_vec(v))
-                    );
-                }
-            }
-            return Vec<1, result_t>{ 
-                .val = static_cast<result_t>(v.lo) + static_cast<result_t>(v.hi)
-            };
-        } else {
-            if constexpr (std::is_signed_v<T>) {
-                if constexpr (sizeof(T) == 1) {
-                    if constexpr (N == 8) {
-                        return from_vec<result_t>(
-                            vpaddl_s8(to_vec(v))
-                        );
-                    } else if constexpr (N == 16) {
-                        return from_vec<result_t>(
-                            vpaddl_s16(to_vec(v))
-                        );
-                    }
-                } else if constexpr (sizeof(T) == 2) {
-                    if constexpr (N == 4) {
-                        return from_vec<result_t>(
-                            vpaddl_s16(to_vec(v))
-                        );
-                    } else if constexpr (N == 8) {
-                        return from_vec<result_t>(
-                            vpaddl_s16(to_vec(v))
-                        );
-                    }
-                } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 4) {
-                        return from_vec<result_t>(
-                            vpaddl_s32(to_vec(v))
-                        );
-                    }
-                }
-            } else {
-                if constexpr (sizeof(T) == 1) {
-                    if constexpr (N == 8) {
-                        return from_vec<result_t>(
-                            vpaddl_u8(to_vec(v))
-                        );
-                    } else if constexpr (N == 16) {
-                        return from_vec<result_t>(
-                            vpaddl_u16(to_vec(v))
-                        );
-                    }
-                } else if constexpr (sizeof(T) == 2) {
-                    if constexpr (N == 4) {
-                        return from_vec<result_t>(
-                            vpaddl_u16(to_vec(v))
-                        );
-                    } else if constexpr (N == 8) {
-                        return from_vec<result_t>(
-                            vpaddl_u16(to_vec(v))
-                        );
-                    }
-                } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 4) {
-                        return from_vec<result_t>(
-                            vpaddl_u32(to_vec(v))
-                        );
-                    }
-                }
-            }
-
-            return join(
-                widening_padd(v.lo),
-                widening_padd(v.hi)
-            );
-        }
-    }
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto widening_padd(
@@ -1409,7 +1320,7 @@ namespace ui::arm::neon {
                     );
                 }
             }
-            return { .val = x.val + static_cast<result_t>(v.lo.val) + static_cast<result_t>(v.hi.val) };
+            return emul::widening_padd(x, v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
