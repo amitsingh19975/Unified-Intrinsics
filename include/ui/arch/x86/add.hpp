@@ -394,9 +394,11 @@ namespace ui::x86 {
                 } else {
                     if constexpr (sizeof(T) == 2) {
                         auto res = _mm256_hadd_epi16(l, r);
+                        res = _mm256_permute4x64_epi64(res, 0xD8);
                         return from_vec<T>(res);
                     } else if constexpr (sizeof(T) == 4) {
                         auto res = _mm256_hadd_epi32(l, r);
+                        res = _mm256_permute4x64_epi64(res, 0xD8);
                         return from_vec<T>(res);
                     } else if constexpr (sizeof(T) == 8) {
                         auto t0 = _mm256_unpackhi_epi64(l, r);
@@ -419,8 +421,120 @@ namespace ui::x86 {
             );
         }
     }
+
+    template <bool Merge = true, std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        op::padd_t op
+    ) noexcept -> T {
+        static constexpr auto size = sizeof(v);
+        if constexpr (N == 2) {
+            return emul::fold(v, op);
+        } else {
+            if constexpr (size == sizeof(__m128)) {
+                auto a = to_vec(v);
+                if constexpr (std::same_as<T, float>) {
+                    a = _mm_add_ps(a, _mm_movehl_ps(a, a));
+                    a = _mm_add_ss(a, _mm_shuffle_ps(a, a, 1));
+                    return _mm_cvtss_f32(a);
+                } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                    return static_cast<T>(fold(cast<float>(v)));
+                } else {
+                    if constexpr (sizeof(T) == 1) {
+                        auto b = _mm_unpackhi_epi64(a, a);
+                        auto sum = _mm_add_epi8(a, b);
+                        auto res = _mm_sad_epu8(sum, _mm_setzero_si128());
+                        return static_cast<T>(_mm_cvtsi128_si32(res));
+                    } else if constexpr (sizeof(T) == 2) {
+                        auto b = _mm_unpackhi_epi64(a, a);
+                        auto sum = _mm_add_epi16(a, b);
+                        auto shf = _mm_shuffle_epi32(sum, _MM_SHUFFLE(1, 1, 1, 1));
+                        sum = _mm_add_epi16(sum, shf);
+                        auto shifted = _mm_srli_epi32(sum, 16);
+                        sum = _mm_add_epi16(sum, shifted);
+                        return static_cast<T>(_mm_cvtsi128_si32(sum));
+                    } else if constexpr (sizeof(T) == 4) {
+                        auto b = _mm_unpackhi_epi64(a, a);
+                        auto sum = _mm_add_epi32(a, b);
+                        auto shf = _mm_shuffle_epi32(sum, _MM_SHUFFLE(1, 1, 1, 1));
+                        sum = _mm_add_epi32(sum, shf);
+                        return static_cast<T>(_mm_cvtsi128_si32(sum));
+                    }
+                }
+            } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
+                return fold(from_vec<T>(fit_to_vec(v)), op);
+            }
+
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+            if constexpr (size == sizeof(__m256)) {
+                auto a = to_vec(v);
+                if constexpr (std::same_as<T, float>) {
+                    auto lo = _mm256_castps256_ps128(a);
+                    auto hi = _mm256_extractf128_ps(a, 1);
+                    return fold<false>(from_vec<T>(_mm_add_ps(lo, hi)), op);
+                } else if constexpr (std::same_as<T, double>) {
+                    auto lo = _mm256_castpd256_pd128(a);
+                    auto hi = _mm256_extractf128_pd(a, 1);
+                    return fold<false>(from_vec<T>(_mm_add_pd(lo, hi)), op);
+                } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                    return static_cast<T>(fold(cast<float>(v)));
+                } else {
+                    auto lo = _mm256_castsi256_si128(a);
+                    auto hi = _mm256_extracti128_si256(a, 1);
+                    return fold<false>(add(from_vec<T>(lo), from_vec<T>(hi)), op);
+                }
+            }
+            #endif
+
+            // TODO: Add AVX512
+            return static_cast<T>(fold<false>(v.lo, op) + fold<false>(v.hi, op));
+        }
+    }
 // !MARK
 
+// MARK: Widening Pairwise Addition
+    template <std::size_t N, std::integral T>
+        requires (N > 1)
+    UI_ALWAYS_INLINE auto widening_padd(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N / 2, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        auto temp = cast<result_t>(v);
+        auto res = padd(temp, temp);
+        return res.lo;
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto widening_padd(
+        Vec<N, internal::widening_result_t<T>> const& x,
+        Vec<2 * N, T> const& v
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        return add(x, widening_padd(v));
+    }
+// !MARK
+
+// MARK: Addition across vector
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto fold(
+        Vec<N, T> const& v,
+        [[maybe_unused]] op::add_t op
+    ) noexcept -> T {
+        return fold(v, op::padd_t{});
+    }
+// !MARK
+
+// MARK: Widening Addition across vector
+    template <std::size_t N, std::integral T>
+        requires (sizeof(T) < 8)
+    UI_ALWAYS_INLINE auto widening_fold(
+        Vec<N, T> const& v,
+        op::add_t op
+    ) noexcept -> internal::widening_result_t<T> {
+        using result_t = internal::widening_result_t<T>;
+        auto v = cast<result_t>(v);
+        return fold(v, op);
+    }
+// !MARK
 } // namespace ui::x86
 
 #endif // AMT_UI_ARCH_X86_ADD_HPP
