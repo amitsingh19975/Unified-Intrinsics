@@ -114,6 +114,10 @@ namespace ui::emul {
         else return fold(v.lo, op) + fold(v.hi, op);
     }
 
+
+// !MAKR
+
+// MARK: Pairwise Addition
     template <std::size_t N, std::integral T>
         requires (N > 1)
     UI_ALWAYS_INLINE auto widening_padd(
@@ -122,30 +126,8 @@ namespace ui::emul {
         using result_t = internal::widening_result_t<T>;
         if constexpr (N == 2) {
             return {
-                .val = static_cast<result_t>(v[0]) + static_cast<result_t>(v[1])
+                .val = static_cast<result_t>(static_cast<result_t>(v[0]) + static_cast<result_t>(v[1]))
             };
-        } else {
-            return join(
-                widening_padd(v.lo),
-                widening_padd(v.hi)
-            );
-        }
-    }
-// !MAKR
-
-// MARK: Pairwise Addition
-    template <std::size_t N, std::integral T>
-        requires (N == 1)
-    UI_ALWAYS_INLINE static constexpr auto widening_padd(
-        Vec<N, T> const& v
-    ) noexcept {
-        using result_t = internal::widening_result_t<T>;
-        using ret_t = Vec<N / 2, result_t>;
-
-        if constexpr (N == 2) {
-            return ret_t{ 
-                .val = static_cast<result_t>(v.lo) + static_cast<result_t>(v.hi)
-             };
         } else {
             return join(
                 widening_padd(v.lo),
