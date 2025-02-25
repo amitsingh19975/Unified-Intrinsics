@@ -1352,7 +1352,7 @@ namespace ui::x86 {
                                     return fn(join(v_,v_)).lo;
                                 },
                                 case_maker<8> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<16> = [](auto const& v_) {
                                     auto m = to_vec(v_);
                                     if constexpr (Saturating) {
@@ -1392,7 +1392,7 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(To) == 4) {
                         constexpr auto fn = [](auto const& v_) {
                             return cast_helper<To>(v_, [](__m128i m) {
-                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX2
                                 return _mm_cvtepi16_epi32(m);
                                 #else
                                 return _mm256_cvtepi16_epi32(m);
@@ -1417,7 +1417,7 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(To) == 8) {
                         constexpr auto fn = [](auto const& v_) {
                             return cast_helper<To>(v_, [](__m128i m) {
-                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX2
                                 return _mm_cvtepi16_epi64(m);
                                 #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
                                 return _mm256_cvtepi16_epi64(m);
@@ -1532,7 +1532,7 @@ namespace ui::x86 {
                                     return fn(join(v_,v_)).lo;
                                 },
                                 case_maker<8> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<16> = [](auto const& v_) {
                                     auto m = to_vec(v_);
                                     if constexpr (Saturating) {
@@ -1720,7 +1720,7 @@ namespace ui::x86 {
                                     return fn(join(v_,v_)).lo;
                                 },
                                 case_maker<4> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<8> = [](auto const& v_) {
                                     auto m = to_vec(v_);
                                     if constexpr (Saturating) {
@@ -1760,7 +1760,7 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(To) == 8) {
                         constexpr auto fn = [](auto const& v_) {
                             return cast_helper<To>(v_, [](__m128i m) {
-                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX2
                                 return _mm_cvtepi32_epi64(m);
                                 #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
                                 return _mm256_cvtepi32_epi64(m);
@@ -1905,7 +1905,7 @@ namespace ui::x86 {
                                     return fn(join(v_,v_)).lo;
                                 },
                                 case_maker<4> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<8> = [](auto const& v_) {
                                     auto m = to_vec(v_);
                                     if constexpr (Saturating) {
@@ -1945,7 +1945,7 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(To) == 8) {
                         constexpr auto fn = [](auto const& v_) {
                             return cast_helper<To>(v_, [](__m128i m) {
-                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX2
                                 return _mm_cvtepu32_epi64(m);
                                 #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
                                 return _mm256_cvtepu32_epi64(m);
@@ -1994,7 +1994,7 @@ namespace ui::x86 {
                                     return fn(join(v_,v_)).lo;
                                 },
                                 case_maker<4> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<8> = [](auto const& v_) {
                                     auto m = to_vec(v_);
                                     if constexpr (Saturating) {
@@ -2020,7 +2020,7 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(To) == 8) {
                         constexpr auto fn = [](auto const& v_) {
                             auto m = to_vec(v_);
-                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX
+                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX2
                             return _mm_cvtepu32_epi64(m);
                             #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
                             return _mm256_cvtepu32_epi64(m);
@@ -2035,7 +2035,7 @@ namespace ui::x86 {
                                     return fn(join(v_, v_));
                                 },
                                 case_maker<4> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<8> = fn
                                 #endif
                                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
@@ -2288,7 +2288,7 @@ namespace ui::x86 {
                             if constexpr (sizeof(m) == sizeof(__m128)) {
                                 return from_vec<To>(_mm_cvtps_epi32(m));
                             }
-                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                             if constexpr (sizeof(m) == sizeof(__m256)) {
                                 return from_vec<To>(_mm256_cvtps_epi32(m));
                             }
@@ -2306,7 +2306,7 @@ namespace ui::x86 {
                                     return fn(join(v_, v_));
                                 },
                                 case_maker<4> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<8> = fn
                                 #endif
                                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
@@ -2381,7 +2381,7 @@ namespace ui::x86 {
                             if constexpr (sizeof(m) == sizeof(__m128)) {
                                 return from_vec<To>(_mm_cvtpd_epi32(m));
                             }
-                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                             if constexpr (sizeof(m) == sizeof(__m256)) {
                                 return from_vec<To>(_mm256_cvtpd_epi32(m));
                             }
@@ -2399,7 +2399,7 @@ namespace ui::x86 {
                                     return Vec<1, To>{ .val = static_cast<To>(v_.val) };
                                 },
                                 case_maker<2> = fn
-                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                                #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                                 , case_maker<4> = fn
                                 #endif
                                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
