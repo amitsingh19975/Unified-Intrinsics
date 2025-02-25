@@ -101,12 +101,12 @@ namespace ui {
             return { ptr, elements };
         }
 
-        constexpr auto data() noexcept -> element_t* {
-            return static_cast<element_t*>(static_cast<void*>(this));
+        auto data() noexcept -> element_t* {
+            return reinterpret_cast<element_t*>(this);
         }
 
-        constexpr auto data() const noexcept -> element_t const* {
-            return static_cast<element_t const*>(static_cast<void const*>(this));
+        auto data() const noexcept -> element_t const* {
+            return reinterpret_cast<element_t const*>(this);
         }
 
         constexpr auto operator[](size_type k) noexcept -> element_t& {
@@ -230,12 +230,12 @@ namespace ui {
             return static_cast<std::span<element_t const>>(*this);
         }
 
-        constexpr auto data() noexcept -> element_t* {
-            return static_cast<element_t*>(static_cast<void*>(this));
+        auto data() noexcept -> element_t* {
+            return reinterpret_cast<element_t*>(this);
         }
 
-        constexpr auto data() const noexcept -> element_t const* {
-            return static_cast<element_t const*>(static_cast<void const*>(this));
+        auto data() const noexcept -> element_t const* {
+            return reinterpret_cast<element_t const*>(this);
         }
 
         constexpr auto operator[]([[maybe_unused]] size_type k) noexcept -> element_t& {
