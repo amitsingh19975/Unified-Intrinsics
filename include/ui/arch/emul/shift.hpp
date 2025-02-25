@@ -41,9 +41,14 @@ namespace ui::emul {
         ) noexcept -> T {
             static constexpr auto bits = sizeof(T) * 8;
             if constexpr (std::is_signed_v<T>) {
-                static constexpr auto lane = bits;
+                static constexpr auto lane = bits - 1;
+                using utype = std::make_unsigned_t<T>;
                 T const limit = T(1) << (lane - s);
-                return static_cast<T>((v >= limit || v <= -limit) ? ( v >> lane + (T(1) << lane) - 1) : (v << s));
+                return static_cast<T>(
+                        (v >= limit || v <= -limit)
+                            ? static_cast<T>(static_cast<T>(static_cast<utype>(v) >> lane) + (T(1) << lane) - 1)
+                            : (v << s)
+                    );
             } else {
                 static constexpr auto max = std::numeric_limits<T>::max();
                 return static_cast<T>((T(1) << (bits - s)) <= v ? max : static_cast<T>(v << s));
@@ -56,9 +61,14 @@ namespace ui::emul {
         ) noexcept -> T {
             static constexpr auto bits = sizeof(T) * 8;
             if constexpr (std::is_signed_v<T>) {
-                static constexpr auto lane = bits;
+                static constexpr auto lane = bits - 1;
+                using utype = std::make_unsigned_t<T>;
                 static constexpr T limit = T(1) << (lane - Shift);
-                return static_cast<T>((v >= limit || v <= -limit) ? ( v >> lane + (T(1) << lane) - 1) : (v << Shift));
+                return static_cast<T>(
+                        (v >= limit || v <= -limit)
+                            ? static_cast<T>(static_cast<T>(static_cast<utype>(v) >> lane) + (T(1) << lane) - 1)
+                            : (v << Shift)
+                    );
             } else {
                 static constexpr auto max = std::numeric_limits<T>::max();
                 return static_cast<T>((T(1) << (bits - Shift)) <= v ? max : static_cast<T>(v << Shift));
@@ -72,7 +82,7 @@ namespace ui::emul {
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return map([](auto v_, auto s_) {
-            return sat_shift_left_helper(v_, s_);
+            return internal::sat_shift_left_helper(v_, s_);
         }, v, s);
     }
 
@@ -82,7 +92,7 @@ namespace ui::emul {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         return map([](auto v_) {
-            return sat_shift_left_helper<Shift>(v_);
+            return internal::sat_shift_left_helper<Shift>(v_);
         }, v);
     }
 // !MARK
@@ -94,7 +104,7 @@ namespace ui::emul {
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return map([](auto v_, auto s_) {
-            return static_cast<T>(v_ >> s_);
+            return static_cast<T>(v_ << s_);
         }, v, s);
     }
 // !MARK
@@ -122,9 +132,9 @@ namespace ui::emul {
 
 // MARK: Vector shift left and insert
     /**
-     * @brief It inserts 'Shift' amount of LSB of 'a' into 'b' shifted by 'Shift'.
      * @code
-     * (b << Shift) | (a & ((1 << (Shift + 1)) - 1))
+     * mask = (1 << Shift) - 1
+     * (a & mask) | (b << Shift) & ~mask
      * @codeend
      * @tparam Shift amount of shift
      * @param a masked LSB will be inserted into 'b'
@@ -137,13 +147,10 @@ namespace ui::emul {
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
         return map([](auto a_, auto b_) {
-            if constexpr (Shift + 1 == sizeof(T) * 8) {
-                static constexpr T mask = static_cast<T>(~T(0));
-                return static_cast<T>((b_ << Shift) | (a_ & mask));
-            } else {
-                static constexpr T mask = static_cast<T>((std::size_t(1) << (Shift + 1)) - 1); 
-                return static_cast<T>((b_ << Shift) | (a_ & mask));
-            }
+            static constexpr auto mask = static_cast<std::make_unsigned_t<T>>(T(1) << Shift) - 1; 
+            auto a0 = static_cast<T>(a_ & mask);
+            auto b0 = static_cast<T>((b_ << Shift) & ~mask);
+            return static_cast<T>(a0 | b0);
         }, a, b);
     }
 // !MARK

@@ -273,7 +273,7 @@ namespace ui::arm::neon {
                 }
                 #endif
                 if (s[0] < 0) return emul::sat_shift_right(v, { .val = static_cast<std::make_unsigned_t<T>>(s[0]) });
-                return ui::emul::sat_shift_left(v, s);
+                return ui::emul::sat_shift_left(v, rcast<std::make_unsigned_t<T>>(s));
             } else {
                 if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
@@ -368,7 +368,7 @@ namespace ui::arm::neon {
     ) noexcept -> Vec<N, T> {
         return internal::sat_shift_left_right_helper(
             v,
-            s
+            rcast<std::make_signed_t<T>>(s)
         );
     }
 
@@ -519,7 +519,7 @@ namespace ui::arm::neon {
                     return from_vec<T>(vrshl_u64(to_vec(v), to_vec(s)));
                 }
                 if (s[0] < 0) return emul::rounding_shift_right(v, { .val = static_cast<std::make_unsigned_t<T>>(s[0]) });
-                return emul::rounding_shift_left(v, s);
+                return emul::rounding_shift_left(v, rcast<std::make_unsigned_t<T>>(s));
             } else {
                 if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
@@ -612,7 +612,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v,
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
-        return internal::rounding_shift_left_right_helper(v, s);
+        return internal::rounding_shift_left_right_helper(v, rcast<std::make_signed_t<T>>(s));
     }
 // !MARK
 
@@ -661,7 +661,7 @@ namespace ui::arm::neon {
                 }
                 #endif
                 if (s[0] < 0) return emul::sat_rounding_shift_right(v, { .val = static_cast<std::make_unsigned_t<T>>(s[0]) });
-                return emul::sat_rounding_shift_left(v, s);
+                return emul::sat_rounding_shift_left(v, rcast<std::make_unsigned_t<T>>(s));
             } else {
                 if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
@@ -820,9 +820,9 @@ namespace ui::arm::neon {
 
 // MARK: Vector shift left and insert
     /**
-     * @brief It inserts 'Shift' amount of LSB of 'a' into 'b' shifted by 'Shift'.
      * @code
-     * (b << Shift) | (a & ((1 << (Shift + 1)) - 1))
+     * mask = (1 << Shift) - 1
+     * (a & mask) | (b << Shift) & ~mask
      * @codeend
      * @tparam Shift amount of shift
      * @param a masked LSB will be inserted into 'b'
