@@ -272,7 +272,7 @@ namespace ui::arm::neon {
                     }
                 }
                 #endif
-                if (s[0] < 0) return emul::sat_shift_right(v, { .val = static_cast<make_unsigned_t<T>>(s[0]) });
+                if (s[0] < 0) return emul::sat_shift_right(v, { .val = static_cast<std::make_unsigned_t<T>>(s[0]) });
                 return ui::emul::sat_shift_left(v, s);
             } else {
                 if constexpr (std::is_signed_v<T>) {
@@ -518,7 +518,7 @@ namespace ui::arm::neon {
                 } else if constexpr (std::same_as<T, std::uint64_t>) {
                     return from_vec<T>(vrshl_u64(to_vec(v), to_vec(s)));
                 }
-                if (s[0] < 0) return emul::rounding_shift_right(v, { .val = static_cast<make_unsigned_t<T>>(s[0]) });
+                if (s[0] < 0) return emul::rounding_shift_right(v, { .val = static_cast<std::make_unsigned_t<T>>(s[0]) });
                 return emul::rounding_shift_left(v, s);
             } else {
                 if constexpr (std::is_signed_v<T>) {
@@ -660,7 +660,7 @@ namespace ui::arm::neon {
                     }
                 }
                 #endif
-                if (s[0] < 0) return emul::sat_rounding_shift_right(v, { .val = static_cast<make_unsigned_t<T>>(s[0]) });
+                if (s[0] < 0) return emul::sat_rounding_shift_right(v, { .val = static_cast<std::make_unsigned_t<T>>(s[0]) });
                 return emul::sat_rounding_shift_left(v, s);
             } else {
                 if constexpr (std::is_signed_v<T>) {
