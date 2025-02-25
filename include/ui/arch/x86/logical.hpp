@@ -354,19 +354,67 @@ namespace ui::x86 {
     }
 // !MARK
 
-
-// MARK: Bitwise Not-Or (~lhs) | rhs
+// MARK: Bitwise Not-And ~lhs & rhs
     template <std::size_t N, std::integral T>
-    UI_ALWAYS_INLINE auto bitwise_nor(
+    UI_ALWAYS_INLINE auto bitwise_notand(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        static constexpr auto size = sizeof(lhs);
+        if constexpr (N == 1) {
+            return emul::bitwise_notand(lhs, rhs);
+        } else {
+            if constexpr (size == sizeof(__m128)) {
+                return from_vec<T>(_mm_andnot_si128(to_vec(lhs), to_vec(rhs)));
+            } else if constexpr (size * 2 == sizeof(__m128)) {
+                return bitwise_notand(
+                    from_vec<T>(fit_to_vec(lhs)),
+                    from_vec<T>(fit_to_vec(rhs))
+                ).lo;
+            }
+
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
+            if constexpr (size == sizeof(__m256)) {
+                return from_vec<T>(_mm256_andnot_si256(to_vec(lhs), to_vec(rhs)));
+            } else if constexpr (size * 2 == sizeof(__m256)) {
+                return bitwise_notand(
+                    from_vec<T>(fit_to_vec(lhs)),
+                    from_vec<T>(fit_to_vec(rhs))
+                ).lo;
+            }
+            #endif
+
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+            if constexpr (size == sizeof(__m512)) {
+                return from_vec<T>(_mm512_andnot_si512(to_vec(lhs), to_vec(rhs)));
+            } else if constexpr (size * 2 == sizeof(__m512)) {
+                return bitwise_notand(
+                    from_vec<T>(fit_to_vec(lhs)),
+                    from_vec<T>(fit_to_vec(rhs))
+                ).lo;
+            }
+            #endif
+            return join(
+                bitwise_notand(lhs.lo, rhs.lo),
+                bitwise_notand(lhs.hi, rhs.hi)
+            );
+        }
+    }
+// !MARK
+
+// MARK: Bitwise Or-Not lhs | ~rhs
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto bitwise_ornot(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return emul::bitwise_nor(lhs, rhs);
+            return emul::bitwise_ornot(lhs, rhs);
         } else {
-            return bitwise_or(lhs, bitwise_not(rhs));
+            return bitwise_not(bitwise_notand(lhs, rhs));
         }
     }
+// !MARK
 } // namespace ui::x86
 
 #endif // AMT_UI_ARCH_X86_LOGICAL_HPP

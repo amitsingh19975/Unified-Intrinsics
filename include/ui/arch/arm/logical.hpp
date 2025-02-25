@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_ARM_LOGICAL_HPP
 
 #include "cast.hpp"
+#include "../emul/logical.hpp"
 #include <cassert>
 #include <cfenv>
 #include <concepts>
@@ -460,16 +461,14 @@ namespace ui::arm::neon {
     }
 // !MARK
 
-// MARK: Bitwise Not-Or
+// MARK: Bitwise Or-Not lhs | ~rhs
     template <std::size_t N, std::integral T>
-    UI_ALWAYS_INLINE auto bitwise_nor(
+    UI_ALWAYS_INLINE auto bitwise_ornot(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(~(lhs.val | rhs.val))
-            };
+            return emul::bitwise_ornot(lhs, rhs);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -537,13 +536,22 @@ namespace ui::arm::neon {
                 }
             }
             return join(
-                bitwise_nor(lhs.lo, rhs.lo),
-                bitwise_nor(lhs.hi, rhs.hi)
+                bitwise_ornot(lhs.lo, rhs.lo),
+                bitwise_ornot(lhs.hi, rhs.hi)
             );
         }
     }
 // !MARK
 
+// MARK: Bitwise Or-Not lhs | ~rhs
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto bitwise_notand(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T> {
+        return bitwise_not(bitwise_ornot(lhs, rhs));
+    }
+// !MARK
 }
 
 #endif // AMT_UI_ARCH_ARM_LOGICAL_HPP
