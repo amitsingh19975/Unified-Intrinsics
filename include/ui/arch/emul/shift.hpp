@@ -7,6 +7,7 @@
 
 namespace ui::emul {
 
+
 // MARK: Left Shift
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto shift_left(
@@ -31,6 +32,8 @@ namespace ui::emul {
 
 // MARK: Saturating Left Shift
     namespace internal {
+        using namespace ::ui::internal;
+
         template <std::integral T>
         UI_ALWAYS_INLINE static constexpr auto sat_shift_left_helper(
             T v,
@@ -43,7 +46,7 @@ namespace ui::emul {
                 return static_cast<T>((v >= limit || v <= -limit) ? ( v >> lane + (T(1) << lane) - 1) : (v << s));
             } else {
                 static constexpr auto max = std::numeric_limits<T>::max();
-                return static_cast<T>((T(1) << (bits - s)) <= v ? max : static_cast<T>(v << s))
+                return static_cast<T>((T(1) << (bits - s)) <= v ? max : static_cast<T>(v << s));
             }
         }
 
@@ -58,7 +61,7 @@ namespace ui::emul {
                 return static_cast<T>((v >= limit || v <= -limit) ? ( v >> lane + (T(1) << lane) - 1) : (v << Shift));
             } else {
                 static constexpr auto max = std::numeric_limits<T>::max();
-                return static_cast<T>((T(1) << (bits - Shift)) <= v ? max : static_cast<T>(v << Shift))
+                return static_cast<T>((T(1) << (bits - Shift)) <= v ? max : static_cast<T>(v << Shift));
             }
         }
     }
@@ -164,11 +167,39 @@ namespace ui::emul {
             return static_cast<T>(v_ >> Shift);
         }, v);
     }
+    
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto sat_shift_right(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        return map([](auto v_, auto s_) {
+            if constexpr (std::is_signed_v<T>) {
+                return static_cast<T>(s_ >= (sizeof(T) * 8 - 1) ? T(-1) : (v_ >> s_));
+            } else {
+                return static_cast<T>(v_ >> s_);
+            }
+        }, v, s);
+    }
+
+    template <unsigned Shift, std::size_t N, std::integral T>
+        requires (Shift < (sizeof(T) * 8))
+    UI_ALWAYS_INLINE static constexpr auto sat_shift_right(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return map([](auto v_) {
+            if constexpr (std::is_signed_v<T>) {
+                return static_cast<T>(Shift >= (sizeof(T) * 8 - 1) ? T(-1) : (v_ >> Shift));
+            } else {
+                return static_cast<T>(v_ >> Shift);
+            }
+        }, v);
+    }
 // !MARK
 
-// MARK: Vector rounding shift left
+// MARK: Vector rounding shift right
     template <std::size_t N, std::integral T>
-    UI_ALWAYS_INLINE static constexpr auto rounding_shift_left(
+    UI_ALWAYS_INLINE static constexpr auto rounding_shift_right(
         Vec<N, T> const& v,
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
