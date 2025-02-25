@@ -752,7 +752,7 @@ namespace ui::arm::neon {
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto sat_rounding_shift_left(
         Vec<N, T> const& v,
-        Vec<N, std::make_usigned_t<T>> const& s
+        Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return internal::sat_rounding_shift_helper(v, rcast<std::make_signed_t<T>>(s));
     }
@@ -763,8 +763,8 @@ namespace ui::arm::neon {
         requires ((Shift < (sizeof(T) * 8)) && sizeof(T) < 8)
     UI_ALWAYS_INLINE auto widening_shift_left(
         Vec<N, T> const& v
-    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
-        using result_t = internal::widening_result_t<T>;
+    ) noexcept -> Vec<N, ::ui::internal::widening_result_t<T>> {
+        using result_t = ::ui::internal::widening_result_t<T>;
         if constexpr (N == 1) {
             return emul::widening_shift_left<Shift>(v);
         } else {
@@ -1026,9 +1026,9 @@ namespace ui::arm::neon {
 
 // MARK: Vector saturating rounding shift left
     template <std::size_t N, std::integral T>
-    UI_ALWAYS_INLINE auto sat_rounding_shift_left(
+    UI_ALWAYS_INLINE auto sat_rounding_shift_right(
         Vec<N, T> const& v,
-        Vec<N, std::make_usigned_t<T>> const& s
+        Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return internal::sat_rounding_shift_helper(v, negate(rcast<std::make_signed_t<T>>(s)));
     }
@@ -1251,7 +1251,7 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE auto narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = internal::narrowing_result_t<T>;
+        using result_t = ::ui::internal::narrowing_result_t<T>;
         if constexpr (N == 1) {
             return Vec<1, result_t> {
                 .val = static_cast<result_t>(v.val >> Shift)
@@ -1314,7 +1314,7 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE auto sat_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = internal::narrowing_result_t<T>;
+        using result_t = ::ui::internal::narrowing_result_t<T>;
         using ret_t = Vec<N, result_t>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
@@ -1393,7 +1393,7 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE auto sat_unsigned_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = std::make_unsigned_t<internal::narrowing_result_t<T>>;
+        using result_t = std::make_unsigned_t<::ui::internal::narrowing_result_t<T>>;
         using ret_t = Vec<N, result_t>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
@@ -1444,7 +1444,7 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE auto sat_rounding_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = internal::narrowing_result_t<T>;
+        using result_t = ::ui::internal::narrowing_result_t<T>;
         using ret_t = Vec<N, result_t>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
@@ -1523,7 +1523,7 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE auto sat_rounding_unsigned_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = std::make_unsigned_t<internal::narrowing_result_t<T>>;
+        using result_t = std::make_unsigned_t<::ui::internal::narrowing_result_t<T>>;
         using ret_t = Vec<N, result_t>;
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
@@ -1572,7 +1572,7 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE auto rounding_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = internal::narrowing_result_t<T>;
+        using result_t = ::ui::internal::narrowing_result_t<T>;
         using ret_t = Vec<N, result_t>;
         if constexpr (N == 1) {
             auto temp = static_cast<std::int64_t>(v.val);
