@@ -31,4 +31,4 @@ function(add_catch_test source_filename has_no_vector_version)
     endif()
 endfunction(add_catch_test target)
 
-# add_subdirectory(runtime)
+add_subdirectory(runtime)

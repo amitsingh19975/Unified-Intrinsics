@@ -7,3 +7,4 @@ else()
 endif()
 
 add_catch_test(cast_test.cpp TRUE)
+add_catch_test(shift_test.cpp TRUE)
