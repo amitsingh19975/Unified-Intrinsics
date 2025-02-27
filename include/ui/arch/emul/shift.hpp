@@ -272,11 +272,28 @@ namespace ui::emul {
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return map([](auto v_, auto s_) {
-            using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
-            auto temp = static_cast<type>(v_);
-            auto shift = s_;
-            temp += (1 << (shift - 1));
-            return static_cast<T>(temp >> shift);
+            auto const round_bit = (1 << (s_ - 1));
+            #ifndef UI_HAS_INT128
+            if constexpr (sizeof(T) == 8) {
+                if (v_ == 0) return T(0);
+                constexpr unsigned lane = sizeof(T) * 8 - 1;
+                return static_cast<T>(s_ > lane
+                    ? 0
+                    : (v_ >> s_) + ((v_ & round_bit) >> (s_ - 1)));
+            } else 
+            #endif
+            {
+                #ifdef UI_HAS_INT128
+                using type64 = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+                using type128 = std::conditional_t<std::is_signed_v<T>, ui::int128_t, ui::uint128_t>;
+                using type = std::conditional_t<sizeof(T) == 8, type128, type64>;
+                #else
+                using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+                #endif
+                auto temp = static_cast<type>(v_) >> s_;
+                temp += (v_ & round_bit) >> (s_ - 1);
+                return static_cast<T>(temp);
+            }
         }, v, s);
     }
 // !MARK
@@ -374,18 +391,18 @@ namespace ui::emul {
      * @param b will be shifted by 'Shift'
     */
     template <unsigned Shift, std::size_t N, std::integral T>
-        requires (Shift > 0 && Shift <= (sizeof(T) * 8))
+        requires (Shift > 0 && Shift < (sizeof(T) * 8))
     UI_ALWAYS_INLINE auto insert_shift_right(
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
         return map([](auto a_, auto b_) {
-            static constexpr T mask = static_cast<T>(
-                Shift != sizeof(T) * 8
-                    ? (~T(0) << (sizeof(T) * 8 - Shift))
-                    : 0
-            );
-            return static_cast<T>((b_ >> Shift) | (a_ & mask));
+            using utype = std::make_unsigned_t<T>;
+            static constexpr auto bits = sizeof(T) * 8;
+            static constexpr utype mask = (utype(1) << (bits - Shift)) - 1;
+            auto tb = static_cast<utype>(b_) >> Shift;
+            auto ta = static_cast<utype>(a_ & ~mask);
+            return static_cast<T>(tb | ta);
         }, a, b);
     }
 // !MARK

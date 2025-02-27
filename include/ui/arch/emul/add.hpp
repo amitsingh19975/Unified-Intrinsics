@@ -68,19 +68,14 @@ namespace ui::emul {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         return map([](auto l, auto r) {
-            using type = std::make_unsigned_t<T>;
-            auto sum = static_cast<type>(static_cast<type>(l) + static_cast<type>(r));
+            auto sum = static_cast<T>(l + r);
             static constexpr auto bits = sizeof(T) * 8 - 1;
-            static constexpr auto sign_bit = T(1) << (bits);
+            static constexpr auto min = std::numeric_limits<T>::min();
+            static constexpr auto max = std::numeric_limits<T>::max();
             if constexpr (std::is_signed_v<T>) {
-                auto tr = static_cast<type>(r);
-                auto s0 = static_cast<type>(static_cast<type>(l) >> bits); // get the last sign bit
-                auto t0 = s0 + ~sign_bit;
-                // ~(l ^ s) | (l ^ sum)
-                if (static_cast<T>((t0 ^ tr) | ~(sum ^ tr)) >= 0) {
-                    sum = static_cast<type>(t0);
-                }
-                return static_cast<T>(sum);
+                auto mask = ((l ^ sum) & ~(l ^ r)) >> bits;
+                auto sat = (l >> bits) ^ std::numeric_limits<T>::max();
+                return static_cast<T>((sum & ~mask) | (sat & mask));
             } else {
                 return sum < l ? std::numeric_limits<T>::max() : sum;
             }
