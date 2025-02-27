@@ -737,8 +737,8 @@ namespace ui::arm::neon {
                 } 
             } else {
                 return join(
-                    sat_add_helper<M0, M1>(lhs.lo, lhs.lo, signed_fn0, unsigned_fn0, signed_fn1, unsigned_fn1),
-                    sat_add_helper<M0, M1>(lhs.hi, lhs.hi, signed_fn0, unsigned_fn0, signed_fn1, unsigned_fn1)
+                    sat_add_helper<M0, M1>(lhs.lo, rhs.lo, signed_fn0, unsigned_fn0, signed_fn1, unsigned_fn1),
+                    sat_add_helper<M0, M1>(lhs.hi, rhs.hi, signed_fn0, unsigned_fn0, signed_fn1, unsigned_fn1)
                 );
             }
         }
