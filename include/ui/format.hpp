@@ -54,29 +54,19 @@ namespace std {
                             // TODO: Do we really need binary rep for floats?
                             format_to(out, "{}", v[i]);
                         } else {
-                            auto temp = static_cast<std::make_unsigned_t<T>>(v[i]);
-                            if (v[i] < 0) {
-                                format_to(out, "-0b{:0{}b}", temp, sizeof(T) * 8);
-                            } else {
-                                format_to(out, "0b{:0{}b}", temp, sizeof(T) * 8);
-                            }
+                            format_to(out, "{:0{}b}", v[i], sizeof(T) * 8);
                         }
                     } break;
                     case Radix::hex: {
                         if constexpr (std::floating_point<T>) {
                             auto f = fp::decompose_fp(v[i]);
                             if (f.sign) {
-                                format_to(out, "-0x{:a}", -v[i], sizeof(T) * 8);
+                                format_to(out, "-{:a}", -v[i], sizeof(T) * 8);
                             } else {
-                                format_to(out, "0x{:a}", v[i], sizeof(T) * 8);
+                                format_to(out, "{:a}", v[i], sizeof(T) * 8);
                             }
                         } else {
-                            auto temp = static_cast<std::make_unsigned_t<T>>(v[i]);
-                            if (v[i] < 0) {
-                                format_to(out, "-0x{:0{}x}", temp, sizeof(T) * 8 / 4);
-                            } else {
-                                format_to(out, "0x{:0{}x}", temp, sizeof(T) * 8 / 4);
-                            }
+                            format_to(out, "{:0{}x}", v[i], sizeof(T) * 8 / 4);
                         }
                     } break;
                     default: break;
