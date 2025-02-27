@@ -98,4 +98,12 @@
     #define UI_HAS_BFLOAT_16
 #endif
 
+#ifdef __SIZEOF_INT128__
+    #define UI_HAS_INT128
+    namespace ui {
+        using int128_t  = __int128_t;
+        using uint128_t = __uint128_t;
+    }
+#endif
+
 #endif // AMT_UI_FEATURES_HPP
