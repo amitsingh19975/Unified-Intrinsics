@@ -21,7 +21,7 @@ struct DataGenerator {
     static constexpr auto cyclic_make(T min, T max) noexcept -> ui::Vec<N, T> {
         std::array<T, N> data;
         for (auto i = 0u; i < N; ++i) {
-            data[i] = static_cast<T>(min + (N % (max + 1)));
+            data[i] = static_cast<T>(min + (i % (max + 1)));
         }
         return ui::Vec<N, T>::load(data.data(), data.size());
     }
