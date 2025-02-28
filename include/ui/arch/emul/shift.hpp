@@ -399,10 +399,12 @@ namespace ui::emul {
         return map([](auto a_, auto b_) {
             using utype = std::make_unsigned_t<T>;
             static constexpr auto bits = sizeof(T) * 8;
-            static constexpr utype mask = (utype(1) << (bits - Shift)) - 1;
-            auto tb = static_cast<utype>(b_) >> Shift;
-            auto ta = static_cast<utype>(a_ & ~mask);
-            return static_cast<T>(tb | ta);
+            static constexpr auto adj_shift = bits - Shift;
+            static constexpr utype mask = (utype(1) << adj_shift) - 1;
+            auto ta = (static_cast<utype>(a_) >> adj_shift) << adj_shift;
+            utype tb = static_cast<utype>(b_) >> Shift;
+            auto res = static_cast<T>(ta | tb);
+            return res;
         }, a, b);
     }
 // !MARK
