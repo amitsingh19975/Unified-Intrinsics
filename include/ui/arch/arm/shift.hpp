@@ -126,6 +126,14 @@ namespace ui::arm::neon {
         return internal::shift_left_right_helper(v, rcast<std::make_signed_t<T>>(s));
     }
 
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto shift_left(
+        Vec<N, T> const& v,
+        Vec<N, std::make_signed_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        return internal::shift_left_right_helper(v, s);
+    }
+
     template <unsigned Shift, std::size_t N, std::integral T>
         requires (Shift < (sizeof(T) * 8))
     UI_ALWAYS_INLINE auto shift_left(
@@ -892,7 +900,7 @@ namespace ui::arm::neon {
                     }
                 }
             }
-        
+
             return join(
                 insert_shift_left<Shift>(a.lo, b.lo),
                 insert_shift_left<Shift>(a.hi, b.hi)
@@ -908,6 +916,14 @@ namespace ui::arm::neon {
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return internal::shift_left_right_helper(v, negate(rcast<std::make_signed_t<T>>(s)));
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto shift_right(
+        Vec<N, T> const& v,
+        Vec<N, std::make_signed_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        return internal::shift_left_right_helper(v, s);
     }
 
     template <unsigned Shift, std::size_t N, std::integral T>
@@ -1132,6 +1148,7 @@ namespace ui::arm::neon {
             );
         }
     }
+
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto rounding_shift_right(
         Vec<N, T> const& v,
@@ -1656,33 +1673,26 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, std::uint64_t>) {
                 return from_vec<T>(vsri_n_u64(to_vec(a), to_vec(b), Shift));  
             }
-            static constexpr T mask = static_cast<T>(
-                Shift != sizeof(T) * 8
-                    ? (~T(0) << (sizeof(T) * 8 - Shift))
-                    : 0
-            );
-            return {
-                .val = static_cast<T>((b.val >> Shift) | (a.val & mask))
-            };
+            return emul::insert_shift_right<Shift>(a, b);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
                         return from_vec<T>(vsri_n_s8(to_vec(a), to_vec(b), Shift));
                     } else if constexpr (N == 16) {
-                        return from_vec<T>(vsliq_n_s8(to_vec(a), to_vec(b), Shift));
+                        return from_vec<T>(vsriq_n_s8(to_vec(a), to_vec(b), Shift));
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
                         return from_vec<T>(vsri_n_s16(to_vec(a), to_vec(b), Shift));
                     } else if constexpr (N == 8) {
-                        return from_vec<T>(vsliq_n_s16(to_vec(a), to_vec(b), Shift));
+                        return from_vec<T>(vsriq_n_s16(to_vec(a), to_vec(b), Shift));
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
                         return from_vec<T>(vsri_n_s32(to_vec(a), to_vec(b), Shift));
                     } else if constexpr (N == 4) {
-                        return from_vec<T>(vsliq_n_s32(to_vec(a), to_vec(b), Shift));
+                        return from_vec<T>(vsriq_n_s32(to_vec(a), to_vec(b), Shift));
                     }
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
@@ -1694,19 +1704,19 @@ namespace ui::arm::neon {
                     if constexpr (N == 8) {
                         return from_vec<T>(vsri_n_u8(to_vec(a), to_vec(b), Shift));
                     } else if constexpr (N == 16) {
-                        return from_vec<T>(vsliq_n_u8(to_vec(a), to_vec(b), Shift));
+                        return from_vec<T>(vsriq_n_u8(to_vec(a), to_vec(b), Shift));
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
                         return from_vec<T>(vsri_n_u16(to_vec(a), to_vec(b), Shift));
                     } else if constexpr (N == 8) {
-                        return from_vec<T>(vsliq_n_u16(to_vec(a), to_vec(b), Shift));
+                        return from_vec<T>(vsriq_n_u16(to_vec(a), to_vec(b), Shift));
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
                         return from_vec<T>(vsri_n_u32(to_vec(a), to_vec(b), Shift));
                     } else if constexpr (N == 4) {
-                        return from_vec<T>(vsliq_n_u32(to_vec(a), to_vec(b), Shift));
+                        return from_vec<T>(vsriq_n_u32(to_vec(a), to_vec(b), Shift));
                     }
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
