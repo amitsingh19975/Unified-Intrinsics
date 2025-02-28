@@ -2,13 +2,11 @@
 #define AMT_UI_ARCH_ARM_ADD_HPP
 
 #include "cast.hpp"
-#include <algorithm>
 #include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <type_traits>
 #include "../basic.hpp"
 #include "../emul/add.hpp"
@@ -541,7 +539,7 @@ namespace ui::arm::neon {
             [](auto const& l, auto const& r) { return vhadd_u8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_u8(to_vec(l), to_vec(r)) ; },
-            
+
             [](auto const& l, auto const& r) { return vhaddq_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhaddq_u8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_s8(to_vec(l), to_vec(r)) ; },
@@ -561,7 +559,7 @@ namespace ui::arm::neon {
             [](auto const& l, auto const& r) { return vhadd_u16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_s16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_u16(to_vec(l), to_vec(r)) ; },
-            
+
             [](auto const& l, auto const& r) { return vhaddq_s16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhaddq_u16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_s16(to_vec(l), to_vec(r)) ; },
@@ -677,7 +675,6 @@ namespace ui::arm::neon {
 // MARK: Saturating Addition
 
     namespace internal {
-
         template <std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto sat_add_helper(
             Vec<N, T> const& lhs,
@@ -841,214 +838,165 @@ namespace ui::arm::neon {
 
     } // namespace internal
 
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto sat_add(
         Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
+        Vec<N, U> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<8, 16>(
-            lhs, rhs,
-            [](auto const& l, auto const& r) { return vqadd_s8(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqadd_u8(to_vec(l), to_vec(r)); },
+        if constexpr (std::is_signed_v<T> == std::is_signed_v<U>) {
+            return internal::sat_add_helper<8, 16>(
+                lhs, rhs,
+                [](auto const& l, auto const& r) { return vqadd_s8(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqadd_u8(to_vec(l), to_vec(r)); },
 
-            [](auto const& l, auto const& r) { return vqaddq_s8(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqaddq_u8(to_vec(l), to_vec(r)); }
-        );
+                [](auto const& l, auto const& r) { return vqaddq_s8(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqaddq_u8(to_vec(l), to_vec(r)); }
+            );
+        } else if constexpr (std::is_signed_v<T>) {
+            return internal::sat_add_helper<8, 16>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vuqadd_s8(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vuqaddq_s8(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        } else {
+            return internal::sat_add_helper<8, 16>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vsqadd_u8(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vsqaddq_u8(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        }
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 1 && std::is_signed_v<T> && !std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
-        Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<8, 16>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vuqadd_s8(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vuqaddq_s8(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
-    }
-
-    template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 1 && !std::is_signed_v<T> && std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
-        Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<8, 16>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vsqadd_u8(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vsqaddq_u8(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
-    }
-
-    template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto sat_add(
         Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<4, 8>(
-            lhs, rhs,
-            [](auto const& l, auto const& r) { return vqadd_s16(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqadd_u16(to_vec(l), to_vec(r)); },
-
-            [](auto const& l, auto const& r) { return vqaddq_s16(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqaddq_u16(to_vec(l), to_vec(r)); }
-        );
-    }
-    
-    template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 2 && std::is_signed_v<T> && !std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<4, 8>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vuqadd_s16(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vuqaddq_s16(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
+        if constexpr (std::is_signed_v<T> == std::is_signed_v<U>) {
+            return internal::sat_add_helper<4, 8>(
+                lhs, rhs,
+                [](auto const& l, auto const& r) { return vqadd_s16(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqadd_u16(to_vec(l), to_vec(r)); },
+
+                [](auto const& l, auto const& r) { return vqaddq_s16(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqaddq_u16(to_vec(l), to_vec(r)); }
+            );
+        } else if constexpr (std::is_signed_v<T>) {
+            return internal::sat_add_helper<4, 8>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vuqadd_s16(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vuqaddq_s16(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        } else {
+            return internal::sat_add_helper<4, 8>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vsqadd_u16(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vsqaddq_u16(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        }
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 2 && !std::is_signed_v<T> && std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
-        Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<4, 8>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vsqadd_u16(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vsqaddq_u16(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
-    }
-
-    template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto sat_add(
         Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
+        Vec<N, U> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<2, 4>(
-            lhs, rhs,
-            [](auto const& l, auto const& r) { return vqadd_s32(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqadd_u32(to_vec(l), to_vec(r)); },
+        if constexpr (std::is_signed_v<T> == std::is_signed_v<U>) {
+            return internal::sat_add_helper<2, 4>(
+                lhs, rhs,
+                [](auto const& l, auto const& r) { return vqadd_s32(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqadd_u32(to_vec(l), to_vec(r)); },
 
-            [](auto const& l, auto const& r) { return vqaddq_s32(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqaddq_u32(to_vec(l), to_vec(r)); }
-        );
+                [](auto const& l, auto const& r) { return vqaddq_s32(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqaddq_u32(to_vec(l), to_vec(r)); }
+            );
+        } else if constexpr (std::is_signed_v<T>) {
+            return internal::sat_add_helper<2, 4>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vuqadd_s32(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vuqaddq_s32(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        } else {
+            return internal::sat_add_helper<2, 4>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vsqadd_u32(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vsqaddq_u32(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        }
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 4 && std::is_signed_v<T> && !std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
-        Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<2, 4>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vuqadd_s32(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vuqaddq_s32(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
-    }
-
-
-    template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 4 && !std::is_signed_v<T> && std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
-        Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<2, 4>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vsqadd_u32(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vsqaddq_u32(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
-    }
-
-    template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto sat_add(
         Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<1, 2>(
-            lhs, rhs,
-            [](auto const& l, auto const& r) { return vqadd_s64(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqadd_u64(to_vec(l), to_vec(r)); },
-
-            [](auto const& l, auto const& r) { return vqaddq_s64(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vqaddq_u64(to_vec(l), to_vec(r)); }
-        );
-    }  
-
-    template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 8 && std::is_signed_v<T> && !std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::sat_add_helper<1, 2>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vuqadd_s64(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vuqaddq_s64(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
-    }
+        if constexpr (std::is_signed_v<T> == std::is_signed_v<U>) {
+            return internal::sat_add_helper<1, 2>(
+                lhs, rhs,
+                [](auto const& l, auto const& r) { return vqadd_s64(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqadd_u64(to_vec(l), to_vec(r)); },
 
-    template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 8 && !std::is_signed_v<T> && std::is_signed_v<U>)
-    UI_ALWAYS_INLINE auto sat_add(
-        Vec<N, T> const& lhs,
-        Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, T> {    
-        return internal::sat_add_helper<1, 2>(
-            lhs, rhs,
-            #ifdef UI_CPU_ARM64
-            [](auto const& l, auto const& r) { return vsqadd_u64(to_vec(l), to_vec(r)); },
-            [](auto const& l, auto const& r) { return vsqaddq_u64(to_vec(l), to_vec(r)); }
-            #else
-            []{},
-            []{}
-            #endif
-        );
-    }
+                [](auto const& l, auto const& r) { return vqaddq_s64(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vqaddq_u64(to_vec(l), to_vec(r)); }
+            );
+        } else if constexpr (std::is_signed_v<T>) {
+            return internal::sat_add_helper<1, 2>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vuqadd_s64(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vuqaddq_s64(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        } else {
+            return internal::sat_add_helper<1, 2>(
+                lhs, rhs,
+                #ifdef UI_CPU_ARM64
+                [](auto const& l, auto const& r) { return vsqadd_u64(to_vec(l), to_vec(r)); },
+                [](auto const& l, auto const& r) { return vsqaddq_u64(to_vec(l), to_vec(r)); }
+                #else
+                []{},
+                []{}
+                #endif
+            );
+        }
+    } 
 // !MARK
 
 // MARK: Pairwise Addition
@@ -1197,8 +1145,8 @@ namespace ui::arm::neon {
                 }
             } 
             return join(
-                padd(lhs.lo, rhs.lo),
-                padd(lhs.hi, rhs.hi)
+                padd(lhs.lo, lhs.hi),
+                padd(rhs.lo, rhs.hi)
             );
         }
     }
@@ -1303,7 +1251,7 @@ namespace ui::arm::neon {
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto widening_padd(
-        Vec<N, internal::widening_result_t<T>> const& x,
+        Vec<N, internal::widening_result_t<T>> const& a,
         Vec<2 * N, T> const& v
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
@@ -1312,41 +1260,41 @@ namespace ui::arm::neon {
             if constexpr (sizeof(T) == 4) {
                 if constexpr (std::is_signed_v<T>) {
                     return from_vec<result_t>(
-                        vpadal_s32(to_vec(x), to_vec(v))
+                        vpadal_s32(to_vec(a), to_vec(v))
                     );
                 } else {
                     return from_vec<result_t>(
-                        vpadal_u32(to_vec(x), to_vec(v))
+                        vpadal_u32(to_vec(a), to_vec(v))
                     );
                 }
             }
-            return emul::widening_padd(x, v);
+            return emul::widening_padd(a, v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 4) {
                         return from_vec<result_t>(
-                            vpadal_s8(to_vec(x), to_vec(v))
+                            vpadal_s8(to_vec(a), to_vec(v))
                         );
                     } else if constexpr (N == 8) {
                         return from_vec<result_t>(
-                            vpadalq_s8(to_vec(x), to_vec(v))
+                            vpadalq_s8(to_vec(a), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 2) {
                         return from_vec<result_t>(
-                            vpadal_s16(to_vec(x), to_vec(v))
+                            vpadal_s16(to_vec(a), to_vec(v))
                         );
                     } else if constexpr (N == 4) {
                         return from_vec<result_t>(
-                            vpadalq_s16(to_vec(x), to_vec(v))
+                            vpadalq_s16(to_vec(a), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
                         return from_vec<result_t>(
-                            vpadalq_s32(to_vec(x), to_vec(v))
+                            vpadalq_s32(to_vec(a), to_vec(v))
                         );
                     } 
                 }
@@ -1354,35 +1302,35 @@ namespace ui::arm::neon {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 4) {
                         return from_vec<result_t>(
-                            vpadal_u8(to_vec(x), to_vec(v))
+                            vpadal_u8(to_vec(a), to_vec(v))
                         );
                     } else if constexpr (N == 8) {
                         return from_vec<result_t>(
-                            vpadalq_u8(to_vec(x), to_vec(v))
+                            vpadalq_u8(to_vec(a), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 2) {
                         return from_vec<result_t>(
-                            vpadal_u16(to_vec(x), to_vec(v))
+                            vpadal_u16(to_vec(a), to_vec(v))
                         );
                     } else if constexpr (N == 4) {
                         return from_vec<result_t>(
-                            vpadalq_u16(to_vec(x), to_vec(v))
+                            vpadalq_u16(to_vec(a), to_vec(v))
                         );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
                         return from_vec<result_t>(
-                            vpadalq_u32(to_vec(x), to_vec(v))
+                            vpadalq_u32(to_vec(a), to_vec(v))
                         );
                     } 
                 }
             }
 
             return join(
-                widening_padd(x.lo, v.lo),
-                widening_padd(x.hi, v.hi)
+                widening_padd(a.lo, v.lo),
+                widening_padd(a.hi, v.hi)
             );
         }
     }
@@ -1577,7 +1525,10 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return fold(v.lo, op) + fold(v.hi, op);
+            return static_cast<result_t>(
+                widening_fold(v.lo, op) +
+                widening_fold(v.hi, op)
+            );
         }
     }
 

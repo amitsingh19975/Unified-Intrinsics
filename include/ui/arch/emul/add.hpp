@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_EMUL_ADD_HPP
 
 #include "cast.hpp"
+#include "ui/arch/basic.hpp"
 #include <concepts>
 #include <cstdint>
 #include <limits>
@@ -30,13 +31,13 @@ namespace ui::emul {
     ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
         using result_t = internal::widening_result_t<T, U>;
         return map([](auto l, auto r) { 
-            return static_cast<result_t>(l) + static_cast<result_t>(r);
+            return static_cast<result_t>(static_cast<result_t>(l) + static_cast<result_t>(r));
         }, lhs, rhs);
     }
 // !MAKR
 
 // MARK: Halving Widening Addition
-    template <bool Round, std::size_t N, std::integral T>
+    template <bool Round = false, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto halving_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -62,12 +63,12 @@ namespace ui::emul {
 // !MAKR
 
 // MARK: Saturation Addition
-    template <std::size_t N, std::integral T>
-    UI_ALWAYS_INLINE static constexpr auto sat_add(
-        Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return map([](auto l, auto r) {
+    namespace internal {
+        template <std::integral T>
+        UI_ALWAYS_INLINE static constexpr auto sat_add_helper(
+            T l,
+            T r
+        ) noexcept -> T {
             auto sum = static_cast<T>(l + r);
             static constexpr auto bits = sizeof(T) * 8 - 1;
             static constexpr auto min = std::numeric_limits<T>::min();
@@ -78,6 +79,30 @@ namespace ui::emul {
                 return static_cast<T>((sum & ~mask) | (sat & mask));
             } else {
                 return sum < l ? std::numeric_limits<T>::max() : sum;
+            }
+        }
+
+    } // namespace internal
+    template <std::size_t N, std::integral T, std::integral U>
+    UI_ALWAYS_INLINE static constexpr auto sat_add(
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, T> {
+        return map([](auto l, auto r) {
+            if constexpr (std::is_signed_v<T> == std::is_signed_v<U>) {
+                return internal::sat_add_helper(l, r);
+            } else if constexpr (std::is_signed_v<T>) {
+                // T: signed, U: unsigned
+                static constexpr auto min = std::numeric_limits<T>::max();
+                if (r >= static_cast<U>(min)) return min;
+                auto tr = static_cast<T>(r);
+                return internal::sat_add_helper(l, tr); 
+            } else {
+                // T: unsigned, U: signed
+                static constexpr auto min = std::numeric_limits<U>::max();
+                if (l >= static_cast<T>(min)) return min;
+                auto tr = static_cast<T>(r);
+                return internal::sat_add_helper(l, tr); 
             }
         }, lhs, rhs);
     }
@@ -133,18 +158,18 @@ namespace ui::emul {
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto widening_padd(
-        Vec<    N, internal::widening_result_t<T>> const& x,
+        Vec<    N, internal::widening_result_t<T>> const& a,
         Vec<2 * N, T> v
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         if constexpr (N == 1) {
             return {
-                .val = x.val + static_cast<result_t>(v.lo.val) + static_cast<result_t>(v.hi.val)    
+                .val = static_cast<result_t>(a.val + static_cast<result_t>(v.lo.val) + static_cast<result_t>(v.hi.val))
             };
         } else {
             return join(
-                widening_padd(x.lo, v.lo),
-                widening_padd(x.hi, v.hi)
+                widening_padd(a.lo, v.lo),
+                widening_padd(a.hi, v.hi)
             );
         }
     }
@@ -169,7 +194,7 @@ namespace ui::emul {
     UI_ALWAYS_INLINE auto widening_fold(
         Vec<N, T> const& v,
         [[maybe_unused]] op::add_t op
-    ) noexcept -> T {
+    ) noexcept -> internal::widening_result_t<T> {
         using result_t = internal::widening_result_t<T>;
         constexpr auto helper = []<std::size_t... Is>(
             std::index_sequence<Is...>,

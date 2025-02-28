@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <limits>
 #include <cfenv>
+#include <type_traits>
 
 namespace ui::internal {
 
@@ -172,12 +173,26 @@ namespace ui::internal {
     using narrowing_result_t = typename NarrowingResult<T>::type;
 
 
-    template <bool Round, typename Acc, typename From>
-    UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, auto&& op) noexcept -> From {
-        auto l = static_cast<Acc>(lhs);
-        auto r = static_cast<Acc>(rhs);
-        auto sum = op(l, r) + Round;
-        return static_cast<From>(sum / 2);
+    template <bool Round, typename From>
+    UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, op::add_t) noexcept -> From {
+        if constexpr (Round) {
+            using utype = std::make_unsigned_t<From>;
+            static constexpr auto bits = sizeof(From) * 8 - 1;
+            auto l = lhs >> 1;
+            auto r = rhs >> 1;
+            From res = lhs | rhs;
+            res = static_cast<utype>(res << bits) >> bits;
+            return static_cast<From>(res + (l + r));
+        } else {
+            auto sum = lhs + (rhs - lhs) / 2;
+            return static_cast<From>(sum);
+        }
+    }
+
+    template <bool Round, typename From>
+    UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, op::sub_t) noexcept -> From {
+        auto sum = (lhs - rhs + Round) / 2;
+        return static_cast<From>(sum);
     }
 
     template <std::floating_point T>
