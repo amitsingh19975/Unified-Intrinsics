@@ -499,7 +499,7 @@ namespace ui::arm::neon {
             lhs, rhs,
             [](auto const& l, auto const& r) { return vhsub_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsub_u8(to_vec(l), to_vec(r)) ; },
-            
+
             [](auto const& l, auto const& r) { return vhsubq_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsubq_u8(to_vec(l), to_vec(r)) ; }
         ); 

@@ -3,6 +3,7 @@
 
 #include "cast.hpp"
 #include "ui/arch/basic.hpp"
+#include "ui/features.hpp"
 #include <concepts>
 #include <cstdint>
 #include <limits>
@@ -38,13 +39,14 @@ namespace ui::emul {
 
 // MARK: Halving Widening Addition
     template <bool Round = false, std::size_t N, std::integral T>
+        requires (sizeof(T) < 8)
     UI_ALWAYS_INLINE static constexpr auto halving_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using acc_t = internal::widening_result_t<T>;
-        return map([](auto l, auto r) {
-            return internal::halving_round_helper<Round, acc_t>(l, r, op::add_t{});
+        return map([](auto l, auto r) -> acc_t {
+            return static_cast<acc_t>(internal::halving_round_helper<Round>(l, r, op::add_t{}));
         }, lhs, rhs); 
     }
 // !MAKR
@@ -56,7 +58,7 @@ namespace ui::emul {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, internal::narrowing_result_t<T>> {
         using result_t = internal::narrowing_result_t<T>;
-        return map([](auto l, auto r) {
+        return map([](auto l, auto r) -> result_t {
             return (static_cast<result_t>((l + r) >> (sizeof(result_t) * 8)));
         }, lhs, rhs); 
     }
@@ -84,6 +86,7 @@ namespace ui::emul {
 
     } // namespace internal
     template <std::size_t N, std::integral T, std::integral U>
+        requires (sizeof(T) == sizeof(U))
     UI_ALWAYS_INLINE static constexpr auto sat_add(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
@@ -93,16 +96,39 @@ namespace ui::emul {
                 return internal::sat_add_helper(l, r);
             } else if constexpr (std::is_signed_v<T>) {
                 // T: signed, U: unsigned
-                static constexpr auto min = std::numeric_limits<T>::max();
-                if (r >= static_cast<U>(min)) return min;
+                static constexpr auto max = std::numeric_limits<T>::max();
+                if (r >= static_cast<U>(max)) return max;
                 auto tr = static_cast<T>(r);
-                return internal::sat_add_helper(l, tr); 
+                return static_cast<T>(internal::sat_add_helper(l, tr));
             } else {
                 // T: unsigned, U: signed
-                static constexpr auto min = std::numeric_limits<U>::max();
-                if (l >= static_cast<T>(min)) return min;
-                auto tr = static_cast<T>(r);
-                return internal::sat_add_helper(l, tr); 
+                #ifndef UI_HAS_INT128
+                if constexpr (sizeof(T) == 8) {
+                    static constexpr auto max = static_cast<T>(std::numeric_limits<U>::max());
+                    if (l > max) return std::numeric_limits<T>::max();
+                    if (r < 0) {
+                        if (static_cast<U>(l) >= r) return T(0);
+                        return static_cast<T>(l + r);
+                    }
+                    auto tl = static_cast<U>(l);
+                    return static_cast<T>(internal::sat_add_helper(tl, r));
+                } else
+                #endif
+                {
+
+                    #ifdef UI_HAS_INT128
+                    using type = std::conditional_t<sizeof(T) == 8, ui::int128_t, std::int64_t>;
+                    #else
+                    using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+                    #endif
+                    auto a = static_cast<type>(l);
+                    auto b = static_cast<type>(r);
+                    return static_cast<T>(std::clamp<type>(
+                        a + b,
+                        type(0),
+                        static_cast<type>(std::numeric_limits<T>::max())
+                    ));
+                }
             }
         }, lhs, rhs);
     }

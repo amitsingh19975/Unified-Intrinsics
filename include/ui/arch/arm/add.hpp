@@ -664,7 +664,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept {
-        return internal::high_narrowing_add_helper<4>(
+        return internal::high_narrowing_add_helper<2>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vaddhn_s64(to_vec(l), to_vec(r)); },
             [](auto const& l, auto const& r) { return vaddhn_u64(to_vec(l), to_vec(r)); }
