@@ -211,26 +211,67 @@ namespace ui::emul {
         Vec<N, std::make_unsigned_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         return map([](auto v_, auto s_) {
-            auto temp = static_cast<std::int64_t>(v_);
-            auto shift = s_;
-            temp += (1 << (shift - 1));
-            return static_cast<T>(temp >> shift);
+            #ifndef UI_HAS_INT128
+            if constexpr (sizeof(T) == 8) {
+                static constexpr auto lanesize = sizeof(T) * 8;
+                auto const shift = s_ - 1;
+                auto const mask = T(1) << (s_ - 1);
+                if (s_ > lanesize) return T(0);
+                if (s_ == lanesize) return (v_ & mask) >> shift;
+                auto r = v_ >> s_;
+                return static_cast<T>(r + ((v_ & mask) >> shift));
+            } else 
+            #endif
+            {
+                #ifdef UI_HAS_INT128
+                using type64 = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+                using type128 = std::conditional_t<std::is_signed_v<T>, ui::int128_t, ui::uint128_t>;
+                using type = std::conditional_t<sizeof(T) == 8, type128, type64>;
+                #else
+                using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+                #endif
+                auto temp = static_cast<type>(v_);
+                auto shift = s_;
+                temp += (1 << (shift - 1));
+                return static_cast<T>(temp >> shift);
+            }
         }, v, s);
     }
 // !MARK
 
-// MARK: Vector rounding shift left
+// MARK: Vector rounding shift right
     template <unsigned Shift, std::size_t N, std::integral T>
         requires (Shift > 0 && Shift < sizeof(T) * 8)
     UI_ALWAYS_INLINE static constexpr auto rounding_shift_right(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         return map([](auto v_) {
-            auto temp = static_cast<std::int64_t>(v_);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
+            #ifndef UI_HAS_INT128
+            if constexpr (sizeof(T) == 8) {
+                static constexpr auto lanesize = sizeof(T) * 8;
+                auto const shift = Shift - 1;
+                auto const mask = T(1) << (Shift - 1);
+                if (Shift > lanesize) return T(0);
+                if (Shift == lanesize) return (v_ & mask) >> shift;
+                auto r = v_ >> Shift;
+                return static_cast<T>(r + ((v_ & mask) >> shift));
+            } else 
+            #endif
+            {
+                #ifdef UI_HAS_INT128
+                using type64 = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+                using type128 = std::conditional_t<std::is_signed_v<T>, ui::int128_t, ui::uint128_t>;
+                using type = std::conditional_t<sizeof(T) == 8, type128, type64>;
+                #else
+                using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
+                #endif
+
+                auto temp = static_cast<type>(v_);
+                if constexpr (Shift > 1) {
+                    temp += (1ll << (Shift - 1));
+                }
+                return static_cast<T>(temp >> Shift);
             }
-            return static_cast<T>(temp >> Shift);
         }, v);
     }
 // !MARK
@@ -242,13 +283,10 @@ namespace ui::emul {
         Vec<N, T> const& a,
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
+        auto vt = rounding_shift_right<Shift>(v);
         return map([](auto a_, auto v_) {
-            auto temp = static_cast<std::int64_t>(v_);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return static_cast<T>(a_ + static_cast<T>(temp >> Shift));
-        }, a, v);
+            return static_cast<T>(a_ + v_);
+        }, a, vt);
     }
 // !MARK
 
@@ -305,10 +343,11 @@ namespace ui::emul {
         Vec<N, T> const& v
     ) noexcept {
         using result_t = internal::narrowing_result_t<T>;
+        using type = std::conditional_t<std::is_signed_v<T>, std::int64_t, std::uint64_t>;
         return map([](auto v_) {
-            auto temp = static_cast<std::int64_t>(v_) >> Shift;
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<result_t>::max());
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<result_t>::min());
+            auto temp = static_cast<type>(v_) >> Shift;
+            static constexpr auto max = static_cast<type>(std::numeric_limits<result_t>::max());
+            static constexpr auto min = static_cast<type>(std::numeric_limits<result_t>::min());
             return static_cast<result_t>(std::clamp(temp, min, max));
         }, v);
     }
@@ -319,10 +358,11 @@ namespace ui::emul {
     ) noexcept {
         using result_t = std::make_unsigned_t<internal::narrowing_result_t<T>>;
         return map([](auto v_) {
-            auto temp = static_cast<std::uint64_t>(v_) >> Shift;
-            static constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<result_t>::max());
-            static constexpr auto min = static_cast<std::uint64_t>(std::numeric_limits<result_t>::min());
-            return static_cast<result_t>(std::clamp(temp, min, max));
+            if (v_ < 0) return result_t(0);
+            static constexpr auto max = std::numeric_limits<result_t>::max();
+            auto temp = static_cast<T>(v_ >> Shift);
+            if (temp > static_cast<T>(max)) return max;
+            return static_cast<result_t>(temp);
         }, v);
     }
 // !MARK
@@ -335,13 +375,12 @@ namespace ui::emul {
     ) noexcept {
         using result_t = internal::narrowing_result_t<T>;
         return map([](auto v_) {
-            static constexpr auto max = static_cast<std::int64_t>(std::numeric_limits<T>::max());
-            static constexpr auto min = static_cast<std::int64_t>(std::numeric_limits<T>::min());
-            auto temp = static_cast<std::int64_t>(v_);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return static_cast<result_t>(std::clamp(temp >> Shift, min, max));
+            static constexpr auto mask = T(1) << (Shift - 1);
+            static constexpr auto max = std::numeric_limits<result_t>::max();
+            static constexpr auto min = std::numeric_limits<result_t>::min();
+            auto m0 = v_ & mask;
+            auto r = (v_ >> Shift) + (m0 >> (Shift - 1));
+            return static_cast<result_t>(std::clamp<T>(r, min, max));
         }, v);
     }
 
@@ -352,13 +391,12 @@ namespace ui::emul {
     ) noexcept {
         using result_t = std::make_unsigned_t<internal::narrowing_result_t<T>>;
         return map([](auto v_) {
-            static constexpr auto max = static_cast<std::uint64_t>(std::numeric_limits<T>::max());
-            static constexpr auto min = static_cast<std::uint64_t>(std::numeric_limits<T>::min());
-            auto temp = static_cast<std::uint64_t>(v_);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return static_cast<result_t>(std::clamp(temp >> Shift, min, max));
+            static constexpr auto max = std::numeric_limits<result_t>::max();
+            static constexpr auto mask = T(1) << (Shift - 1);
+            if (v_ < 0) return result_t(0);
+            auto m0 = v_ & mask;
+            auto r = (v_ >> Shift) + (m0 >> (Shift - 1));
+            return static_cast<result_t>(r >= static_cast<T>(max) ? max : r);
         }, v);
     }
 // !MARK
@@ -370,12 +408,13 @@ namespace ui::emul {
         Vec<N, T> const& v
     ) noexcept {
         using result_t = internal::narrowing_result_t<T>;
+        using utype = std::make_unsigned_t<T>;
         return map([](auto v_) {
-            auto temp = static_cast<std::int64_t>(v_);
-            if constexpr (Shift > 1) {
-                temp += (1ll << (Shift - 1));
-            }
-            return static_cast<result_t>(temp >> Shift);
+            static constexpr auto bits = sizeof(T) * 8;
+            auto mask = (v_ << (bits - Shift));
+            mask = static_cast<utype>(mask) >> (bits - 1);
+            auto r = static_cast<utype>(v_) >> Shift;
+            return static_cast<result_t>(r + mask);
         }, v);
     }
 // !MARK
