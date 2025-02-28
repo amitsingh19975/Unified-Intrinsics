@@ -8,8 +8,6 @@
 #include <numeric>
 #include <print>
 #include "ui.hpp"
-#include "ui/arch/arm/shift.hpp"
-#include "ui/arch/basic.hpp"
 #include <cstdint>
 #include <type_traits>
 #include <random>
