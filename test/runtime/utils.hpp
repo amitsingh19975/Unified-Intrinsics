@@ -43,3 +43,5 @@ struct DataGenerator {
     }
 };
 
+template <std::floating_point T = float>
+static constexpr T eps = T(0.1);

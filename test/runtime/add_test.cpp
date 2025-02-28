@@ -1,5 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <cmath>
 #include <cstdint>
 #include <print>
 #include "ui.hpp"
@@ -1211,7 +1213,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
     }
 }
 
-TEST_CASE( VEC_ARCH_NAME " 64bit Addition", "[addition][32bit]" ) {
+TEST_CASE( VEC_ARCH_NAME " 64bit Addition", "[addition][64bit]" ) {
     GIVEN("Signed 64bit Integer") {
         using type = std::int64_t;
         using ntype = std::int32_t;
@@ -1431,4 +1433,265 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Addition", "[addition][32bit]" ) {
         }
     }
 }
+
+TEST_CASE( VEC_ARCH_NAME " Float16 Addition", "[addition][float16]" ) {
+    using type = float16;
+    static constexpr auto N = 16ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(float(v[0]), Catch::Matchers::WithinRel(float(min), eps<float>));
+        REQUIRE_THAT(float(v[1]), Catch::Matchers::WithinRel(float(max), eps<float>));
+        for (auto i = 2u; i < N; ++i) {
+            auto lhs = float(v[i]);
+            auto rhs = float(i - 2); 
+            INFO(std::format("{} == {}", lhs, rhs));
+            REQUIRE_THAT(lhs, Catch::Matchers::WithinRel(rhs, eps<float>));
+        }
+    }
+
+    WHEN("Normal Addition") {
+        auto res = add(v, v); 
+        INFO(std::format("add(v, v): {}", res));
+
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i] * 2), eps<float>));
+        }
+    }
+
+    WHEN("Pairwise Addition") {
+        auto res = padd(v, v);
+        INFO(std::format("padd(v, v): {}", res));
+        
+        REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(float(65504), eps<float>));
+        REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(float(1), eps<float>));
+        REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(float(5), eps<float>));
+        REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(float(9), eps<float>));
+        REQUIRE_THAT(float(res[ 4]), Catch::Matchers::WithinRel(float(13), eps<float>));
+        REQUIRE_THAT(float(res[ 5]), Catch::Matchers::WithinRel(float(17), eps<float>));
+        REQUIRE_THAT(float(res[ 6]), Catch::Matchers::WithinRel(float(21), eps<float>));
+        REQUIRE_THAT(float(res[ 7]), Catch::Matchers::WithinRel(float(25), eps<float>));
+        REQUIRE_THAT(float(res[ 8]), Catch::Matchers::WithinRel(float(65504), eps<float>));
+        REQUIRE_THAT(float(res[ 9]), Catch::Matchers::WithinRel(float(1), eps<float>));
+        REQUIRE_THAT(float(res[10]), Catch::Matchers::WithinRel(float(5), eps<float>));
+        REQUIRE_THAT(float(res[11]), Catch::Matchers::WithinRel(float(9), eps<float>));
+        REQUIRE_THAT(float(res[12]), Catch::Matchers::WithinRel(float(13), eps<float>));
+        REQUIRE_THAT(float(res[13]), Catch::Matchers::WithinRel(float(17), eps<float>));
+        REQUIRE_THAT(float(res[14]), Catch::Matchers::WithinRel(float(21), eps<float>));
+        REQUIRE_THAT(float(res[15]), Catch::Matchers::WithinRel(float(25), eps<float>));
+    }
+
+    WHEN("Pairwise fold") {
+        auto res = fold(v, op::padd_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(float(res), Catch::Matchers::WithinRel(INFINITY, eps<float>));
+    }
+
+    WHEN("Fold") {
+        auto res = fold(v, op::add_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(float(res), Catch::Matchers::WithinRel(INFINITY, eps<float>));
+    }
+}
+
+TEST_CASE( VEC_ARCH_NAME " Bfloat16 Addition", "[addition][bfloat16]" ) {
+    using type = bfloat16;
+    static constexpr auto N = 16ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(float(v[0]), Catch::Matchers::WithinRel(float(min), eps<float>));
+        REQUIRE_THAT(float(v[1]), Catch::Matchers::WithinRel(float(max), eps<float>));
+        for (auto i = 2u; i < N; ++i) {
+            auto lhs = float(v[i]);
+            auto rhs = float(i - 2); 
+            INFO(std::format("{} == {}", lhs, rhs));
+            REQUIRE_THAT(lhs, Catch::Matchers::WithinRel(rhs, eps<float>));
+        }
+    }
+
+    WHEN("Normal Addition") {
+        auto res = add(v, v); 
+        INFO(std::format("add(v, v): {}", res));
+
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i] * 2), eps<float>));
+        }
+    }
+
+    WHEN("Pairwise Addition") {
+        auto res = padd(v, v);
+        INFO(std::format("padd(v, v): {}", res));
+        
+        REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(float(max), eps<float>));
+        REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(float(1), eps<float>));
+        REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(float(5), eps<float>));
+        REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(float(9), eps<float>));
+        REQUIRE_THAT(float(res[ 4]), Catch::Matchers::WithinRel(float(13), eps<float>));
+        REQUIRE_THAT(float(res[ 5]), Catch::Matchers::WithinRel(float(17), eps<float>));
+        REQUIRE_THAT(float(res[ 6]), Catch::Matchers::WithinRel(float(21), eps<float>));
+        REQUIRE_THAT(float(res[ 7]), Catch::Matchers::WithinRel(float(25), eps<float>));
+        REQUIRE_THAT(float(res[ 8]), Catch::Matchers::WithinRel(float(max), eps<float>));
+        REQUIRE_THAT(float(res[ 9]), Catch::Matchers::WithinRel(float(1), eps<float>));
+        REQUIRE_THAT(float(res[10]), Catch::Matchers::WithinRel(float(5), eps<float>));
+        REQUIRE_THAT(float(res[11]), Catch::Matchers::WithinRel(float(9), eps<float>));
+        REQUIRE_THAT(float(res[12]), Catch::Matchers::WithinRel(float(13), eps<float>));
+        REQUIRE_THAT(float(res[13]), Catch::Matchers::WithinRel(float(17), eps<float>));
+        REQUIRE_THAT(float(res[14]), Catch::Matchers::WithinRel(float(21), eps<float>));
+        REQUIRE_THAT(float(res[15]), Catch::Matchers::WithinRel(float(25), eps<float>));
+    }
+
+    WHEN("Pairwise fold") {
+        auto res = fold(v, op::padd_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(float(res), Catch::Matchers::WithinRel(float(max), eps<float>));
+    }
+
+    WHEN("Fold") {
+        auto res = fold(v, op::add_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(float(res), Catch::Matchers::WithinRel(float(max), eps<float>));
+    }
+}
+
+TEST_CASE( VEC_ARCH_NAME " float32 Addition", "[addition][float32]" ) {
+    using type = float;
+    static constexpr auto N = 16ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(v[0], Catch::Matchers::WithinRel(min, eps<float>));
+        REQUIRE_THAT(v[1], Catch::Matchers::WithinRel(max, eps<float>));
+        for (auto i = 2u; i < N; ++i) {
+            auto lhs = float(v[i]);
+            auto rhs = float(i - 2); 
+            INFO(std::format("{} == {}", lhs, rhs));
+            REQUIRE_THAT(lhs, Catch::Matchers::WithinRel(rhs, eps<float>));
+        }
+    }
+
+    WHEN("Normal Addition") {
+        auto res = add(v, v); 
+        INFO(std::format("add(v, v): {}", res));
+
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i] * 2), eps<float>));
+        }
+    }
+
+    WHEN("Pairwise Addition") {
+        auto res = padd(v, v);
+        INFO(std::format("padd(v, v): {}", res));
+        
+        REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(max, eps<float>));
+        REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(1, eps<float>));
+        REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(5, eps<float>));
+        REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(9, eps<float>));
+        REQUIRE_THAT(float(res[ 4]), Catch::Matchers::WithinRel(13, eps<float>));
+        REQUIRE_THAT(float(res[ 5]), Catch::Matchers::WithinRel(17, eps<float>));
+        REQUIRE_THAT(float(res[ 6]), Catch::Matchers::WithinRel(21, eps<float>));
+        REQUIRE_THAT(float(res[ 7]), Catch::Matchers::WithinRel(25, eps<float>));
+        REQUIRE_THAT(float(res[ 8]), Catch::Matchers::WithinRel(max, eps<float>));
+        REQUIRE_THAT(float(res[ 9]), Catch::Matchers::WithinRel(1, eps<float>));
+        REQUIRE_THAT(float(res[10]), Catch::Matchers::WithinRel(5, eps<float>));
+        REQUIRE_THAT(float(res[11]), Catch::Matchers::WithinRel(9, eps<float>));
+        REQUIRE_THAT(float(res[12]), Catch::Matchers::WithinRel(13, eps<float>));
+        REQUIRE_THAT(float(res[13]), Catch::Matchers::WithinRel(17, eps<float>));
+        REQUIRE_THAT(float(res[14]), Catch::Matchers::WithinRel(21, eps<float>));
+        REQUIRE_THAT(float(res[15]), Catch::Matchers::WithinRel(25, eps<float>));
+    }
+
+    WHEN("Pairwise fold") {
+        auto res = fold(v, op::padd_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(float(res), Catch::Matchers::WithinRel(max, eps<float>));
+    }
+
+    WHEN("Fold") {
+        auto res = fold(v, op::add_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(float(res), Catch::Matchers::WithinRel(max, eps<float>));
+    }
+}
+
+TEST_CASE( VEC_ARCH_NAME " float64 Addition", "[addition][float64]" ) {
+    using type = double;
+    static constexpr auto N = 16ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(v[0], Catch::Matchers::WithinRel(min, eps<double>));
+        REQUIRE_THAT(v[1], Catch::Matchers::WithinRel(max, eps<double>));
+        for (auto i = 2u; i < N; ++i) {
+            auto lhs = v[i];
+            auto rhs = double(i - 2); 
+            INFO(std::format("{} == {}", lhs, rhs));
+            REQUIRE_THAT(lhs, Catch::Matchers::WithinRel(rhs, eps<double>));
+        }
+    }
+
+    WHEN("Normal Addition") {
+        auto res = add(v, v); 
+        INFO(std::format("add(v, v): {}", res));
+
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(res[i], Catch::Matchers::WithinRel(v[i] * 2, eps<double>));
+        }
+    }
+
+    WHEN("Pairwise Addition") {
+        auto res = padd(v, v);
+        INFO(std::format("padd(v, v): {}", res));
+        
+        REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(max, eps<double>));
+        REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(1,   eps<double>));
+        REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(5,   eps<double>));
+        REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(9,   eps<double>));
+        REQUIRE_THAT(res[ 4], Catch::Matchers::WithinRel(13,  eps<double>));
+        REQUIRE_THAT(res[ 5], Catch::Matchers::WithinRel(17,  eps<double>));
+        REQUIRE_THAT(res[ 6], Catch::Matchers::WithinRel(21,  eps<double>));
+        REQUIRE_THAT(res[ 7], Catch::Matchers::WithinRel(25,  eps<double>));
+        REQUIRE_THAT(res[ 8], Catch::Matchers::WithinRel(max, eps<double>));
+        REQUIRE_THAT(res[ 9], Catch::Matchers::WithinRel(1,   eps<double>));
+        REQUIRE_THAT(res[10], Catch::Matchers::WithinRel(5,   eps<double>));
+        REQUIRE_THAT(res[11], Catch::Matchers::WithinRel(9,   eps<double>));
+        REQUIRE_THAT(res[12], Catch::Matchers::WithinRel(13,  eps<double>));
+        REQUIRE_THAT(res[13], Catch::Matchers::WithinRel(17,  eps<double>));
+        REQUIRE_THAT(res[14], Catch::Matchers::WithinRel(21,  eps<double>));
+        REQUIRE_THAT(res[15], Catch::Matchers::WithinRel(25,  eps<double>));
+    }
+
+    WHEN("Pairwise fold") {
+        auto res = fold(v, op::padd_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(res, Catch::Matchers::WithinRel(max, eps<double>));
+    }
+
+    WHEN("Fold") {
+        auto res = fold(v, op::add_t{});
+        INFO(std::format("fold(v): {}", res));
+        REQUIRE_THAT(res, Catch::Matchers::WithinRel(max, eps<double>));
+    }
+}
+
 
