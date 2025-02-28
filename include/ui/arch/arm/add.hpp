@@ -1017,12 +1017,16 @@ namespace ui::arm::neon {
             } 
             #endif
             if constexpr (std::same_as<T, float>) {
-                return std::bit_cast<ret_t>(
-                    vpadd_f32(to_vec(lhs), to_vec(rhs))
-                );
+                if constexpr (N == 2) {
+                    return std::bit_cast<ret_t>(
+                        vpadd_f32(to_vec(lhs), to_vec(rhs))
+                    );
+                }
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
-                return from_vec(vpadd_f16(to_vec(lhs), to_vec(rhs)));
+                if constexpr (N == 4) {
+                    return from_vec(vpadd_f16(to_vec(lhs), to_vec(rhs)));
+                }
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<bfloat16>(padd(cast<float>(lhs), cast<float>(rhs)));
@@ -1065,7 +1069,7 @@ namespace ui::arm::neon {
                 #endif
             } else if constexpr (std::same_as<T, float16>) {
                 #if defined(UI_HAS_FLOAT_16) && defined(UI_CPU_ARM64) 
-                if constexpr (N == 4) {
+                if constexpr (N == 8) {
                     return from_vec(vpaddq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
@@ -1165,7 +1169,7 @@ namespace ui::arm::neon {
                     return static_cast<T>(vpadds_f32(to_vec(v)));
                 }
             } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                return cast<T>(padd(cast<float>(v)));
+                return static_cast<T>(fold(cast<float>(v), op));
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
                     return static_cast<T>(vpaddd_f64(to_vec(v)));
@@ -1181,7 +1185,7 @@ namespace ui::arm::neon {
             }
             #endif
 
-            return fold(v.lo, op) + fold(v.hi, op);
+            return static_cast<T>(fold(v.lo, op) + fold(v.hi, op));
         }
     }
 // !Mark
@@ -1363,7 +1367,7 @@ namespace ui::arm::neon {
                     );
                 } 
             } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                return cast<T>(fold(cast<float>(v), op)); 
+                return static_cast<T>(fold(cast<float>(v), op)); 
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
