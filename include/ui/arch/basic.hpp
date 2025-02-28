@@ -174,7 +174,8 @@ namespace ui::internal {
 
 
     template <bool Round, typename From>
-    UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, op::add_t) noexcept -> From {
+        requires (sizeof(From) < 8)
+    UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, op::add_t) noexcept -> std::int64_t {
         if constexpr (Round) {
             using utype = std::make_unsigned_t<From>;
             static constexpr auto bits = sizeof(From) * 8 - 1;
@@ -182,10 +183,12 @@ namespace ui::internal {
             auto r = rhs >> 1;
             From res = lhs | rhs;
             res = static_cast<utype>(res << bits) >> bits;
-            return static_cast<From>(res + (l + r));
+            return static_cast<std::int64_t>(res + (l + r));
         } else {
-            auto sum = lhs + (rhs - lhs) / 2;
-            return static_cast<From>(sum);
+            auto l = static_cast<std::int64_t>(lhs);
+            auto r = static_cast<std::int64_t>(rhs);
+            auto sum = l + (r - l) / 2;
+            return sum;
         }
     }
 
