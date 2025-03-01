@@ -2,6 +2,9 @@
 #define AMT_ARCH_EMUL_ABS_HPP
 
 #include "cast.hpp"
+#include <concepts>
+#include <limits>
+#include <type_traits>
 
 namespace ui::emul {
 
@@ -11,11 +14,11 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-	return map([](auto l, auto r) {
-	    return static_cast<T>(
-		l > r ? (l - r) : (r - l)
-	    );  
-	}, lhs, rhs);
+        return map([](auto l, auto r) {
+            return static_cast<T>(
+                l > r ? (l - r) : (r - l)
+            );
+        }, lhs, rhs);
     }
 // !MARK
 
@@ -25,13 +28,12 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
-	using result_t = internal::widening_result_t<T>;
-	
-	return map([](auto l, auto r) {
-	    return static_cast<result_t>(
-		l > r ? (l - r) : (r - l)
-	    );  
-	}, lhs, rhs);
+        using result_t = internal::widening_result_t<T>;
+        return map([](auto l, auto r) {
+            return static_cast<result_t>(
+                l > r ? (l - r) : (r - l)
+            );
+        }, lhs, rhs);
     }
 // !MARK
 
@@ -42,34 +44,35 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-	return map([](auto a, auto l, auto r){
-	    return static_cast<T>(a + (l > r ? l - r : r - l));
-	}, acc, lhs, rhs);
+        return map([](auto a, auto l, auto r){
+            return static_cast<T>(a + (l > r ? l - r : r - l));
+        }, acc, lhs, rhs);
     }
 // !MARK
 
 // MARK: Absolute Value
     template <std::size_t N, typename T>
+        requires ((std::integral<T> && std::is_signed_v<T>) || std::floating_point<T>)
     UI_ALWAYS_INLINE static constexpr auto abs(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-	using std::abs;
-	using ui::abs;
-	return map([](auto v_) {
-	    return static_cast<T>(abs(v_));
-	}, v);
+        using std::abs;
+        using ui::abs;
+        return map([](auto v_) {
+            return static_cast<T>(abs(v_));
+        }, v);
     }
 
     template <std::size_t N, std::integral T>
+        requires std::is_signed_v<T>
     UI_ALWAYS_INLINE static constexpr auto sat_abs(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-	return map([](auto v_) {
-            using type = std::conditional_t<std::is_signed_v<T>, std::int16_t, std::uint64_t>;
-            static constexpr auto min = static_cast<type>(std::numeric_limits<T>::min());
-            static constexpr auto max = static_cast<type>(std::numeric_limits<T>::max());
-            return static_cast<T>(std::clamp(std::abs(static_cast<type>(v_)), min, max));
-	}, v);
+        return map([](T v_) -> T {
+            static constexpr T sign_bit = static_cast<T>(T(1) << (sizeof(T) * 8 - 1));
+            if (v_ == sign_bit) return std::numeric_limits<T>::max();
+            return std::abs(v_);
+        }, v);
     }
 // !MARK
 } // namespace ui::emul
