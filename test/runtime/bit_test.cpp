@@ -85,7 +85,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Bit-Manipulation Operations", "[bit][8bit]" ) {
         }
     }
 
-    GIVEN("Signed 8bit Integer") {
+    GIVEN("Unsigned 8bit Integer") {
         using type = std::uint8_t;
         using wtype = std::uint16_t;
         using utype = std::make_unsigned_t<type>;
@@ -234,7 +234,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Bit-Manipulation Operations", "[bit][16bit]" ) 
         }
     }
 
-    GIVEN("Signed 16bit Integer") {
+    GIVEN("Unsigned 16bit Integer") {
         using type = std::uint16_t;
         using wtype = std::uint32_t;
         using utype = std::make_unsigned_t<type>;
@@ -383,7 +383,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Bit-Manipulation Operations", "[bit][32bit]" ) 
         }
     }
 
-    GIVEN("Signed 32bit Integer") {
+    GIVEN("Unsigned 32bit Integer") {
         using type = std::uint32_t;
         using wtype = std::uint64_t;
         using utype = std::make_unsigned_t<type>;
@@ -532,7 +532,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Bit-Manipulation Operations", "[bit][64bit]" ) 
         }
     }
 
-    GIVEN("Signed 64bit Integer") {
+    GIVEN("Unsigned 64bit Integer") {
         using type = std::uint64_t;
         using utype = std::make_unsigned_t<type>;
         using mtype = mask_inner_t<type>;
