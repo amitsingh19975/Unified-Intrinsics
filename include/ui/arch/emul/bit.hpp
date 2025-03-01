@@ -13,17 +13,10 @@ namespace ui::emul {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
 	constexpr auto helper = [](T val) -> T {
-	    static constexpr auto bits = sizeof(T) * 8 - 1;
-            auto const sign_bit = (val >> bits) & 1;
-            auto count = static_cast<T>(val & sign_bit);
-            for (auto pos = bits - 1; pos > 0; --pos) {
-                if (((val >> pos) & 1) == sign_bit) {
-                    ++count;
-                    continue;
-                }
-                break;
-            }
-            return count;
+            auto tmp = static_cast<std::make_signed_t<T>>(val);
+            auto t0 = static_cast<std::make_unsigned_t<T>>(val);
+            auto v0 = static_cast<std::make_unsigned_t<T>>(tmp < 0 ? ~t0 : t0);
+            return static_cast<T>(std::countl_zero(v0) - 1);
 	};
 	return map([helper](auto v_) { return helper(v_); }, v);
     }
@@ -66,14 +59,14 @@ namespace ui::emul {
 // MARK: Bitwise select
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto bitwise_select(
-        mask_t<N, T> const& a,
-        Vec<N, T> const& b,
-        Vec<N, T> const& c
+        mask_t<N, T> const& cond,
+        Vec<N, T> const& true_,
+        Vec<N, T> const& false_
     ) noexcept -> Vec<N, T> {
 	return map([](auto a_, auto b_, auto c_) {
             static constexpr auto max = std::numeric_limits<mask_inner_t<T>>::max();
 	    return static_cast<T>(a_ == max ? b_ : c_);
-	}, a, b, c);
+	}, cond, true_, false_);
     }
 // !MARK
 } // namespace ui::emul
