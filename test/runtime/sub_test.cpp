@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <print>
+#include "catch2/matchers/catch_matchers.hpp"
 #include "ui.hpp"
 #include "utils.hpp"
 
@@ -755,6 +756,110 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Subtraction", "[subtraction][16bit]" ) {
             REQUIRE(res[12] == 0);
             REQUIRE(res[13] == 1);
             REQUIRE(res[15] == 3);
+        }
+    }
+}
+
+TEST_CASE( VEC_ARCH_NAME " Float16 Subtraction", "[subtraction][float16]" ) {
+    using type = float16;
+    static constexpr auto N = 8ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(float(v[ 0]), Catch::Matchers::WithinRel(float(min), eps<float>));
+        REQUIRE_THAT(float(v[ 1]), Catch::Matchers::WithinRel(float(max), eps<float>));
+        for (auto i = 2u; i < N; ++i) {
+            REQUIRE_THAT(float(v[ i]), Catch::Matchers::WithinRel(float(i - 2), eps<float>));
+        }
+    }
+
+    WHEN("Normal subtraction") {
+        auto res = sub(v, Vec<N, type>::load(10));
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i] - 10), eps<float>));
+        }
+    }
+}
+
+TEST_CASE( VEC_ARCH_NAME " Bfloat16 Subtraction", "[subtraction][bfloat16]" ) {
+    using type = bfloat16;
+    static constexpr auto N = 8ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(float(v[ 0]), Catch::Matchers::WithinRel(float(min), eps<float>));
+        REQUIRE_THAT(float(v[ 1]), Catch::Matchers::WithinRel(float(max), eps<float>));
+        for (auto i = 2u; i < N; ++i) {
+            REQUIRE_THAT(float(v[ i]), Catch::Matchers::WithinRel(float(i - 2), eps<float>));
+        }
+    }
+
+    WHEN("Normal subtraction") {
+        auto res = sub(v, Vec<N, type>::load(10));
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i] - 10), eps<float>));
+        }
+    }
+}
+
+TEST_CASE( VEC_ARCH_NAME " float32 Subtraction", "[subtraction][float32]" ) {
+    using type = float;
+    static constexpr auto N = 8ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(v[ 0], Catch::Matchers::WithinRel(min, eps<float>));
+        REQUIRE_THAT(v[ 1], Catch::Matchers::WithinRel(max, eps<float>));
+        for (auto i = 2u; i < N; ++i) {
+            REQUIRE_THAT(v[ i], Catch::Matchers::WithinRel(float(i - 2), eps<float>));
+        }
+    }
+
+    WHEN("Normal subtraction") {
+        auto res = sub(v, Vec<N, type>::load(10));
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(res[i], Catch::Matchers::WithinRel(v[i] - 10, eps<float>));
+        }
+    }
+}
+
+TEST_CASE( VEC_ARCH_NAME " float64 Subtraction", "[subtraction][float64]" ) {
+    using type = double;
+    static constexpr auto N = 8ul;
+    auto v = DataGenerator<N, type>::make();
+
+    INFO("[Vec]: " << std::format("{}", v));
+
+    static constexpr auto min = std::numeric_limits<type>::min();
+    static constexpr auto max = std::numeric_limits<type>::max();
+
+    THEN("Elements are correct") {
+        REQUIRE_THAT(v[ 0], Catch::Matchers::WithinRel(min, eps<double>));
+        REQUIRE_THAT(v[ 1], Catch::Matchers::WithinRel(max, eps<double>));
+        for (auto i = 2u; i < N; ++i) {
+            REQUIRE_THAT(v[ i], Catch::Matchers::WithinRel(double(i - 2), eps<double>));
+        }
+    }
+
+    WHEN("Normal subtraction") {
+        auto res = sub(v, Vec<N, type>::load(10));
+        for (auto i = 0ul; i < N; ++i) {
+            REQUIRE_THAT(res[i], Catch::Matchers::WithinRel(v[i] - 10, eps<double>));
         }
     }
 }
