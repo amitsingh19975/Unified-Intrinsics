@@ -32,8 +32,8 @@ using SignedTypes = std::tuple<
 
 TEMPLATE_LIST_TEST_CASE_METHOD(
     Fixture,
-    VEC_ARCH_NAME " Div Operations",
-    "[div][signed]",
+    VEC_ARCH_NAME " Logical Operations",
+    "[logical][integer]",
     SignedTypes
 ) {
     using type = Fixture<TestType>::type;
@@ -150,8 +150,8 @@ using FTypes = std::tuple<
 
 TEMPLATE_LIST_TEST_CASE_METHOD(
     FloatFixture,
-    VEC_ARCH_NAME " Float Negate test",
-    "[logical][negate]",
+    VEC_ARCH_NAME " Logical Operations",
+    "[logical][float]",
     FTypes
 ) {
     using type = FloatFixture<TestType>::type;
