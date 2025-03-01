@@ -920,63 +920,27 @@ static constexpr auto operator>=(T lhs, ui::float16 rhs) noexcept -> bool {
 }
 
 static constexpr auto operator+(ui::float16 lhs, ui::float16 rhs) noexcept -> ui::float16 {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
     auto l = float(lhs);
     auto r = float(rhs);
     return l + r;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return std::bit_cast<ui::float16>(get_first(vadd_f16(load_f16(lhs), load_f16(rhs))));
-        #else
-        return std::bit_cast<ui::float16>(lhs.data + rhs.data);
-        #endif
-    #endif
 }
 
 static constexpr auto operator-(ui::float16 lhs, ui::float16 rhs) noexcept -> ui::float16 {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
     auto l = float(lhs);
     auto r = float(rhs);
     return l - r;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return std::bit_cast<ui::float16>(get_first(vsub_f16(load_f16(lhs), load_f16(rhs))));
-        #else
-        return std::bit_cast<ui::float16>(lhs.data - rhs.data);
-        #endif
-    #endif
 }
 
 static constexpr auto operator*(ui::float16 lhs, ui::float16 rhs) noexcept -> ui::float16 {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
     auto l = float(lhs);
     auto r = float(rhs);
     return l * r;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return std::bit_cast<ui::float16>(get_first(vmul_f16(load_f16(lhs), load_f16(rhs))));
-        #else
-        return std::bit_cast<ui::float16>(lhs.data * rhs.data);
-        #endif
-    #endif
 }
 
 static constexpr auto operator/(ui::float16 lhs, ui::float16 rhs) noexcept -> ui::float16 {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
     auto l = float(lhs);
     auto r = float(rhs);
     return l / r;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return std::bit_cast<ui::float16>(get_first(vdiv_f16(load_f16(lhs), load_f16(rhs))));
-        #else
-        return std::bit_cast<ui::float16>(lhs.data / rhs.data);
-        #endif
-    #endif
 }
 
 static constexpr auto operator==(ui::bfloat16 lhs, ui::bfloat16 rhs) noexcept -> bool {

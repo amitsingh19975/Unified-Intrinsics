@@ -11,7 +11,7 @@ namespace ui::emul {
         Vec<N, T> const& num,
         Vec<N, T> const& den
     ) noexcept -> Vec<N, T> {
-        return map([](auto n, auto d) {
+        return map([](auto n, auto d) -> T {
             if constexpr (std::integral<T>) {
                 // floating-point divisions are faster in most of the cases. (Need testing)
                 return static_cast<T>(float(n) / float(d));
@@ -26,21 +26,18 @@ namespace ui::emul {
         Vec<N, T> const& num,
         Vec<N, T> const& den
     ) noexcept -> Vec<N, T> {
-        return map([](auto n, auto d) {
+        return map([](auto n, auto d) -> T {
             if constexpr (std::integral<T>) {
                 // floating-point divisions are faster in most of the cases. (Need testing)
-                return n - static_cast<T>(float(n) / float(d));
+                return n - static_cast<T>(float(n) / float(d)) * d;
             } else {
-                using type = std::conditional_t<
-                    sizeof(T) == 2,
-                    std::int16_t,
-                    std::conditional_t<
-                        sizeof(T) == 4,
-                        std::int32_t,
-                        std::int64_t
-                    >
-                >;
-                return n - static_cast<T>(static_cast<type>(n / d));
+                if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                    auto n0 = float(n);
+                    auto d0 = float(d);
+                    return std::fmod(n0, d0);
+                } else {
+                    return std::fmod(n, d);
+                }
             }
         }, num, den);
     }

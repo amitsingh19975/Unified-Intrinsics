@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <limits>
+#include "../emul/rounding.hpp"
 
 namespace ui::arm::neon {
 
@@ -55,15 +56,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                return {
-                    .val = T(internal::round_helper(float(v.val), mode))
-                };
-            } else {
-                return {
-                    .val = internal::round_helper(v.val, mode)
-                };
-            }
+            return emul::round<mode>(v);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -112,7 +105,7 @@ namespace ui::arm::neon {
                         );
                     }
                 }
-            } else if (std::same_as<T, double>) {
+            } else if constexpr (std::same_as<T, double>) {
                 #ifdef UI_CPU_ARM64
                 if constexpr (N == 2) {
                     if constexpr (mode == std::float_round_style::round_toward_zero) {
