@@ -279,14 +279,13 @@ namespace ui {
         }
 
         friend constexpr auto operator-(float16 val) noexcept -> float16 {
-            if (val.is_nan()) return val;
             std::uint16_t temp = std::bit_cast<std::uint16_t>(val.data) ^ 0x8000u;
             return std::bit_cast<float16>(temp);
         }
 
         constexpr auto is_nan() const noexcept -> bool {
             auto val = std::bit_cast<std::uint16_t>(data);
-            return val & 0x7c01;
+            return ((val & 0x7c00) == 0x7c00) && ((val & 0x03ff) != 0);
         }
 
         constexpr auto abs() const noexcept -> float16 {
