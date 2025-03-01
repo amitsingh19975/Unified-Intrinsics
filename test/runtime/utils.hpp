@@ -37,7 +37,7 @@ struct DataGenerator {
             );
             for (auto i = 0ul; i < N; ++i) data[i] = dist(rng);
         } else {
-            std::uniform_int_distribution<T> dist(-100, 100);
+            std::uniform_real_distribution<T> dist(-100, 100);
             for (auto i = 0ul; i < N; ++i) data[i] = dist(rng);
         }
         return ui::Vec<N, T>::load(data.data(), data.size());
