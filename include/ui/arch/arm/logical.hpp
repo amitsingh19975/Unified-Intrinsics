@@ -3,12 +3,8 @@
 
 #include "cast.hpp"
 #include "../emul/logical.hpp"
-#include <cassert>
-#include <cfenv>
 #include <concepts>
 #include <cstddef>
-#include <cstdlib>
-#include <limits>
 #include <type_traits>
 
 namespace ui::arm::neon {
@@ -19,9 +15,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(-v.val)
-            };
+            return emul::negate(v);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -87,11 +81,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            static constexpr auto min = std::numeric_limits<T>::min();
-            static constexpr auto max = std::numeric_limits<T>::max();
-            return {
-                .val = static_cast<T>((v.val == min) ? max : -v.val)
-            };
+            return emul::sat_negate(v);
         } else {
             if constexpr (sizeof(T) == 1) {
                 if constexpr (N == 8) {
@@ -132,9 +122,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(~v.val)
-            };
+            return emul::bitwise_not(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -216,9 +204,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(lhs.val & rhs.val)
-            };
+            return emul::bitwise_and(lhs, rhs);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -300,9 +286,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(lhs.val | rhs.val)
-            };
+            return emul::bitwise_or(lhs, rhs);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -384,9 +368,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(lhs.val ^ rhs.val)
-            };
+            return emul::bitwise_xor(lhs, rhs);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
