@@ -2,14 +2,11 @@
 #define AMT_UI_ARCH_ARM_BIT_HPP
 
 #include "cast.hpp"
-#include <bit>
-#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
-#include <limits>
 #include <type_traits>
+#include "../emul/bit.hpp"
 
 namespace ui::arm::neon {
 // MARK: Count leading sign bits
@@ -18,20 +15,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            static constexpr auto bits = sizeof(T) * 8 - 1;
-            auto const sign_bit = (v.val >> bits) & 1;
-            auto val = v.val;
-            auto count = static_cast<T>(val & sign_bit);
-            for (auto pos = bits - 1; pos > 0; --pos) {
-                if (((val >> pos) & 1) == sign_bit) {
-                    ++count;
-                    continue;
-                }
-                break;
-            }
-            return {
-                .val = count
-            };
+            return emul::count_leading_sign_bits(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -88,9 +72,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(std::countl_zero(static_cast<std::make_unsigned_t<T>>(v.val)))
-            };
+            return emul::count_leading_zeros(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -148,9 +130,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(std::popcount(static_cast<std::make_unsigned_t<T>>(v.val)))
-            };
+            return emul::popcount(v);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -221,9 +201,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return {
-                .val = static_cast<T>(a.val & (~b.val))
-            };
+            return emul::bitwise_clear(a, b);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
@@ -291,10 +269,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& c
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            static constexpr auto max = std::numeric_limits<mask_inner_t<T>>::max();
-            return {
-                .val = static_cast<T>(a.val == max ? b.val : c.val)
-            };
+            return emul::bitwise_select(a, b, c);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {

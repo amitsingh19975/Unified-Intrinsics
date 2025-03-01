@@ -23,9 +23,7 @@ namespace ui::emul {
                 }
                 break;
             }
-            return {
-                .val = count
-            };
+            return count;
 	};
 	return map([helper](auto v_) { return helper(v_); }, v);
     }
