@@ -8,6 +8,12 @@
 #include <type_traits>
 
 namespace ui::arm::neon {
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto bitwise_xor(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T>;
+
 // MARK: Negation
     template <std::size_t N, typename T>
         requires (std::is_floating_point_v<T> || std::is_signed_v<T>)
@@ -37,11 +43,15 @@ namespace ui::arm::neon {
                     return from_vec<T>(vnegq_f16(to_vec(v)));
                 }
                 #else
-                return cast<T>(negate(cast<float>(v)));
+                auto tmp = rcast<std::uint16_t>(v);
+                auto mask = Vec<N, std::uint16_t>::load(0x8000);
+                return rcast<T>(bitwise_xor(tmp, mask)); 
                 #endif
-            } else if constexpr (std::same_as<T, float16>) {
-                return cast<T>(negate(cast<float>(v)));
-            } else {
+            } else if constexpr (std::same_as<T, bfloat16>) {
+                auto tmp = rcast<std::uint16_t>(v);
+                auto mask = Vec<N, std::uint16_t>::load(0x8000);
+                return rcast<T>(bitwise_xor(tmp, mask)); 
+            } else if constexpr (std::integral<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
                         return from_vec<T>(vneg_s8(to_vec(v)));
@@ -525,7 +535,7 @@ namespace ui::arm::neon {
     }
 // !MARK
 
-// MARK: Bitwise Or-Not lhs | ~rhs
+// MARK: Bitwise Not-And ~lhs & rhs
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto bitwise_notand(
         Vec<N, T> const& lhs,

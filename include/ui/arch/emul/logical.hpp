@@ -16,15 +16,15 @@ namespace ui::emul {
     }
 // !MARK
 
-    template <std::size_t N, typename T>
-        requires (std::is_arithmetic_v<T> || std::is_signed_v<T>)
+    template <std::size_t N, std::integral T>
+        requires (std::is_signed_v<T>)
     UI_ALWAYS_INLINE static constexpr auto sat_negate(
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
-        return map([](auto v_) { 
+        return map([](auto v_) -> T { 
             static constexpr auto min = std::numeric_limits<T>::min();
             static constexpr auto max = std::numeric_limits<T>::max();
-            return static_cast<T>((v_.val == min) ? max : -v_.val);
+            return static_cast<T>((v_ == min) ? max : -v_);
         }, v);
     }
 
