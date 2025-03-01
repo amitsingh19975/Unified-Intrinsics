@@ -6,13 +6,17 @@
 #include <utility>
 
 namespace ui::emul {
+    namespace internal {
+        using namespace ::ui::internal;
+    } // namespace internal
+
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto max(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return map([](auto l, auto r) {
-            return std::max(l, r);
+        return map([](auto l, auto r) -> T {
+            return internal::max(l, r);
         }, lhs, rhs);
     }
 
@@ -21,8 +25,8 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return map([](auto l, auto r) {
-            return std::min(l, r);
+        return map([](auto l, auto r) -> T {
+            return internal::min(l, r);
         }, lhs, rhs);
     }
 
@@ -61,8 +65,8 @@ namespace ui::emul {
         constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& l, auto const& r) {
             auto res = Vec<N, T>{};
             ((
-                res[Is] = std::max(l[2 * Is], l[2 * Is + 1]),
-                res[Is + N / 2] = std::max(r[2 * Is], r[2 * Is + 1])
+                res[Is] = internal::max(l[2 * Is], l[2 * Is + 1]),
+                res[Is + N / 2] = internal::max(r[2 * Is], r[2 * Is + 1])
             ),...);
             return res;
         };
@@ -75,8 +79,8 @@ namespace ui::emul {
         [[maybe_unused]] op::pmax_t op
     ) noexcept -> T {
         if constexpr (N == 1) return v.val;
-        else if constexpr (N == 2) return std::max(v[0], v[1]);
-        else return std::max(fold(v.lo, op), fold(v.hi, op));
+        else if constexpr (N == 2) return internal::max(v[0], v[1]);
+        else return internal::max(fold(v.lo, op), fold(v.hi, op));
     }
 
     template <std::size_t N, std::floating_point T>
@@ -115,8 +119,8 @@ namespace ui::emul {
         constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, auto const& l, auto const& r) {
             auto res = Vec<N, T>{};
             ((
-                res[Is] = std::min(l[2 * Is], l[2 * Is + 1]),
-                res[Is + N / 2] = std::min(r[2 * Is], r[2 * Is + 1])
+                res[Is] = internal::min(l[2 * Is], l[2 * Is + 1]),
+                res[Is + N / 2] = internal::min(r[2 * Is], r[2 * Is + 1])
             ),...);
             return res;
         };
@@ -129,8 +133,8 @@ namespace ui::emul {
         [[maybe_unused]] op::pmin_t op
     ) noexcept -> T {
         if constexpr (N == 1) return v.val;
-        else if constexpr (N == 2) return std::min(v[0], v[1]);
-        else return std::min(fold(v.lo, op), fold(v.hi, op));
+        else if constexpr (N == 2) return internal::min(v[0], v[1]);
+        else return internal::min(fold(v.lo, op), fold(v.hi, op));
     }
 
     template <std::size_t N, std::floating_point T>
@@ -167,7 +171,7 @@ namespace ui::emul {
         [[maybe_unused]] op::max_t op
     ) noexcept -> T {
         if constexpr (N == 1) return v.val;
-        else return std::max(fold(v.lo, op), fold(v.hi, op));
+        else return internal::max(fold(v.lo, op), fold(v.hi, op));
     }
 
     template <std::size_t N, typename T>
@@ -185,7 +189,7 @@ namespace ui::emul {
         [[maybe_unused]] op::min_t op
     ) noexcept -> T {
         if constexpr (N == 1) return v.val;
-        else return std::min(fold(v.lo, op), fold(v.hi, op));
+        else return internal::min(fold(v.lo, op), fold(v.hi, op));
     }
 
     template <std::size_t N, typename T>

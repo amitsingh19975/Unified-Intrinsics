@@ -2,16 +2,12 @@
 #define AMT_UI_ARCH_ARM_MINMAX_HPP
 
 #include "cast.hpp"
-#include "ui/arch/basic.hpp"
-#include "ui/base.hpp"
-#include "ui/float.hpp"
 #include <bit>
-#include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <cstdlib>
 #include <algorithm>
 #include <type_traits>
+#include "../emul/minmax.hpp"
 
 namespace ui::arm::neon {
 
@@ -20,7 +16,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        if constexpr (N == 1) return { .val = std::max(lhs.val, rhs.val) };
+        if constexpr (N == 1) return emul::max(lhs, rhs);
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
@@ -101,7 +97,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        if constexpr (N == 1) return { .val = std::min(lhs.val, rhs.val) };
+        if constexpr (N == 1) return emul::min(lhs, rhs);
         if constexpr (std::floating_point<T>) {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2)
@@ -197,9 +193,7 @@ namespace ui::arm::neon {
                     );
                 }
             #endif
-            return {
-                .val = internal::maxnm(lhs.val, rhs.val)
-            };
+            return emul::maxnm(lhs, rhs);
         } else {
 
             if constexpr (std::same_as<T, float>) {
@@ -249,9 +243,7 @@ namespace ui::arm::neon {
                     );
                 }
             #endif
-            return {
-                .val = internal::minnm(lhs.val, rhs.val)
-            };
+            return emul::minnm(lhs, rhs);
         } else {
 
             if constexpr (std::same_as<T, float>) {
@@ -304,7 +296,7 @@ namespace ui::arm::neon {
                 ); 
             }
             #endif
-            return { { .val = std::max(x.lo.val, x.hi.val) }, { .val = std::max(y.lo.val, y.hi.val) } };
+            return emul::pmax(x, y);
         } else {
             if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
@@ -418,12 +410,12 @@ namespace ui::arm::neon {
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpmaxqd_f64(to_vec(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(fold(cast<float>(v)));
+                    return T(fold(cast<float>(v), op));
                 }
             #endif
-            return static_cast<T>(std::max(v.lo.val, v.hi.val));
+            return emul::fold(v, op);
         } else {
-            return std::max(
+            return internal::max(
                 fold(v.lo, op),
                 fold(v.hi, op)
             );
@@ -447,10 +439,7 @@ namespace ui::arm::neon {
                     return from_vec<T>(vpmaxnmq_f64(to_vec(x), to_vec(y)));
                 }
             #endif
-            return {
-                {.val = internal::maxnm(x.lo.val, x.hi.val)},
-                {.val = internal::maxnm(y.lo.val, y.hi.val)}
-            };
+            return emul::pmaxnm(x, y);
         } else {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
@@ -496,10 +485,10 @@ namespace ui::arm::neon {
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpmaxnmqd_f64(to_vec(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(fold(cast<float>(v)));
+                    return T(fold(cast<float>(v), op));
                 }
             #endif
-            return static_cast<T>(internal::maxnm(v.lo.val, v.hi.val));
+            return emul::fold(v, op);
         } else {
             return internal::maxnm(
                 fold(v.lo, op),
@@ -528,7 +517,7 @@ namespace ui::arm::neon {
                 ); 
             }
             #endif
-            return { { .val = std::min(x.lo.val, x.hi.val) }, { .val = std::min(y.lo.val, y.hi.val) } };
+            return emul::pmin(x, y);
         } else {
             if constexpr (std::same_as<T, float>) {
                 #ifdef UI_CPU_ARM64
@@ -620,8 +609,8 @@ namespace ui::arm::neon {
             }   
 
             return join(
-                pmin(x.lo, y.lo),
-                pmin(x.hi, y.hi)
+                pmin(x.lo, x.hi),
+                pmin(y.lo, y.hi)
             );
         }
     }
@@ -641,12 +630,12 @@ namespace ui::arm::neon {
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpminqd_f64(to_vec(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(fold(cast<float>(v)));
+                    return T(fold(cast<float>(v), op));
                 }
             #endif
-            return static_cast<T>(std::min(v.lo.val, v.hi.val));
+            return emul::fold(v, op);
         } else {
-            return std::min(
+            return internal::min(
                 fold(v.lo, op),
                 fold(v.hi, op)
             );
@@ -670,10 +659,7 @@ namespace ui::arm::neon {
                     return from_vec<T>(vpminnmq_f64(to_vec(x), to_vec(y)));
                 }
             #endif
-            return {
-                {.val = internal::minnm(x.lo.val, x.hi.val)},
-                {.val = internal::minnm(y.lo.val, y.hi.val)}
-            };
+            return emul::pminnm(x, y);
         } else {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, float>) {
@@ -695,8 +681,8 @@ namespace ui::arm::neon {
             }
             #endif
             return join(
-                pminnm(x.lo, y.lo),
-                pminnm(x.hi, y.hi)
+                pminnm(x.lo, x.hi),
+                pminnm(y.lo, y.hi)
             );
         }
     }
@@ -719,10 +705,10 @@ namespace ui::arm::neon {
                 } else if constexpr (std::same_as<T, double>) {
                     return static_cast<T>(vpminnmqd_f64(to_vec(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return T(fold(cast<float>(v)));
+                    return T(fold(cast<float>(v), op));
                 }
             #endif
-            return static_cast<T>(internal::minnm(v.lo.val, v.hi.val));
+            return emul::fold(v, op);
         } else {
             return internal::minnm(
                 fold(v.lo, op),
@@ -809,7 +795,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return std::max(
+            return internal::max(
                 fold(v.lo, op),
                 fold(v.hi, op)
             );
@@ -936,7 +922,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return std::min(
+            return internal::min(
                 fold(v.lo, op),
                 fold(v.hi, op)
             );

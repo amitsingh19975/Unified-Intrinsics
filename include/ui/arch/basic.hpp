@@ -201,12 +201,36 @@ namespace ui::internal {
         return sum;
     }
 
+    template <typename T>
+    UI_ALWAYS_INLINE static constexpr auto max(
+        T lhs,
+        T rhs
+    ) noexcept -> T {
+        if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+            return T(std::max(float(lhs), float(rhs)));
+        } else {
+            return std::max(lhs, rhs);
+        }
+    }
+
+    template <typename T>
+    UI_ALWAYS_INLINE static constexpr auto min(
+        T lhs,
+        T rhs
+    ) noexcept -> T {
+        if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+            return T(std::min(float(lhs), float(rhs)));
+        } else {
+            return std::min(lhs, rhs);
+        }
+    }
+
     template <std::floating_point T>
     UI_ALWAYS_INLINE static constexpr auto maxnm(T a, T b) noexcept -> T {
         using std::isnan;
         if (isnan(a)) return b;
         if (isnan(b)) return a;
-        return std::max(a, b);
+        return max(a, b);
     }
 
     template <std::floating_point T>
@@ -214,7 +238,7 @@ namespace ui::internal {
         using std::isnan;
         if (isnan(a)) return b;
         if (isnan(b)) return a;
-        return std::min(a, b);
+        return min(a, b);
     }
 
     static inline constexpr auto convert_rounding_style(std::float_round_style mode) noexcept -> int {
