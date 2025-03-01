@@ -187,15 +187,18 @@ namespace ui::internal {
         } else {
             auto l = static_cast<std::int64_t>(lhs);
             auto r = static_cast<std::int64_t>(rhs);
-            auto sum = l + (r - l) / 2;
+            auto sum = l + ((r - l) >> 1);
             return sum;
         }
     }
 
-    template <bool Round, typename From>
-    UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, op::sub_t) noexcept -> From {
-        auto sum = (lhs - rhs + Round) / 2;
-        return static_cast<From>(sum);
+    template <typename From>
+    UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, op::sub_t) noexcept {
+        using wtype = widening_result_t<From>;
+        auto l = static_cast<wtype>(lhs);
+        auto r = static_cast<wtype>(rhs);
+        auto sum = (l - r) >> 1;
+        return sum;
     }
 
     template <std::floating_point T>

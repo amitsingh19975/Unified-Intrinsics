@@ -12,6 +12,7 @@
 #include <type_traits>
 #include "../basic.hpp"
 #include "../emul/sub.hpp"
+#include "logical.hpp"
 
 namespace ui::arm::neon { 
 
@@ -57,7 +58,7 @@ namespace ui::arm::neon {
                 sub(lhs.lo, rhs.lo),
                 sub(lhs.hi, rhs.hi)
             );
-        }    
+        }
     }
 
     template <std::size_t N, std::integral T>
@@ -101,7 +102,7 @@ namespace ui::arm::neon {
                 sub(lhs.lo, rhs.lo),
                 sub(lhs.hi, rhs.hi)
             );
-        }    
+        }
     }
 
     template <std::size_t N, std::integral T>
@@ -145,7 +146,7 @@ namespace ui::arm::neon {
                 sub(lhs.lo, rhs.lo),
                 sub(lhs.hi, rhs.hi)
             );
-        }    
+        }
     }
 
     template <std::size_t N, std::integral T>
@@ -187,7 +188,7 @@ namespace ui::arm::neon {
                 sub(lhs.lo, rhs.lo),
                 sub(lhs.hi, rhs.hi)
             );
-        }    
+        }
     }
 
 
@@ -293,7 +294,6 @@ namespace ui::arm::neon {
 // !MARK
 
 // MARK: Widening Subtraction
-
     namespace internal {
         using namespace ::ui::internal;
         template <std::size_t M, std::size_t N, std::integral T, std::integral U>
@@ -326,6 +326,12 @@ namespace ui::arm::neon {
     } // namespace internal
 
     template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto widening_sub(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T>>;
+
+    template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
@@ -339,11 +345,11 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 2 && sizeof(U) == 1)
+        requires (sizeof(T) == 2 && sizeof(U) == 1 && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
+    ) noexcept -> Vec<N, T> {
         return internal::widening_sub_helper<8>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubw_s8(to_vec(l), to_vec(r)); },
@@ -352,12 +358,18 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 1 && sizeof(U) == 2)
+        requires (sizeof(T) == 1 && sizeof(U) == 2 && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
-    ) noexcept {
-        return widening_sub(rhs, lhs); 
+    ) noexcept -> Vec<N, U>{
+        // FIXME: is it better to negate or cast?
+        // Evaluate the performace and fix it.
+        if constexpr (std::is_signed_v<T>) {
+            return negate(widening_sub(rhs, lhs));
+        } else {
+            return sub(cast<U>(lhs), rhs); 
+        }
     }
 
     template <std::size_t N, std::integral T>
@@ -374,11 +386,11 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 4 && sizeof(U) == 2)
+        requires (sizeof(T) == 4 && sizeof(U) == 2 && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
+    ) noexcept -> Vec<N, T> {
         return internal::widening_sub_helper<4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubw_s16(to_vec(l), to_vec(r)); },
@@ -387,12 +399,19 @@ namespace ui::arm::neon {
     }
     
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 2 && sizeof(U) == 4)
+        requires (sizeof(T) == 2 && sizeof(U) == 4 && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
-    ) noexcept {
-        return widening_sub(rhs, lhs); 
+    ) noexcept -> Vec<N, U> {
+        // FIXME: is it better to negate or cast?
+        // Evaluate the performace and fix it.
+        if constexpr (std::is_signed_v<T>) {
+            return negate(widening_sub(rhs, lhs));
+        } else {
+            using wtype = internal::widening_result_t<T>;
+            return sub(cast<wtype>(lhs), rhs); 
+        }
     }
 
     template <std::size_t N, std::integral T>
@@ -409,11 +428,11 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 8 && sizeof(U) == 4)
+        requires (sizeof(T) == 8 && sizeof(U) == 4 && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
-    ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
+    ) noexcept -> Vec<N, T> {
         return internal::widening_sub_helper<2>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubw_s32(to_vec(l), to_vec(r)); },
@@ -422,12 +441,19 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::integral T, std::integral U>
-        requires (sizeof(T) == 4 && sizeof(U) == 8)
+        requires (sizeof(T) == 4 && sizeof(U) == 8 && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
-    ) noexcept {
-        return widening_sub(rhs, lhs);
+    ) noexcept -> Vec<N, U> {
+        // FIXME: is it better to negate or cast?
+        // Evaluate the performace and fix it.
+        if constexpr (std::is_signed_v<T>) {
+            return negate(widening_sub(rhs, lhs));
+        } else {
+            using wtype = internal::widening_result_t<T>;
+            return sub(cast<wtype>(lhs), rhs); 
+        }
     }
 // !MARK
 
@@ -443,9 +469,8 @@ namespace ui::arm::neon {
             auto&&   signed_fn1,
             auto&& unsigned_fn1
         ) noexcept -> Vec<N, T> {
-            using acc_t = widening_result_t<T>;
             if constexpr (N == 1) {
-                return { .val = halving_round_helper<false, acc_t>(lhs.val, rhs.val, op::sub_t{})};
+                return emul::halving_sub(lhs, rhs);
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
                     return from_vec<T>(
@@ -489,29 +514,28 @@ namespace ui::arm::neon {
 
     } // namespace internal
 
-    template <bool Round = false, std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T>
         requires (sizeof(T) == 1)
     UI_ALWAYS_INLINE auto halving_sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::halving_sub_helper<Round, 8, 16>(
+    ) noexcept {
+        return internal::halving_sub_helper<8, 16>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vhsub_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsub_u8(to_vec(l), to_vec(r)) ; },
-
             [](auto const& l, auto const& r) { return vhsubq_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsubq_u8(to_vec(l), to_vec(r)) ; }
         ); 
     }
 
-    template <bool Round = false, std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T>
         requires (sizeof(T) == 2)
     UI_ALWAYS_INLINE auto halving_sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::halving_sub_helper<Round, 4, 8>(
+    ) noexcept {
+        return internal::halving_sub_helper<4, 8>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vhsub_s16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsub_u16(to_vec(l), to_vec(r)) ; },
@@ -520,17 +544,16 @@ namespace ui::arm::neon {
         ); 
     }
 
-    template <bool Round = false, std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto halving_sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return internal::halving_sub_helper<Round, 2, 4>(
+    ) noexcept {
+        return internal::halving_sub_helper<2, 4>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vhsub_s32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsub_u32(to_vec(l), to_vec(r)) ; },
-            
             [](auto const& l, auto const& r) { return vhsubq_s32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsubq_u32(to_vec(l), to_vec(r)) ; }
         ); 
@@ -611,7 +634,7 @@ namespace ui::arm::neon {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept {
-        return internal::high_narrowing_sub_helper<4>(
+        return internal::high_narrowing_sub_helper<2>(
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubhn_s64(to_vec(l), to_vec(r)); },
             [](auto const& l, auto const& r) { return vsubhn_u64(to_vec(l), to_vec(r)); }

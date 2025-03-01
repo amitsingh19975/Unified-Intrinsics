@@ -2,6 +2,8 @@
 #define AMT_ARCH_EMUL_SUB_HPP
 
 #include "cast.hpp"
+#include "ui/arch/basic.hpp"
+#include "ui/base.hpp"
 #include <concepts>
 #include <cstdint>
 #include <type_traits>
@@ -21,27 +23,26 @@ namespace ui::emul {
 
 // MARK: Widening Subtraction
     template <std::size_t N, std::integral T, std::integral U>
-        requires (((sizeof(T) << 1) == sizeof(U)) || ((sizeof(U) << 1) == sizeof(T)))
+        requires ((((sizeof(T) * 2) == sizeof(U)) || ((sizeof(U) * 2) == sizeof(T)) || sizeof(T) == sizeof(U)) && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, U> const& rhs
     ) noexcept -> Vec<N, internal::widening_result_t<T, U>> {
         using result_t = internal::widening_result_t<T, U>;
-        return map([](auto l, auto r) {
+        return map([](auto l, auto r) -> result_t {
             return static_cast<result_t>(l) - static_cast<result_t>(r);
         }, lhs, rhs);
     }
 // !MARK
 
 // MARK: Narrowing Subtraction
-    template <bool Round = false, std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto halving_sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        using acc_t = internal::widening_result_t<T>;
-        return map([](auto l, auto r) {
-            return internal::halving_round_helper<Round, acc_t>(l, r, std::minus<>{});
+        return map([](auto l, auto r) -> T {
+            return static_cast<T>(internal::halving_round_helper(l, r, op::sub_t{}));
         }, lhs, rhs);
     }
 
@@ -54,7 +55,7 @@ namespace ui::emul {
         Vec<N, T> const& rhs
     ) noexcept {
         using result_t = internal::narrowing_result_t<T>; 
-        return map([](auto l, auto r) {
+        return map([](auto l, auto r) -> result_t {
             return static_cast<result_t>((l - r) >> (sizeof(result_t) * 8));
         }, lhs, rhs);
     }
