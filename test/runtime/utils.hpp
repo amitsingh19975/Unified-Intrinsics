@@ -4,6 +4,7 @@
 #include <print>
 #include "ui.hpp"
 #include <random>
+#include <utility>
 
 template <unsigned I>
 using index_t = std::integral_constant<unsigned, I>;
@@ -40,6 +41,22 @@ struct DataGenerator {
             for (auto i = 0ul; i < N; ++i) data[i] = dist(rng);
         }
         return ui::Vec<N, T>::load(data.data(), data.size());
+    }
+
+    template <typename Fn>
+    static constexpr auto make_mask(Fn&& fn) -> ui::mask_t<N, T> {
+        std::array<ui::mask_inner_t<T>, N> data;
+        for (auto i = 0ul; i < N; ++i) {
+            if constexpr (
+                std::invocable<Fn, int> ||
+                std::invocable<Fn, int&>
+            ) {
+                data[i] = std::invoke(fn, i);
+            } else {
+                data[i] = std::invoke(fn);
+            }
+        }
+        return ui::mask_t<N, T>::load(data.data(), data.size());
     }
 };
 
