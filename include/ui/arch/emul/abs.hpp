@@ -62,6 +62,12 @@ namespace ui::emul {
             return static_cast<T>(abs(v_));
         }, v);
     }
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE static constexpr auto abs(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return v;
+    }
 
     template <std::size_t N, std::integral T>
         requires std::is_signed_v<T>
@@ -73,6 +79,13 @@ namespace ui::emul {
             if (v_ == sign_bit) return std::numeric_limits<T>::max();
             return std::abs(v_);
         }, v);
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto sat_abs(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return v;
     }
 // !MARK
 } // namespace ui::emul

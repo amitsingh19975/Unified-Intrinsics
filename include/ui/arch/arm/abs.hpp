@@ -442,7 +442,6 @@ namespace ui::arm::neon {
 
 // MARK: Absolute Value
     template <std::size_t N, typename T>
-        requires (std::is_signed_v<T>)
     UI_ALWAYS_INLINE auto abs(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
@@ -496,7 +495,6 @@ namespace ui::arm::neon {
     }
 
     template <std::size_t N, std::integral T>
-        requires std::is_signed_v<T>
     UI_ALWAYS_INLINE auto sat_abs(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {

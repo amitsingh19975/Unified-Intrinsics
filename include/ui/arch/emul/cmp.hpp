@@ -5,6 +5,8 @@
 #include <bit>
 #include <limits>
 #include <type_traits>
+#include "abs.hpp"
+#include "ui/base.hpp"
 
 namespace ui::emul {
 
@@ -155,15 +157,19 @@ namespace ui::emul {
         [[maybe_unused]] op::abs_greater_equal_t op
     ) noexcept -> mask_t<N, T> {
         using result_t = mask_inner_t<T>;
-        using ui::abs;
-        using std::abs;
-        return map([](auto l, auto r) {
-            if constexpr (std::is_signed_v<T>) {
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::greater_equal_t{}
+            );
+        } else {
+            using ui::abs;
+            using std::abs;
+            return map([](auto l, auto r) {
                 return (abs(l) >= abs(r)) ? std::numeric_limits<result_t>::max() : result_t{};
-            } else {
-                return (l >= r) ? std::numeric_limits<result_t>::max() : result_t{};
-            }
-        }, lhs, rhs);
+            }, lhs, rhs);
+        }
     }
 // !MARK
 
@@ -175,15 +181,19 @@ namespace ui::emul {
         [[maybe_unused]] op::abs_less_equal_t op
     ) noexcept -> mask_t<N, T> {
         using result_t = mask_inner_t<T>;
-        using ui::abs;
-        using std::abs;
-        return map([](auto l, auto r) {
-            if constexpr (std::is_signed_v<T>) {
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::less_equal_t{}
+            );
+        } else {
+            using ui::abs;
+            using std::abs;
+            return map([](auto l, auto r) {
                 return (abs(l) <= abs(r)) ? std::numeric_limits<result_t>::max() : result_t{};
-            } else {
-                return (l <= r) ? std::numeric_limits<result_t>::max() : result_t{};
-            }
-        }, lhs, rhs);
+            }, lhs, rhs);
+        }
     }
 // !MARK
 
@@ -195,15 +205,19 @@ namespace ui::emul {
         [[maybe_unused]] op::abs_greater_t op
     ) noexcept -> mask_t<N, T> {
         using result_t = mask_inner_t<T>;
-        using ui::abs;
-        using std::abs;
-        return map([](auto l, auto r) {
-            if constexpr (std::is_signed_v<T>) {
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::greater_t{}
+            );
+        } else {
+            using ui::abs;
+            using std::abs;
+            return map([](auto l, auto r) {
                 return (abs(l) > abs(r)) ? std::numeric_limits<result_t>::max() : result_t{};
-            } else {
-                return (l > r) ? std::numeric_limits<result_t>::max() : result_t{};
-            }
-        }, lhs, rhs);
+            }, lhs, rhs);
+        }
     }
 // !MARK
 
@@ -215,15 +229,19 @@ namespace ui::emul {
         [[maybe_unused]] op::abs_less_t op
     ) noexcept -> mask_t<N, T> {
         using result_t = mask_inner_t<T>;
-        using ui::abs;
-        using std::abs;
-        return map([](auto l, auto r) {
-            if constexpr (std::is_signed_v<T>) {
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::less_t{}
+            );
+        } else {
+            using ui::abs;
+            using std::abs;
+            return map([](auto l, auto r) {
                 return (abs(l) < abs(r)) ? std::numeric_limits<result_t>::max() : result_t{};
-            } else {
-                return (l < r) ? std::numeric_limits<result_t>::max() : result_t{};
-            }
-        }, lhs, rhs);
+            }, lhs, rhs);
+        }
     }
 // !MARK
 

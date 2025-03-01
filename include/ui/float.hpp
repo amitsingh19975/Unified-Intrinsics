@@ -291,7 +291,7 @@ namespace ui {
 
         constexpr auto abs() const noexcept -> float16 {
             auto val = std::bit_cast<std::uint16_t>(data);
-            auto t = static_cast<std::uint16_t>(val & (~std::uint16_t(0) >> 1));
+            auto t = static_cast<std::uint16_t>(val & ~(std::uint16_t(1) << 15));
             return std::bit_cast<float16>(t);
         }
 
@@ -397,7 +397,9 @@ namespace ui {
         }
 
         constexpr auto abs() const noexcept -> bfloat16 {
-            return { std::abs(float(*this)) };
+            auto val = std::bit_cast<std::uint16_t>(data);
+            auto t = static_cast<std::uint16_t>(val & ~(std::uint16_t(1) << 15));
+            return std::bit_cast<bfloat16>(t);
         }
 
         constexpr auto is_zero() const noexcept -> bool {

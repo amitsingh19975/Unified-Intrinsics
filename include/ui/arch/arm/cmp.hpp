@@ -3,14 +3,14 @@
 
 #include "cast.hpp"
 #include <bit>
-#include <cassert>
-#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <limits>
 #include <type_traits>
+#include "../emul/cmp.hpp"
+#include "abs.hpp"
+#include "ui/base.hpp"
 
 namespace ui::arm::neon { 
 
@@ -51,7 +51,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return { .val = (lhs.val == rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -68,9 +68,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vceq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vceq_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vceqq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vceqq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -99,7 +99,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vceq_s64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vceqq_s64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -125,7 +125,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vceq_u64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vceqq_u64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -175,7 +175,7 @@ namespace ui::arm::neon {
             static constexpr auto true_ = std::numeric_limits<result_t>::max();
             static constexpr auto false_ = result_t{};
 
-            return { .val = ((lhs.val & rhs.val)) ? true_ : false_ };
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) { 
@@ -199,7 +199,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vtst_s64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vtstq_s64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -225,7 +225,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vtst_u64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vtstq_u64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -275,7 +275,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return { .val = (lhs.val >= rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -292,9 +292,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcge_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcge_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcgeq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcgeq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -323,7 +323,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcge_s64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcgeq_s64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -349,7 +349,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcge_u64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcgeq_u64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -384,7 +384,7 @@ namespace ui::arm::neon {
                 };
             }
             #endif
-            return { .val = (v.val >= T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(v, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -401,9 +401,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcgez_f16(to_vec(v)));
+                    return from_vec<result_t>(vcgez_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcgezq_f16(to_vec(v)));
+                    return from_vec<result_t>(vcgezq_f16(to_vec(v)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(v), op));
@@ -432,36 +432,12 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgez_s64(to_vec(v)));
+                        return std::bit_cast<ret_t>(vcgezq_s64(to_vec(v)));
                     }
                 #endif
                 }
             } else {
-                 if constexpr (sizeof(T) == 1) { 
-                    if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vcgez_s8(std::bit_cast<int8x8_t>(v)));
-                    } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(vcgezq_s8(std::bit_cast<int8x16_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 2) {
-                    if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vcgez_s16(std::bit_cast<int16x4_t>(v)));
-                    } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vcgezq_s16(std::bit_cast<int16x8_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgez_s32(std::bit_cast<int32x2_t>(v)));
-                    } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vcgezq_s32(std::bit_cast<int32x4_t>(v)));
-                    }
-                #ifdef UI_CPU_ARM64
-                } else if constexpr (sizeof(T) == 8) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgez_s64(std::bit_cast<int64x2_t>(v)));
-                    }
-                #endif
-                }
+                return cmp(v, Vec<N, T>{}, op::greater_equal_t{});
             }
 
             return join(
@@ -510,7 +486,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return { .val = (lhs.val <= rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -527,9 +503,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcle_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcle_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcleq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcleq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -558,7 +534,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcle_s64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcleq_s64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -584,7 +560,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcle_u64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcleq_u64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -619,7 +595,7 @@ namespace ui::arm::neon {
                 };
             }
             #endif
-            return { .val = (v.val <= T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(v, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -636,9 +612,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vclez_f16(to_vec(v)));
+                    return from_vec<result_t>(vclez_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vclezq_f16(to_vec(v)));
+                    return from_vec<result_t>(vclezq_f16(to_vec(v)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(v), op));
@@ -667,36 +643,12 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vclez_s64(to_vec(v)));
+                        return std::bit_cast<ret_t>(vclezq_s64(to_vec(v)));
                     }
                 #endif
                 }
             } else {
-                 if constexpr (sizeof(T) == 1) { 
-                    if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vclez_s8(std::bit_cast<int8x8_t>(v)));
-                    } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(vclezq_s8(std::bit_cast<int8x16_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 2) {
-                    if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vclez_s16(std::bit_cast<int16x4_t>(v)));
-                    } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vclezq_s16(std::bit_cast<int16x8_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vclez_s32(std::bit_cast<int32x2_t>(v)));
-                    } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vclezq_s32(std::bit_cast<int32x4_t>(v)));
-                    }
-                #ifdef UI_CPU_ARM64
-                } else if constexpr (sizeof(T) == 8) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vclez_s64(std::bit_cast<int64x2_t>(v)));
-                    }
-                #endif
-                }
+                return cmp(v, Vec<N, T>{}, op::less_equal_t{});
             }
 
             return join(
@@ -744,7 +696,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return { .val = (lhs.val > rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -761,9 +713,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcgt_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcgt_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcgtq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcgtq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -792,7 +744,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgt_s64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcgtq_s64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -818,7 +770,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgt_u64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcgtq_u64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -853,7 +805,7 @@ namespace ui::arm::neon {
                 };
             }
             #endif
-            return { .val = (v.val > T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(v, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -870,9 +822,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcgtz_f16(to_vec(v)));
+                    return from_vec<result_t>(vcgtz_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcgtzq_f16(to_vec(v)));
+                    return from_vec<result_t>(vcgtzq_f16(to_vec(v)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(v), op));
@@ -901,36 +853,12 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgtz_s64(to_vec(v)));
+                        return std::bit_cast<ret_t>(vcgtzq_s64(to_vec(v)));
                     }
                 #endif
                 }
             } else {
-                 if constexpr (sizeof(T) == 1) { 
-                    if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vcgtz_s8(std::bit_cast<int8x8_t>(v)));
-                    } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(vcgtzq_s8(std::bit_cast<int8x16_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 2) {
-                    if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vcgtz_s16(std::bit_cast<int16x4_t>(v)));
-                    } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vcgtzq_s16(std::bit_cast<int16x8_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgtz_s32(std::bit_cast<int32x2_t>(v)));
-                    } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vcgtzq_s32(std::bit_cast<int32x4_t>(v)));
-                    }
-                #ifdef UI_CPU_ARM64
-                } else if constexpr (sizeof(T) == 8) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcgtz_s64(std::bit_cast<int64x2_t>(v)));
-                    }
-                #endif
-                }
+                return cmp(v, Vec<N, T>{}, op::greater_t{});
             }
 
             return join(
@@ -979,7 +907,7 @@ namespace ui::arm::neon {
                 }
             }
             #endif
-            return { .val = (lhs.val < rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -996,9 +924,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vclt_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vclt_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcltq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcltq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -1027,7 +955,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vclt_s64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcltq_s64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -1053,7 +981,7 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vclt_u64(to_vec(lhs), to_vec(rhs)));
+                        return std::bit_cast<ret_t>(vcltq_u64(to_vec(lhs), to_vec(rhs)));
                     }
                 #endif
                 }
@@ -1088,7 +1016,7 @@ namespace ui::arm::neon {
                 };
             }
             #endif
-            return { .val = (v.val < T{0}) ? std::numeric_limits<result_t>::max() : result_t{} };
+            return emul::cmp(v, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -1105,9 +1033,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcltz_f16(to_vec(v)));
+                    return from_vec<result_t>(vcltz_f16(to_vec(v)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcltzq_f16(to_vec(v)));
+                    return from_vec<result_t>(vcltzq_f16(to_vec(v)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(v), op));
@@ -1136,36 +1064,12 @@ namespace ui::arm::neon {
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcltz_s64(to_vec(v)));
+                        return std::bit_cast<ret_t>(vcltzq_s64(to_vec(v)));
                     }
                 #endif
                 }
             } else {
-                 if constexpr (sizeof(T) == 1) { 
-                    if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vcltz_s8(std::bit_cast<int8x8_t>(v)));
-                    } else if constexpr (N == 16) {
-                        return std::bit_cast<ret_t>(vcltzq_s8(std::bit_cast<int8x16_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 2) {
-                    if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vcltz_s16(std::bit_cast<int16x4_t>(v)));
-                    } else if constexpr (N == 8) {
-                        return std::bit_cast<ret_t>(vcltzq_s16(std::bit_cast<int16x8_t>(v)));
-                    }
-                } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcltz_s32(std::bit_cast<int32x2_t>(v)));
-                    } else if constexpr (N == 4) {
-                        return std::bit_cast<ret_t>(vcltzq_s32(std::bit_cast<int32x4_t>(v)));
-                    }
-                #ifdef UI_CPU_ARM64
-                } else if constexpr (sizeof(T) == 8) {
-                    if constexpr (N == 2) {
-                        return std::bit_cast<ret_t>(vcltz_s64(std::bit_cast<int64x2_t>(v)));
-                    }
-                #endif
-                }
+                return cmp(v, Vec<N, T>{}, op::less_t{});
             }
 
             return join(
@@ -1194,11 +1098,7 @@ namespace ui::arm::neon {
                 return { .val = static_cast<result_t>(vcaged_f64(lhs.val, rhs.val)) };
             }
             #endif
-            if constexpr (std::is_signed_v<T>) {
-                return { .val = (std::abs(lhs.val) >= std::abs(rhs.val)) ? std::numeric_limits<result_t>::max() : result_t{} };
-            } else {
-                return { .val = (lhs.val >= rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
-            }
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -1215,9 +1115,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcage_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcage_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcageq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcageq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -1225,11 +1125,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
             } else {
-                if constexpr (sizeof(T) == 8) {
-                    return cmp(cast<double>(lhs), cast<double>(rhs), op);
-                } else {
-                    return cmp(cast<float>(lhs), cast<float>(rhs), op);
-                }
+                return cmp(sat_abs(lhs), sat_abs(rhs), op::greater_equal_t{});
             } 
             return join(
                 cmp(lhs.lo, rhs.lo, op),
@@ -1257,11 +1153,7 @@ namespace ui::arm::neon {
                 return { .val = static_cast<result_t>(vcaled_f64(lhs.val, rhs.val)) };
             }
             #endif
-            if constexpr (std::is_signed_v<T>) {
-                return { .val = (std::abs(lhs.val) <= std::abs(rhs.val)) ? std::numeric_limits<result_t>::max() : result_t{} };
-            } else {
-                return { .val = (lhs.val <= rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
-            }
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -1278,9 +1170,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcale_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcale_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcaleq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcaleq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -1288,11 +1180,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
             } else {
-                if constexpr (sizeof(T) == 8) {
-                    return cmp(cast<double>(lhs), cast<double>(rhs), op);
-                } else {
-                    return cmp(cast<float>(lhs), cast<float>(rhs), op);
-                }
+                return cmp(sat_abs(lhs), sat_abs(rhs), op::less_equal_t{});
             } 
             return join(
                 cmp(lhs.lo, rhs.lo, op),
@@ -1320,11 +1208,7 @@ namespace ui::arm::neon {
                 return { .val = static_cast<result_t>(vcagtd_f64(lhs.val, rhs.val)) };
             }
             #endif
-            if constexpr (std::is_signed_v<T>) {
-                return { .val = (std::abs(lhs.val) > std::abs(rhs.val)) ? std::numeric_limits<result_t>::max() : result_t{} };
-            } else {
-                return { .val = (lhs.val > rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
-            }
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -1341,9 +1225,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcagt_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcagt_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcagtq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcagtq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -1351,11 +1235,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
             } else {
-                if constexpr (sizeof(T) == 8) {
-                    return cmp(cast<double>(lhs), cast<double>(rhs), op);
-                } else {
-                    return cmp(cast<float>(lhs), cast<float>(rhs), op);
-                }
+                return cmp(sat_abs(lhs), sat_abs(rhs), op::greater_t{});
             } 
             return join(
                 cmp(lhs.lo, rhs.lo, op),
@@ -1383,11 +1263,7 @@ namespace ui::arm::neon {
                 return { .val = static_cast<result_t>(vcaltd_f64(lhs.val, rhs.val)) };
             }
             #endif
-            if constexpr (std::is_signed_v<T>) {
-                return { .val = (std::abs(lhs.val) > std::abs(rhs.val)) ? std::numeric_limits<result_t>::max() : result_t{} };
-            } else {
-                return { .val = (lhs.val > rhs.val) ? std::numeric_limits<result_t>::max() : result_t{} };
-            }
+            return emul::cmp(lhs, rhs, op);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -1404,9 +1280,9 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    return from_vec<T>(vcalt_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcalt_f16(to_vec(lhs), to_vec(rhs)));
                 } else if constexpr (N == 8) {
-                    return from_vec<T>(vcaltq_f16(to_vec(lhs), to_vec(rhs)));
+                    return from_vec<result_t>(vcaltq_f16(to_vec(lhs), to_vec(rhs)));
                 }
                 #else
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
@@ -1414,11 +1290,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
             } else {
-                if constexpr (sizeof(T) == 8) {
-                    return cmp(cast<double>(lhs), cast<double>(rhs), op);
-                } else {
-                    return cmp(cast<float>(lhs), cast<float>(rhs), op);
-                }
+                return cmp(sat_abs(lhs), sat_abs(rhs), op::less_t{});
             } 
             return join(
                 cmp(lhs.lo, rhs.lo, op),
