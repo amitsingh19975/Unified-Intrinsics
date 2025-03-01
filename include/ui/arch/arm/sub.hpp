@@ -257,13 +257,13 @@ namespace ui::arm::neon {
             return { .val = lhs.val - rhs.val };
         } else {
             #ifdef UI_HAS_FLOAT_16
-            if constexpr (N == 2) {
+            if constexpr (N == 4) {
                 return from_vec(
                     vsub_f16(
                         to_vec(lhs), to_vec(rhs)
                     )
                 );
-            } else if constexpr (N == 4) {
+            } else if constexpr (N == 8) {
                 return from_vec(
                     vsubq_f16(
                         to_vec(lhs), to_vec(rhs)

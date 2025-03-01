@@ -10,7 +10,7 @@
 
 namespace ui::emul {
 // MARK: Wrapping Subtraction
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
