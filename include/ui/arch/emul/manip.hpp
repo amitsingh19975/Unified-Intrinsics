@@ -32,7 +32,7 @@ namespace ui::emul {
 // !MARK
 
 // MARK: Reverse elements
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto reverse(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
