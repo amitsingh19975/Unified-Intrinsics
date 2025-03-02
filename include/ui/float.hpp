@@ -114,32 +114,34 @@ namespace ui {
                 .mantissa = bits & 0xFFFFFFFFFFFFF,
             };
         }
-        
+
         UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<float> fp) noexcept -> float {
             int biased_exp = fp.exponent + 127;
-            
+
             std::uint32_t exp_field = static_cast<std::uint32_t>(biased_exp) & 0xFF;
-            
+
             auto bits = (static_cast<std::uint32_t>(fp.sign) << 31)
                       | (exp_field << 23)
                       | fp.mantissa;
-            
+
             return std::bit_cast<float>(bits);
         }
 
         UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<double> fp) noexcept -> double {
             int biased_exp = fp.exponent + 1023;
-            
+
             std::uint64_t exp_field = static_cast<std::uint32_t>(biased_exp) & 0x7FF;
-            
+
             auto bits = (static_cast<std::uint64_t>(fp.sign) << 63)
                       | (exp_field << 52)
                       | fp.mantissa;
-            
+
             return std::bit_cast<double>(bits);
         }
 
         UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<float16> fp) noexcept -> float16;
+
+        UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<bfloat16> fp) noexcept -> bfloat16;
     }
 
 
@@ -429,14 +431,17 @@ namespace ui {
                 .mantissa = static_cast<std::uint8_t>(bits & 0x7f),
             };
         }
-        /*UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<bfloat16> fp) noexcept -> internal::float16_t {*/
-        /*    int biased_exp = fp.exponent + 15;*/
-        /*    auto exp_field = static_cast<std::uint16_t>(biased_exp) & 0x1F;*/
-        /*    auto bits = static_cast<std::uint16_t>((static_cast<std::uint16_t>(fp.sign) << 15)*/
-        /*              | (exp_field << 10)*/
-        /*              | (fp.mantissa & 0x3FF));*/
-        /*    return std::bit_cast<internal::float16_t>(bits);*/
-        /*}*/
+
+        UI_ALWAYS_INLINE static constexpr auto compose_fp(FloatingPointRep<bfloat16> fp) noexcept -> bfloat16 {
+            int biased_exp = fp.exponent + 127;
+            auto exp_field = static_cast<std::uint16_t>(biased_exp) & 0xFF;
+            auto bits = static_cast<std::uint16_t>(
+                (static_cast<std::uint16_t>(fp.sign) << 15) |
+                (exp_field << 7) |
+                (fp.mantissa & 0x7F)
+            );
+            return std::bit_cast<bfloat16_t>(bits);
+        }
     }
     
     template <std::size_t N>

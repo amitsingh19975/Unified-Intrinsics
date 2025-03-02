@@ -8,10 +8,9 @@
 #include <cstddef>
 #include <cstdlib>
 #include <type_traits>
-#include "../../modular_inv.hpp"
+#include "../emul/reciprocal.hpp"
 
 namespace ui::arm::neon {
-
     template <std::size_t N, typename T>
         requires (std::floating_point<T> || !std::is_signed_v<T>)
     UI_ALWAYS_INLINE auto reciprocal_estimate(
@@ -30,9 +29,7 @@ namespace ui::arm::neon {
 
             }
             #endif
-            return {
-                .val = maths::BinaryReciprocal{}.estimate(v.val)
-            };
+            return emul::reciprocal_estimate(v);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -83,7 +80,6 @@ namespace ui::arm::neon {
             );
         }
     }
-    
 
     /**
      * @param v orginal vector
@@ -109,10 +105,7 @@ namespace ui::arm::neon {
 
             }
             #endif
-            return {
-                .val = maths::internal::calculate_reciprocal(v.val, e.val)
-            };
-
+            return emul::reciprocal_refine(v, e);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -144,6 +137,8 @@ namespace ui::arm::neon {
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<T>(reciprocal_refine(cast<float>(v), cast<float>(e)));
+            } else if constexpr (std::integral<T>) {
+                return e;
             }
 
             return join(
@@ -171,9 +166,7 @@ namespace ui::arm::neon {
 
             }
             #endif
-            return {
-                .val = maths::BinaryReciprocal{}.sqrt_inv(v.val)
-            };
+            return emul::sqrt_inv_estimate(v);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -250,10 +243,7 @@ namespace ui::arm::neon {
 
             }
             #endif
-            return {
-                .val = maths::internal::calculate_sqrt_inv(v.val, e.val)
-            };
-
+            return emul::sqrt_inv_refine(v, e);
         } else {
             if constexpr (std::same_as<T, float>) {
                 if constexpr (N == 2) {
@@ -285,6 +275,8 @@ namespace ui::arm::neon {
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<T>(sqrt_inv_refine(cast<float>(v), cast<float>(e)));
+            } else if constexpr (std::integral<T>) {
+                return e;
             }
 
             return join(
@@ -306,10 +298,8 @@ namespace ui::arm::neon {
                 } else if constexpr (std::same_as<T, double>) {
                     return { .val = vrecpxd_f64(v.val) };
                 }
-            #else
-                auto fp = fp::decompose_fp(v.val);
-                return reciprocal_estimate(Vec<1, T>(1 << fp.exponent));
             #endif
+            return emul::exponent_reciprocal_estimate(v);
         } else { 
             return join(
                 exponent_reciprocal_estimate(v.lo),
