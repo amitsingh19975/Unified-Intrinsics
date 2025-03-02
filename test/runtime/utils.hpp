@@ -68,3 +68,35 @@ struct DataGenerator {
 
 template <std::floating_point T = float>
 static constexpr T eps = T(0.1);
+
+template <typename T>
+constexpr auto get_type_name() noexcept -> std::string_view {
+    if constexpr (std::same_as<T, ui::float16>) {
+        return "float16";
+    } else if constexpr (std::same_as<T, ui::bfloat16>) {
+        return "bfloat16";
+    } else if constexpr (std::same_as<T, float>) {
+        return "float";
+    } else if constexpr (std::same_as<T, double>) {
+        return "double";
+    } else if constexpr (std::same_as<T, std::int8_t>) {
+        return "int8";
+    } else if constexpr (std::same_as<T, std::uint8_t>) {
+        return "uint8";
+    } else if constexpr (std::same_as<T, std::int16_t>) {
+        return "int16";
+    } else if constexpr (std::same_as<T, std::uint16_t>) {
+        return "uint16";
+    } else if constexpr (std::same_as<T, std::int32_t>) {
+        return "int32";
+    } else if constexpr (std::same_as<T, std::uint32_t>) {
+        return "uint32";
+    } else if constexpr (std::same_as<T, std::int64_t>) {
+        return "int64";
+    } else if constexpr (std::same_as<T, std::uint64_t>) {
+        return "uint64";
+    } else if constexpr (std::same_as<T, std::byte>) {
+        return "byte";
+    }
+}
+
