@@ -37,8 +37,14 @@ struct DataGenerator {
             );
             for (auto i = 0ul; i < N; ++i) data[i] = dist(rng);
         } else {
-            std::uniform_real_distribution<T> dist(-100, 100);
-            for (auto i = 0ul; i < N; ++i) data[i] = dist(rng);
+            using type = std::conditional_t<
+                std::same_as<T, ui::float16> ||
+                std::same_as<T, ui::bfloat16>,
+                float,
+                T
+            >;
+            std::uniform_real_distribution<type> dist(-100, 100);
+            for (auto i = 0ul; i < N; ++i) data[i] = T(dist(rng));
         }
         return ui::Vec<N, T>::load(data.data(), data.size());
     }
