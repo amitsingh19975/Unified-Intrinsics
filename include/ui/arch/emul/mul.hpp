@@ -3,6 +3,7 @@
 
 #include "cast.hpp"
 #include "ui/arch/basic.hpp"
+#include "ui/base.hpp"
 #include <concepts>
 
 namespace ui::emul {
@@ -16,48 +17,6 @@ namespace ui::emul {
         return map([](auto l, auto r) {
             return static_cast<T>(l * r);
         }, lhs, rhs);
-    }
-// !MARK
-
-// MARK: Extended Multiplication
-    template <std::size_t N, typename T>
-    UI_ALWAYS_INLINE static constexpr auto safe_mul(
-        Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T> {
-        return map([](auto l, auto r) {
-            if constexpr (std::floating_point<T>) {
-                using std::fpclassify;
-                using std::signbit;
-                auto lc = fpclassify(l);
-                auto rc = fpclassify(r);
-                auto linf = lc == FP_INFINITE;
-                auto rinf = rc == FP_INFINITE;
-                auto lz = lc == FP_ZERO;
-                auto rz = rc == FP_ZERO;
-                auto ls = signbit(l);
-                auto rs = signbit(r);
-                auto sign = ls || rs;
-
-                if ((linf && rz) || (lz && rinf)) {
-                    return static_cast<T>(std::copysign<T>(2.0, (sign ? -1 : 1)));
-                } else if (lz || rz) {
-                    return static_cast<T>(std::copysign<T>(0.0, (sign ? -1 : 1)));
-                } else if (linf || rinf) {
-                    return static_cast<T>(std::copysign<T>(INFINITY, (sign ? -1 : 1)));
-                }
-            }
-            return static_cast<T>(l * r);
-        }, lhs, rhs);
-    }
-
-    template <std::size_t Lane, std::size_t N, std::size_t M, typename T>
-        requires (Lane < M)
-    UI_ALWAYS_INLINE static constexpr auto safe_mul(
-        Vec<N, T> const& a,
-        Vec<M, T> const& v
-    ) noexcept -> Vec<N, T> {
-        return safe_mul(a, Vec<N, T>::load(v[Lane]));
     }
 // !MARK
 
@@ -75,12 +34,13 @@ namespace ui::emul {
     }
 
     template <std::size_t N, std::integral T>
+        requires (sizeof(T) < 8)
     UI_ALWAYS_INLINE static constexpr auto mul_acc(
         Vec<N, internal::widening_result_t<T>> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
         [[maybe_unused]] op::add_t op
-    ) noexcept -> Vec<N, T> {
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         return map([](auto a, auto l, auto r) -> result_t {
             return static_cast<result_t>(a + (static_cast<result_t>(l) * static_cast<result_t>(r)));
@@ -100,12 +60,13 @@ namespace ui::emul {
     }
 
     template <std::size_t N, std::integral T>
+        requires (sizeof(T) < 8)
     UI_ALWAYS_INLINE static constexpr auto mul_acc(
         Vec<N, internal::widening_result_t<T>> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
         [[maybe_unused]] op::sub_t op
-    ) noexcept -> Vec<N, T> {
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         return map([](auto a, auto l, auto r) -> result_t {
             return static_cast<result_t>(a - (static_cast<result_t>(l) * static_cast<result_t>(r)));
@@ -157,6 +118,7 @@ namespace ui::emul {
 
 // MARK: Widening Multiplication
     template <std::size_t N, typename T>
+        requires (sizeof(T) < 8)
     UI_ALWAYS_INLINE static constexpr auto widening_mul(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -166,20 +128,24 @@ namespace ui::emul {
             return static_cast<result_t>(l) * static_cast<result_t>(r);
         }, lhs, rhs);
     }
+
+    template <std::size_t N, typename T>
+        requires (sizeof(T) < 8)
+    UI_ALWAYS_INLINE static constexpr auto widening_mul(
+        Vec<N, internal::widening_result_t<T>> const& a,
+        Vec<N, T> const& v,
+        T const c,
+        op::add_t /*op*/
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        return map([c](auto a_, auto v_) -> result_t {
+            auto t = (static_cast<result_t>(v_) * static_cast<result_t>(c));
+            return static_cast<result_t>(a_ + t);
+        }, a, v);
+    }
 // !MARK
 
 // MARK: Vector multiply-accumulate by scalar
-    template <unsigned Lane, std::size_t N, std::size_t M, typename T>
-        requires (Lane < M)
-    UI_ALWAYS_INLINE static constexpr auto mul_acc(
-        Vec<N, T> const& a,
-        Vec<N, T> const& b,
-        Vec<M, T> const& v,
-        op::add_t op
-    ) noexcept -> Vec<N, T> {
-        return mul_acc(a, b, v[Lane], op);
-    }
-
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto mul_acc(
         Vec<N, T> const& a,
@@ -191,20 +157,20 @@ namespace ui::emul {
             return static_cast<T>(a_ + (l * c));
         }, a, b);
     }
-// !MARK
 
-// MARK: Vector multiply-subtract by scalar
     template <unsigned Lane, std::size_t N, std::size_t M, typename T>
         requires (Lane < M)
     UI_ALWAYS_INLINE static constexpr auto mul_acc(
         Vec<N, T> const& a,
         Vec<N, T> const& b,
         Vec<M, T> const& v,
-        op::sub_t op
+        op::add_t op
     ) noexcept -> Vec<N, T> {
         return mul_acc(a, b, v[Lane], op);
     }
+// !MARK
 
+// MARK: Vector multiply-subtract by scalar
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto mul_acc(
         Vec<N, T> const& a,
@@ -215,6 +181,17 @@ namespace ui::emul {
         return map([c](auto a_, auto l) {
             return static_cast<T>(a_ - (l * c));
         }, a, b);
+    }
+
+    template <unsigned Lane, std::size_t N, std::size_t M, typename T>
+        requires (Lane < M)
+    UI_ALWAYS_INLINE static constexpr auto mul_acc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        Vec<M, T> const& v,
+        op::sub_t op
+    ) noexcept -> Vec<N, T> {
+        return mul_acc(a, b, v[Lane], op);
     }
 // !MARK
 
