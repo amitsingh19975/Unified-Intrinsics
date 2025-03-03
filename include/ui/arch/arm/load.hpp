@@ -2,8 +2,6 @@
 #define AMT_UI_ARCH_ARM_LOAD_HPP
 
 #include "cast.hpp"
-#include "ui/float.hpp"
-#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
