@@ -3,6 +3,7 @@
 
 #include "features.hpp"
 #include "float.hpp"
+#include "ui/maths.hpp"
 #include <array>
 #include <bit>
 #include <cassert>
@@ -170,17 +171,7 @@ namespace ui::maths {
 
         template <std::integral T>
         constexpr auto isqrt_inv(T n) const noexcept -> T {
-            constexpr auto sqrt = [](T n) -> T {
-                if (n <= 1) return n;
-                auto x0 = n >> 1;
-                auto x1 = (x0 + n / x0) >> 1;
-                while (x1 < x0) {
-                    x0 = x1;
-                    x1 = (x0 + n / x0) / 2;
-                }
-                return (x0 * x0 < n) ? x0 + 1 : x0;
-            };
-            auto res = sqrt(n);
+            auto res = maths::isqrt</*RoundUp=*/true>(n);
             // sqrt requres half the width. 2^((3 * W)/ - 1)/sqrt(n)
             static constexpr std::size_t S = (sizeof(T) * 8) / 2 + 1;
             auto e = iestimate<S>(res);

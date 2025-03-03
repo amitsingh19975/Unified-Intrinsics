@@ -119,6 +119,21 @@ namespace ui::maths {
         return std::bit_cast<T>(res);
     }
 
+    template <bool RoundUp = false, std::integral T>
+    constexpr auto isqrt(T n) noexcept -> T {
+        if (n <= 1) return n;
+        auto x0 = n >> 1;
+        auto x1 = (x0 + n / x0) >> 1;
+        while (x1 < x0) {
+            x0 = x1;
+            x1 = (x0 + n / x0) / 2;
+        }
+        if constexpr (RoundUp) {
+            return (x0 * x0 < n) ? x0 + 1 : x0;
+        } else {
+            return x0;
+        }
+    }
 } // namespace ui::maths
 
 #undef UI_BYTE_SWAP_INTRINSIC_2
