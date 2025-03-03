@@ -27,15 +27,14 @@ struct DataGenerator {
         return ui::Vec<N, T>::load(data.data(), data.size());
     }
 
-    static constexpr auto random(std::size_t seed = 0) noexcept -> ui::Vec<N, T> {
+    static constexpr auto random(T* data, std::size_t n, std::size_t seed = 0) noexcept {
         std::mt19937 rng(seed);
-        std::array<T, N> data;
         if constexpr (std::integral<T>) {
             std::uniform_int_distribution<T> dist(
                std::numeric_limits<T>::min(),
                std::numeric_limits<T>::max()
             );
-            for (auto i = 0ul; i < N; ++i) data[i] = dist(rng);
+            for (auto i = 0ul; i < n; ++i) data[i] = dist(rng);
         } else {
             using type = std::conditional_t<
                 std::same_as<T, ui::float16> ||
@@ -44,8 +43,14 @@ struct DataGenerator {
                 T
             >;
             std::uniform_real_distribution<type> dist(-100, 100);
-            for (auto i = 0ul; i < N; ++i) data[i] = T(dist(rng));
+            for (auto i = 0ul; i < n; ++i) data[i] = T(dist(rng));
         }
+    }
+
+    static constexpr auto random(std::size_t seed = 0) noexcept -> ui::Vec<N, T> {
+        std::mt19937 rng(seed);
+        std::array<T, N> data;
+        random(data.data(), data.size(), seed);
         return ui::Vec<N, T>::load(data.data(), data.size());
     }
 
