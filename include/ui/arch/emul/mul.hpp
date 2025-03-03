@@ -128,21 +128,6 @@ namespace ui::emul {
             return static_cast<result_t>(l) * static_cast<result_t>(r);
         }, lhs, rhs);
     }
-
-    template <std::size_t N, typename T>
-        requires (sizeof(T) < 8)
-    UI_ALWAYS_INLINE static constexpr auto widening_mul(
-        Vec<N, internal::widening_result_t<T>> const& a,
-        Vec<N, T> const& v,
-        T const c,
-        op::add_t /*op*/
-    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
-        using result_t = internal::widening_result_t<T>;
-        return map([c](auto a_, auto v_) -> result_t {
-            auto t = (static_cast<result_t>(v_) * static_cast<result_t>(c));
-            return static_cast<result_t>(a_ + t);
-        }, a, v);
-    }
 // !MARK
 
 // MARK: Vector multiply-accumulate by scalar
