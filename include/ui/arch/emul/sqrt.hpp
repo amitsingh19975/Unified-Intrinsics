@@ -2,6 +2,7 @@
 #define AMT_ARCH_EMUL_SQRT_HPP
 
 #include "cast.hpp"
+#include "../../maths.hpp"
 #include <concepts>
 
 namespace ui::emul {
@@ -13,7 +14,11 @@ namespace ui::emul {
             if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                 return T(std::sqrt(float(v_)));
             } else {
-                return std::sqrt(v_);
+                if constexpr (std::integral<T>) {
+                    return static_cast<T>(maths::isqrt(v_));
+                } else {
+                    return static_cast<T>(std::sqrt(v_));
+                }
             }
         }, v);
     }
