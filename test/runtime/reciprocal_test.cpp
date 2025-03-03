@@ -7,12 +7,8 @@
 #include <cstdint>
 #include <format>
 #include <print>
-#include <cmath>
 #include <type_traits>
 #include "ui.hpp"
-#include "ui/arch/arm/reciprocal.hpp"
-#include "ui/arch/emul/reciprocal.hpp"
-#include "ui/float.hpp"
 #include "utils.hpp"
 
 using namespace ui;
