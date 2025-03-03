@@ -94,10 +94,8 @@ namespace ui::arm::neon {
                     }
                 }
             }
-            return join(
-                load<N / 2>(val),
-                load<N / 2>(val)
-            );
+            auto t = load<N / 2>(val);
+            return join(t, t);
         }
     }
 
@@ -359,10 +357,7 @@ namespace ui::arm::neon {
                 }
             }
             auto t = load<N / 2, Lane>(v);
-            return join(
-                t,
-                t
-            );
+            return join(t, t);
         }
     }
 
