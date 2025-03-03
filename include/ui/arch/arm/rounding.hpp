@@ -4,7 +4,6 @@
 #include "cast.hpp"
 #include <cassert>
 #include <cfenv>
-#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdlib>
@@ -12,20 +11,6 @@
 #include "../emul/rounding.hpp"
 
 namespace ui::arm::neon {
-
-    namespace internal {
-        // TODO: Implement arm algorithm using FPCR register
-        // https://developer.arm.com/documentation/ddi0596/2021-03/Shared-Pseudocode/Shared-Functions?lang=en#impl-shared.FPRoundInt.4
-        template <std::floating_point T>
-        UI_ALWAYS_INLINE static auto round_helper(T val, std::float_round_style mode) noexcept -> T {
-            auto const old = std::fegetround(); 
-            std::fesetround(::ui::internal::convert_rounding_style(mode));
-            auto res = std::nearbyint(val);
-            std::fesetround(old);
-            return res;
-        }
-    } // namespace internal
-
     template <std::float_round_style mode = std::float_round_style::round_to_nearest, std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto round(
         Vec<N, T> const& v
