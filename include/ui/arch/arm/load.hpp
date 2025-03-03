@@ -10,7 +10,6 @@
 #include <type_traits>
 
 namespace ui::arm::neon { 
-    
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto load(T val) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
@@ -140,7 +139,7 @@ namespace ui::arm::neon {
                     }
                 } else if constexpr (M == 2) {
                     if constexpr (N == 2) {
-                        return from_vec(vdup_laneq_f64(to_vec(v), Lane));
+                        return from_vec(vdupq_laneq_f64(to_vec(v), Lane));
                     }
                 } else if constexpr (M > 2) {
                     if constexpr (Lane < M / 2) {
@@ -152,19 +151,19 @@ namespace ui::arm::neon {
             #endif
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
-                if constexpr (M == 2) {
+                if constexpr (M == 4) {
                     if constexpr (N == 4) {
                         return from_vec<T>(vdup_lane_f16(to_vec(v), Lane));
                     } else if constexpr (N == 8) {
                         return from_vec<T>(vdupq_lane_f16(to_vec(v), Lane));
                     }
-                } else if constexpr (M == 4) {
+                } else if constexpr (M == 8) {
                     if constexpr (N == 4) {
                         return from_vec<T>(vdup_laneq_f16(to_vec(v), Lane));
                     } else if constexpr (N == 8) {
                         return from_vec<T>(vdupq_laneq_f16(to_vec(v), Lane));
                     }
-                } else if constexpr (M > 4) {
+                } else if constexpr (M > 8) {
                     if constexpr (Lane < M / 2) {
                         return load<N, Lane>(v.lo);
                     } else {
@@ -172,24 +171,24 @@ namespace ui::arm::neon {
                     }
                 }
                 #else
-                auto temp = std::bit_cast<Vec<N, std::uint16_t>>(v);
-                return std::bit_cast<Vec<N, T>>(load<N, Lane>(temp));
+                auto temp = rcast<std::uint16_t>(v);
+                return rcast<T>(load<N, Lane>(temp));
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 #ifdef UI_HAS_BFLOAT_16
-                if constexpr (M == 2) {
+                if constexpr (M == 4) {
                     if constexpr (N == 4) {
                         return from_vec<T>(vdup_lane_bf16(to_vec(v), Lane));
                     } else if constexpr (N == 8) {
                         return from_vec<T>(vdupq_lane_bf16(to_vec(v), Lane));
                     }
-                } else if constexpr (M == 4) {
+                } else if constexpr (M == 8) {
                     if constexpr (N == 4) {
                         return from_vec<T>(vdup_laneq_bf16(to_vec(v), Lane));
                     } else if constexpr (N == 8) {
                         return from_vec<T>(vdupq_laneq_bf16(to_vec(v), Lane));
                     }
-                } else if constexpr (M > 4) {
+                } else if constexpr (M > 8) {
                     if constexpr (Lane < M / 2) {
                         return load<N, Lane>(v.lo);
                     } else {
@@ -197,22 +196,22 @@ namespace ui::arm::neon {
                     }
                 }
                 #else
-                auto temp = std::bit_cast<Vec<N, std::uint16_t>>(v);
-                return std::bit_cast<Vec<N, T>>(load<N, Lane>(temp));
+                auto temp = rcast<std::uint16_t>(v);
+                return rcast<T>(load<N, Lane>(temp));
                 #endif
             } else if constexpr (std::is_signed_v<T>) {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (M == 8) {
                         if constexpr (N == 8) {
-                            return from_vec(vdup_lane_s8(to_vec(v), Lane));        
+                            return from_vec(vdup_lane_s8(to_vec(v), Lane));
                         } else if constexpr (N == 16) {
-                            return from_vec(vdupq_lane_s8(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_s8(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 16) {
                         if constexpr (N == 8) {
-                            return from_vec(vdup_laneq_s8(to_vec(v), Lane));        
+                            return from_vec(vdup_laneq_s8(to_vec(v), Lane));
                         } else if constexpr (N == 16) {
-                            return from_vec(vdupq_laneq_s8(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_s8(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 16) {
                         if constexpr (Lane < M / 2) {
@@ -224,15 +223,15 @@ namespace ui::arm::neon {
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (M == 4) {
                         if constexpr (N == 4) {
-                            return from_vec(vdup_lane_s16(to_vec(v), Lane));        
+                            return from_vec(vdup_lane_s16(to_vec(v), Lane));
                         } else if constexpr (N == 8) {
-                            return from_vec(vdupq_lane_s16(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_s16(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 8) {
                         if constexpr (N == 4) {
-                            return from_vec(vdup_laneq_s16(to_vec(v), Lane));        
+                            return from_vec(vdup_laneq_s16(to_vec(v), Lane));
                         } else if constexpr (N == 8) {
-                            return from_vec(vdupq_laneq_s16(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_s16(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 8) {
                         if constexpr (Lane < M / 2) {
@@ -244,15 +243,15 @@ namespace ui::arm::neon {
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (M == 2) {
                         if constexpr (N == 2) {
-                            return from_vec(vdup_lane_s32(to_vec(v), Lane));        
+                            return from_vec(vdup_lane_s32(to_vec(v), Lane));
                         } else if constexpr (N == 4) {
-                            return from_vec(vdupq_lane_s32(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_s32(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 4) {
                         if constexpr (N == 2) {
-                            return from_vec(vdup_laneq_s32(to_vec(v), Lane));        
+                            return from_vec(vdup_laneq_s32(to_vec(v), Lane));
                         } else if constexpr (N == 4) {
-                            return from_vec(vdupq_laneq_s32(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_s32(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 4) {
                         if constexpr (Lane < M / 2) {
@@ -265,11 +264,11 @@ namespace ui::arm::neon {
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (M == 1) {
                         if constexpr (N == 2) {
-                            return from_vec(vdupq_lane_s64(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_s64(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 2) {
                         if constexpr (N == 2) {
-                            return from_vec(vdupq_laneq_s64(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_s64(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 4) {
                         if constexpr (Lane < M / 2) {
@@ -284,15 +283,15 @@ namespace ui::arm::neon {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (M == 8) {
                         if constexpr (N == 8) {
-                            return from_vec(vdup_lane_u8(to_vec(v), Lane));        
+                            return from_vec(vdup_lane_u8(to_vec(v), Lane));
                         } else if constexpr (N == 16) {
-                            return from_vec(vdupq_lane_u8(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_u8(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 16) {
                         if constexpr (N == 8) {
-                            return from_vec(vdup_laneq_u8(to_vec(v), Lane));        
+                            return from_vec(vdup_laneq_u8(to_vec(v), Lane));
                         } else if constexpr (N == 16) {
-                            return from_vec(vdupq_laneq_u8(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_u8(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 16) {
                         if constexpr (Lane < M / 2) {
@@ -304,15 +303,15 @@ namespace ui::arm::neon {
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (M == 4) {
                         if constexpr (N == 4) {
-                            return from_vec(vdup_lane_u16(to_vec(v), Lane));        
+                            return from_vec(vdup_lane_u16(to_vec(v), Lane));
                         } else if constexpr (N == 8) {
-                            return from_vec(vdupq_lane_u16(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_u16(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 8) {
                         if constexpr (N == 4) {
-                            return from_vec(vdup_laneq_u16(to_vec(v), Lane));        
+                            return from_vec(vdup_laneq_u16(to_vec(v), Lane));
                         } else if constexpr (N == 8) {
-                            return from_vec(vdupq_laneq_u16(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_u16(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 8) {
                         if constexpr (Lane < M / 2) {
@@ -324,15 +323,15 @@ namespace ui::arm::neon {
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (M == 2) {
                         if constexpr (N == 2) {
-                            return from_vec(vdup_lane_u32(to_vec(v), Lane));        
+                            return from_vec(vdup_lane_u32(to_vec(v), Lane));
                         } else if constexpr (N == 4) {
-                            return from_vec(vdupq_lane_u32(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_u32(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 4) {
                         if constexpr (N == 2) {
-                            return from_vec(vdup_laneq_u32(to_vec(v), Lane));        
+                            return from_vec(vdup_laneq_u32(to_vec(v), Lane));
                         } else if constexpr (N == 4) {
-                            return from_vec(vdupq_laneq_u32(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_u32(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 4) {
                         if constexpr (Lane < M / 2) {
@@ -345,11 +344,11 @@ namespace ui::arm::neon {
                 } else if constexpr (sizeof(T) == 8) {
                     if constexpr (M == 1) {
                         if constexpr (N == 2) {
-                            return from_vec(vdupq_lane_u64(to_vec(v), Lane));        
+                            return from_vec(vdupq_lane_u64(to_vec(v), Lane));
                         }
                     } else if constexpr (M == 2) {
                         if constexpr (N == 2) {
-                            return from_vec(vdupq_laneq_u64(to_vec(v), Lane));        
+                            return from_vec(vdupq_laneq_u64(to_vec(v), Lane));
                         }
                     } else if constexpr (M > 4) {
                         if constexpr (Lane < M / 2) {
@@ -361,9 +360,10 @@ namespace ui::arm::neon {
                 #endif
                 }
             }
+            auto t = load<N / 2, Lane>(v);
             return join(
-                load<N / 2, Lane>(v),
-                load<N / 2, Lane>(v)
+                t,
+                t
             );
         }
     }
@@ -378,7 +378,7 @@ namespace ui::arm::neon {
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
-                auto res = from_vec(vld2q_f64(data));
+                auto res = from_vec(vld2_f64(data));
                 a = res.val[0];
                 b = res.val[1];
                 return;
@@ -416,7 +416,7 @@ namespace ui::arm::neon {
             #ifdef UI_CPU_ARM64
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    auto res = from_vec(vld2q_f32(data));
+                    auto res = from_vec(vld2q_f64(data));
                     a = res.val[0];
                     b = res.val[1];
                     return;
@@ -425,12 +425,12 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    auto res = from_vec(vld2_f16(data));
+                    auto res = from_vec(vld2_f16(reinterpret_cast<float16_t const*>(data)));
                     a = res.val[0];
                     b = res.val[1];
                     return;
                 } else if constexpr (N == 8) {
-                    auto res = from_vec(vld2q_f16(data));
+                    auto res = from_vec(vld2q_f16(reinterpret_cast<float16_t const*>(data)));
                     a = res.val[0];
                     b = res.val[1];
                     return;
@@ -438,7 +438,7 @@ namespace ui::arm::neon {
                 #else
                 auto a0 = Vec<N, std::uint16_t>{};
                 auto b0 = Vec<N, std::uint16_t>{};
-                strided_load(reinterpret_cast<std::uint16_t>(data), a0, b0);
+                strided_load(reinterpret_cast<std::uint16_t const*>(data), a0, b0);
                 a = rcast<float16>(a0);
                 b = rcast<float16>(b0);
                 return;
@@ -447,7 +447,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, bfloat16>) {
                 auto a0 = Vec<N, std::uint16_t>{};
                 auto b0 = Vec<N, std::uint16_t>{};
-                strided_load(reinterpret_cast<std::uint16_t>(data), a0, b0);
+                strided_load(reinterpret_cast<std::uint16_t const*>(data), a0, b0);
                 a = rcast<bfloat16>(a0);
                 b = rcast<bfloat16>(b0);
                 return;
@@ -537,7 +537,7 @@ namespace ui::arm::neon {
                     }
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
-                    if constexpr (N == 8) {
+                    if constexpr (N == 2) {
                         auto res = from_vec(vld2q_u64(data));
                         a = res.val[0];
                         b = res.val[1];
@@ -562,7 +562,7 @@ namespace ui::arm::neon {
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
-                auto res = from_vec(vld3q_f64(data));
+                auto res = from_vec(vld3_f64(data));
                 a = res.val[0];
                 b = res.val[1];
                 c = res.val[2];
@@ -606,7 +606,7 @@ namespace ui::arm::neon {
             #ifdef UI_CPU_ARM64
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    auto res = from_vec(vld3q_f32(data));
+                    auto res = from_vec(vld3q_f64(data));
                     a = res.val[0];
                     b = res.val[1];
                     c = res.val[2];
@@ -616,13 +616,13 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    auto res = from_vec(vld3_f16(data));
+                    auto res = from_vec(vld3_f16(reinterpret_cast<float16_t const*>(data)));
                     a = res.val[0];
                     b = res.val[1];
                     c = res.val[2];
                     return;
                 } else if constexpr (N == 8) {
-                    auto res = from_vec(vld3q_f16(data));
+                    auto res = from_vec(vld3q_f16(reinterpret_cast<float16_t const*>(data)));
                     a = res.val[0];
                     b = res.val[1];
                     c = res.val[2];
@@ -632,7 +632,7 @@ namespace ui::arm::neon {
                 auto a0 = Vec<N, std::uint16_t>{};
                 auto b0 = Vec<N, std::uint16_t>{};
                 auto c0 = Vec<N, std::uint16_t>{};
-                strided_load(reinterpret_cast<std::uint16_t>(data), a0, b0, c0);
+                strided_load(reinterpret_cast<std::uint16_t const*>(data), a0, b0, c0);
                 a = rcast<float16>(a0);
                 b = rcast<float16>(b0);
                 c = rcast<float16>(c0);
@@ -643,7 +643,7 @@ namespace ui::arm::neon {
                 auto a0 = Vec<N, std::uint16_t>{};
                 auto b0 = Vec<N, std::uint16_t>{};
                 auto c0 = Vec<N, std::uint16_t>{};
-                strided_load(reinterpret_cast<std::uint16_t>(data), a0, b0, c0);
+                strided_load(reinterpret_cast<std::uint16_t const*>(data), a0, b0, c0);
                 a = rcast<bfloat16>(a0);
                 b = rcast<bfloat16>(b0);
                 c = rcast<bfloat16>(c0);
@@ -747,7 +747,7 @@ namespace ui::arm::neon {
                     }
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
-                    if constexpr (N == 8) {
+                    if constexpr (N == 2) {
                         auto res = from_vec(vld3q_u64(data));
                         a = res.val[0];
                         b = res.val[1];
@@ -774,7 +774,7 @@ namespace ui::arm::neon {
         if constexpr (N == 1) {
             #ifdef UI_CPU_ARM64
             if constexpr (std::same_as<T, double>) {
-                auto res = from_vec(vld4q_f64(data));
+                auto res = from_vec(vld4_f64(data));
                 a = res.val[0];
                 b = res.val[1];
                 c = res.val[2];
@@ -824,7 +824,7 @@ namespace ui::arm::neon {
             #ifdef UI_CPU_ARM64
             } else if constexpr (std::same_as<T, double>) {
                 if constexpr (N == 2) {
-                    auto res = from_vec(vld4q_f32(data));
+                    auto res = from_vec(vld4q_f64(data));
                     a = res.val[0];
                     b = res.val[1];
                     c = res.val[2];
@@ -835,14 +835,14 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, float16>) {
                 #ifdef UI_HAS_FLOAT_16
                 if constexpr (N == 4) {
-                    auto res = from_vec(vld4_f16(data));
+                    auto res = from_vec(vld4_f16(reinterpret_cast<float16_t const*>(data)));
                     a = res.val[0];
                     b = res.val[1];
                     c = res.val[2];
                     d = res.val[3];
                     return;
                 } else if constexpr (N == 8) {
-                    auto res = from_vec(vld4q_f16(data));
+                    auto res = from_vec(vld4q_f16(reinterpret_cast<float16_t const*>(data)));
                     a = res.val[0];
                     b = res.val[1];
                     c = res.val[2];
@@ -854,7 +854,7 @@ namespace ui::arm::neon {
                 auto b0 = Vec<N, std::uint16_t>{};
                 auto c0 = Vec<N, std::uint16_t>{};
                 auto d0 = Vec<N, std::uint16_t>{};
-                strided_load(reinterpret_cast<std::uint16_t>(data), a0, b0, c0, d0);
+                strided_load(reinterpret_cast<std::uint16_t const*>(data), a0, b0, c0, d0);
                 a = rcast<float16>(a0);
                 b = rcast<float16>(b0);
                 c = rcast<float16>(c0);
@@ -867,7 +867,7 @@ namespace ui::arm::neon {
                 auto b0 = Vec<N, std::uint16_t>{};
                 auto c0 = Vec<N, std::uint16_t>{};
                 auto d0 = Vec<N, std::uint16_t>{};
-                strided_load(reinterpret_cast<std::uint16_t>(data), a0, b0, c0, d0);
+                strided_load(reinterpret_cast<std::uint16_t const*>(data), a0, b0, c0, d0);
                 a = rcast<bfloat16>(a0);
                 b = rcast<bfloat16>(b0);
                 c = rcast<bfloat16>(c0);
@@ -985,7 +985,7 @@ namespace ui::arm::neon {
                     }
                 #ifdef UI_CPU_ARM64
                 } else if constexpr (sizeof(T) == 8) {
-                    if constexpr (N == 8) {
+                    if constexpr (N == 2) {
                         auto res = from_vec(vld4q_u64(data));
                         a = res.val[0];
                         b = res.val[1];
