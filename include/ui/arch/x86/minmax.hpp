@@ -784,33 +784,60 @@ namespace ui::x86 {
                     } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                         return fold_helper(cast<float>(v));
                     } else if constexpr (sizeof(T) == 1) {
-                        static constexpr auto max = std::numeric_limits<T>::max();
-                        __m128i t0;
                         if constexpr (is_max) {
-                            t0 = _mm_sub_epi8(_mm_set1_epi8(static_cast<std::int8_t>(max)), a);
+                            if constexpr (std::is_signed_v<T>) {
+                                auto mask = _mm_set1_epi8(static_cast<std::int8_t>(0x7f));
+                                auto t0 = _mm_xor_si128(a, mask); // get rid of sign
+                                auto t1 = _mm_srli_epi16(t0, 8);
+                                auto t2 = _mm_min_epu8(t0, t1);
+                                auto t3 = _mm_minpos_epu16(t2);
+                                return static_cast<T>(_mm_cvtsi128_si32(t3) ^ 0x7f);
+                            } else {
+                                auto t0 = _mm_set1_epi32(~std::int32_t{});
+                                auto t1 = _mm_xor_si128(t0, a);
+                                auto t2 = _mm_srli_epi16(t1, 8);
+                                auto t3 = _mm_min_epu8(t1, t2);
+                                auto t4 = _mm_minpos_epu16(t3);
+                                return static_cast<T>(~_mm_cvtsi128_si32(t4));
+                            }
                         } else {
-                            t0 = a;
-                        }
-                        auto t1 = _mm_min_epu8(t0, _mm_srli_epi16(t0, 8));
-                        auto t2 = _mm_minpos_epu16(t1);
-                        if constexpr (is_max) {
-                            return static_cast<T>(static_cast<int>(max) - _mm_cvtsi128_si32(t2));
-                        } else {
-                            return static_cast<T>(_mm_cvtsi128_si32(t2));
+                            if constexpr (std::is_signed_v<T>) {
+                                auto mask = _mm_set1_epi8(static_cast<std::int8_t>(0x80));
+                                auto t0 = _mm_xor_si128(a, mask); // get rid of sign
+                                auto t1 = _mm_srli_epi16(t0, 8); // logical shift right by 8
+                                auto t2 = _mm_min_epu8(t0, t1);
+                                auto t3 = _mm_minpos_epu16(t2);
+                                return static_cast<T>(_mm_cvtsi128_si32(t3) - 128);
+                            } else {
+                                auto t1 = _mm_srli_epi16(a, 8); // logical shift right by 8
+                                auto t2 = _mm_min_epu8(a, t1);
+                                auto t3 = _mm_minpos_epu16(t2);
+                                return static_cast<T>(_mm_cvtsi128_si32(t2));
+                            }
                         }
                     } else if constexpr (sizeof(T) == 2) {
-                        static constexpr auto max = std::numeric_limits<T>::max();
-                        __m128i t0;
                         if constexpr (is_max) {
-                            t0 = _mm_sub_epi16(_mm_set1_epi16(static_cast<std::int16_t>(max)), a);
+                            if constexpr (std::is_signed_v<T>) {
+                                auto mask = _mm_set1_epi16(static_cast<std::int16_t>(0x7fff));
+                                auto t0 = _mm_xor_si128(mask, a);
+                                auto t1 = _mm_minpos_epu16(t0);
+                                return static_cast<T>(_mm_cvtsi128_si32(t1) ^ 0x7f'ff);
+                            } else {
+                                auto mask = _mm_set1_epi32(~std::int32_t{});
+                                auto t0 = _mm_xor_si128(mask, a);
+                                auto t1 = _mm_minpos_epu16(t0);
+                                return static_cast<T>(~_mm_cvtsi128_si32(t1));
+                            }
                         } else {
-                            t0 = a;
-                        }
-                        auto t2 = _mm_minpos_epu16(t0);
-                        if constexpr (is_max) {
-                            return static_cast<T>(static_cast<int>(max) - _mm_cvtsi128_si32(t2));
-                        } else {
-                            return static_cast<T>(_mm_cvtsi128_si32(t2));
+                            if constexpr (std::is_signed_v<T>) {
+                                auto mask = _mm_set1_epi16(0x80'00);
+                                auto t0 = _mm_xor_si128(mask, a);
+                                auto t1 = _mm_minpos_epu16(t0);
+                                return static_cast<T>(_mm_cvtsi128_si32(t1) ^ 0x80'00);
+                            } else {
+                                auto t0 = _mm_minpos_epu16(a);
+                                return static_cast<T>(_mm_cvtsi128_si32(t0));
+                            }
                         }
                     } else if constexpr (sizeof(T) == 4) {
                         auto b = to_vec(join(v.hi, v.hi));
@@ -869,15 +896,29 @@ namespace ui::x86 {
 
                 // TODO: Add avx 512 implementation
                 if constexpr (is_max) {
-                    return std::max(
-                        fold_helper<false>(v.lo, op),
-                        fold_helper<false>(v.hi, op)
-                    );
+                    if constexpr (std::same_as<O, op::pmaxnm_t>) {
+                        return internal::maxnm(
+                            fold_helper<false>(v.lo, op),
+                            fold_helper<false>(v.hi, op)
+                        );
+                    } else {
+                        return internal::max(
+                            fold_helper<false>(v.lo, op),
+                            fold_helper<false>(v.hi, op)
+                        );
+                    }
                 } else {
-                    return std::max(
-                        fold_helper<false>(v.lo, op),
-                        fold_helper<false>(v.hi, op)
-                    );
+                    if constexpr (std::same_as<O, op::pminnm_t>) {
+                        return internal::minnm(
+                            fold_helper<false>(v.lo, op),
+                            fold_helper<false>(v.hi, op)
+                        );
+                    } else {
+                        return internal::min(
+                            fold_helper<false>(v.lo, op),
+                            fold_helper<false>(v.hi, op)
+                        );
+                    }
                 }
             }
         }
