@@ -2,9 +2,48 @@
 #define AMT_UI_BITS_HPP
 
 #include "arch/arch.hpp"
+#include "ui/base_vec.hpp"
 #include <type_traits>
+#include <utility>
 
-namespace ui::bits {
+namespace ui {
+    template <unsigned S, std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_left(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+       return rcast<T>(shift_left<S>(rcast<std::make_unsigned_t<T>>(v)));
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_left(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+       return rcast<T>(shift_left(rcast<std::make_unsigned_t<T>>(v), s));
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_left(
+        Vec<N, T> const& v,
+        Vec<N, std::make_signed_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+       return rcast<T>(shift_left(rcast<std::make_unsigned_t<T>>(v), s));
+    }
+
+    template <unsigned S, std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_right(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+       return rcast<T>(shift_right<S>(rcast<std::make_unsigned_t<T>>(v)));
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_right(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+       return rcast<T>(shift_right(rcast<std::make_unsigned_t<T>>(v), s));
+    }
 
     template <unsigned R, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto rotate_left(
@@ -16,13 +55,10 @@ namespace ui::bits {
         else {
             // Ex: 1010111 rotate by 3
             //  0111000 | 0000101 => 0111101
-            using utype = std::make_unsigned_t<T>;
-            auto vt = rcast<utype>(v);
-
-            auto lhs = shift_left<S>(vt);
-            auto rhs = shift_right<bits - S>(vt);
+            auto lhs = logical_shift_left<S>(v);
+            auto rhs = logical_shift_right<bits - S>(v);
             auto res = bitwise_or(lhs, rhs);
-            return rcast<T>(res);
+            return res;
         }
     }
 
@@ -36,16 +72,151 @@ namespace ui::bits {
         else {
             // Ex: 1010111 rotate by 3
             //  0001010 | 1110000 => 1111010
-            using utype = std::make_unsigned_t<T>;
-            auto vt = rcast<utype>(v);
-
-            auto lhs = shift_right<S>(vt);
-            auto rhs = shift_left<bits - S>(vt);
+            auto lhs = logical_shift_right<S>(v);
+            auto rhs = logical_shift_left<bits - S>(v);
             auto res = bitwise_or(lhs, rhs);
-            return rcast<T>(res);
+            return res;
         }
     }
 
-} // namespace ui::bits
+    template <unsigned S, std::size_t N, std::integral T>
+        requires (S <= sizeof(T) * 8)
+    UI_ALWAYS_INLINE static constexpr auto shift_left_across_lane(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        if constexpr (S == 0) {
+            return v;
+        } else {
+            static constexpr auto bits = sizeof(T) * 8;
+            // [10, 01, 11] << 1 => (1) [00, 11, 10]
+
+            constexpr auto make_mask = []<std::size_t... Is>(std::index_sequence<Is...>) {
+                return Vec<N, T>::load(((Is != 0 ? ~T(0) : 0))...);
+            };
+            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v) {
+                return shuffle<(Is + 1)..., 0>(v);
+            };
+            auto mask = make_mask(std::make_index_sequence<N>{});
+
+            if constexpr (S == bits) {
+                auto t0 = bitwise_and(v, mask);
+                return helper(std::make_index_sequence<N - 1>{}, t0);
+            } else {
+                auto l0 = logical_shift_left<S>(v); // [(1) 00, (0) 10, (1) 10]
+                auto r0 = logical_shift_right<bits - S>(v); // [01, 00, 01]
+                r0 = bitwise_and(mask, r0);
+                auto r1 = helper(std::make_index_sequence<N - 1>{}, r0);
+                return bitwise_or(l0, r1);
+            } 
+        }
+    }
+
+    template <unsigned S, std::size_t N, std::integral T>
+        requires (S > sizeof(T) * 8)
+    UI_ALWAYS_INLINE static constexpr auto shift_left_across_lane(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        static constexpr auto bits = sizeof(T) * 8;
+        auto t0 = shift_left_across_lane<8>(v);
+        return shift_left_across_lane<S - bits>(t0);
+    }
+
+    template <unsigned S, std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_left_across_lane(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return shift_left_across_lane<S>(v);
+    }
+
+    template <unsigned S, std::size_t N, std::integral T>
+        requires (S <= sizeof(T) * 8)
+    UI_ALWAYS_INLINE static constexpr auto shift_right_across_lane(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        if constexpr (S == 0) {
+            return v;
+        } else {
+            static constexpr auto bits = sizeof(T) * 8;
+            // [10, 01, 11] << 1 => (1) [00, 11, 10]
+
+            auto sign_mask = cmp(v, op::less_zero_t{});
+            constexpr auto make_mask = []<std::size_t... Is>(std::index_sequence<Is...>) {
+                return mask_t<N, T>::load(((Is == 0 ? ~T(0) : 0))...);
+            };
+
+            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v) {
+                return shuffle<0, Is...>(v);
+            };
+            auto mask = make_mask(std::make_index_sequence<N>{});
+            sign_mask = bitwise_and(sign_mask, mask);
+
+            if constexpr (S == bits) {
+                auto t0 = helper(std::make_index_sequence<N - 1>{}, v);
+                return bitwise_or(rcast<T>(sign_mask), t0);
+            } else {
+                auto sm = logical_shift_left<S>(sign_mask);
+                auto l0 = logical_shift_right<S>(v); // [(1) 00, (0) 10, (1) 10]
+                auto r0 =logical_shift_left<bits - S>(v); // [01, 00, 01]
+                auto r1 = helper(std::make_index_sequence<N - 1>{}, r0);
+                return bitwise_or(
+                    bitwise_or(l0, bitwise_and(r1, rcast<T>(mask))),
+                    rcast<T>(sm)
+                );
+            } 
+        }
+    }
+
+    template <unsigned S, std::size_t N, std::integral T>
+        requires (S <= sizeof(T) * 8)
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_right_across_lane(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        if constexpr (S == 0) {
+            return v;
+        } else {
+            static constexpr auto bits = sizeof(T) * 8;
+            // [10, 01, 11] << 1 => (1) [00, 11, 10]
+
+            constexpr auto make_mask = []<std::size_t... Is>(std::index_sequence<Is...>) {
+                return Vec<N, T>::load(((Is != 0 ? ~T(0) : 0))...);
+            };
+
+            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v) {
+                return shuffle<0, Is...>(v);
+            };
+            auto mask = make_mask(std::make_index_sequence<N>{});
+
+            if constexpr (S == bits) {
+                auto t0 = helper(std::make_index_sequence<N - 1>{}, v);
+                return bitwise_and(mask, t0);
+            } else {
+                auto l0 = logical_shift_right<S>(v); // [(1) 00, (0) 10, (1) 10]
+                auto r0 =logical_shift_left<bits - S>(v); // [01, 00, 01]
+                auto r1 = helper(std::make_index_sequence<N - 1>{}, r0);
+                return bitwise_or(l0, bitwise_and(r1, mask));
+            } 
+        }
+    }
+
+    template <unsigned S, std::size_t N, std::integral T>
+        requires (S > sizeof(T) * 8)
+    UI_ALWAYS_INLINE static constexpr auto shift_right_across_lane(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        static constexpr auto bits = sizeof(T) * 8;
+        auto t0 = shift_right_across_lane<8>(v);
+        return shift_right_across_lane<S - bits>(t0);
+    }
+
+    template <unsigned S, std::size_t N, std::integral T>
+        requires (S > sizeof(T) * 8)
+    UI_ALWAYS_INLINE static constexpr auto logical_shift_right_across_lane(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        static constexpr auto bits = sizeof(T) * 8;
+        auto t0 = logical_shift_right_across_lane<8>(v);
+        return logical_shift_right_across_lane<S - bits>(t0);
+    }
+} // namespace ui
 
 #endif // AMT_UI_BITS_HPP
