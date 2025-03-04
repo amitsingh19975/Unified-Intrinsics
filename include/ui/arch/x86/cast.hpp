@@ -2020,12 +2020,19 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(To) == 8) {
                         constexpr auto fn = [](auto const& v_) {
                             auto m = to_vec(v_);
-                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_AVX2
-                            return _mm_cvtepu32_epi64(m);
-                            #elif UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
-                            return _mm256_cvtepu32_epi64(m);
-                            #else
-                            return _mm512_cvtepu32_epi64(m);
+                            if constexpr (sizeof(To) == sizeof(__m128)) {
+                                return _mm_cvtepu32_epi64(m);
+                            }
+                            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
+                            if constexpr (sizeof(To) == sizeof(__m256)) {
+                                return _mm256_cvtepu32_epi64(m);
+                            }
+                            #endif
+
+                            #if UI_CPU_SSE_LEVEL < UI_CPU_SSE_LEVEL_SKX
+                            if constexpr (sizeof(To) == sizeof(__m512)) {
+                                return _mm512_cvtepu32_epi64(m);
+                            }
                             #endif
                         };
                         return cast_iter_chunk<To, Saturating>(
