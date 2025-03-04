@@ -185,7 +185,7 @@ namespace ui::emul {
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE static constexpr auto widening_padd(
         Vec<    N, internal::widening_result_t<T>> const& a,
-        Vec<2 * N, T> v
+        Vec<2 * N, T> const& v
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         if constexpr (N == 1) {
