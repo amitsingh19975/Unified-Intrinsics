@@ -5,6 +5,7 @@
 #include "ui.hpp"
 #include <random>
 #include <utility>
+#include <functional>
 
 template <unsigned I>
 using index_t = std::integral_constant<unsigned, I>;
