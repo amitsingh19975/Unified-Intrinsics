@@ -4,7 +4,6 @@
 #include "cast.hpp"
 #include "logical.hpp"
 #include "shift.hpp"
-#include "add.hpp"
 #include "../emul/add.hpp"
 #include <algorithm>
 #include <bit>
@@ -26,7 +25,7 @@ namespace ui::x86 {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        static constexpr auto size = sizeof(lhs);
+        static constexpr auto size = sizeof(T) * N;
         if constexpr (N == 1) {
             return emul::add(lhs, rhs);
         } else {
@@ -143,7 +142,7 @@ namespace ui::x86 {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, internal::narrowing_result_t<T>> {
-        static constexpr auto size = sizeof(lhs);
+        static constexpr auto size = sizeof(T) * N;
         using result_t = internal::narrowing_result_t<T>; 
         if constexpr (N == 1) {
             return emul::high_narrowing_add(lhs, rhs);
@@ -205,7 +204,7 @@ namespace ui::x86 {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        static constexpr auto size = sizeof(lhs);
+        static constexpr auto size = sizeof(T) * N;
         if constexpr (N == 1) {
             return emul::sat_add(lhs, rhs);
         } else {
@@ -254,15 +253,15 @@ namespace ui::x86 {
                         auto subsum = _mm_sub_epi32(sum, sign);
                         auto suba = _mm_sub_epi32(l, sign); 
                         auto c = _mm_cmpgt_epi32 (suba, subsum);
-                        auto res = _mm256_or_si128(sum, cmp);
+                        auto res = _mm_or_si128(sum, c);
                         return from_vec<T>(res);
                     } else if constexpr (sizeof(T) == 8) {
                         auto mask = _mm_set_epi32(sign_mask, 0, sign_mask, 0);
                         auto sum = _mm_add_epi64(l, r);
                         auto subsum = _mm_sub_epi64(sum, mask);
                         auto suba = _mm_sub_epi64(l, mask);
-                        auto cmp = _mm_cmpgt_epi64(suba, subsum);
-                        return from_vec<T>(_mm_or_si128(sum, cmp));
+                        auto c = _mm_cmpgt_epi64(suba, subsum);
+                        return from_vec<T>(_mm_or_si128(sum, c));
                     }
                 }
             } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
@@ -305,24 +304,24 @@ namespace ui::x86 {
                 } else {
                     static constexpr auto sign_mask = static_cast<std::int32_t>(0x8000'0000);
                     if constexpr (sizeof(T) == 1) {
-                        return from_vec<T>(_mm256_adds_epi8(l, r));
+                        return from_vec<T>(_mm256_adds_epu8(l, r));
                     } else if constexpr (sizeof(T) == 2) {
-                        return from_vec<T>(_mm256_adds_epi16(l, r));
+                        return from_vec<T>(_mm256_adds_epu16(l, r));
                     } else if constexpr (sizeof(T) == 4) {
                         auto sign = _mm256_set1_epi32(sign_mask);
                         auto sum = _mm256_add_epi32(l, r);
                         auto subsum = _mm256_sub_epi32(sum, sign);
                         auto suba = _mm256_sub_epi32(l, sign); 
                         auto c = _mm256_cmpgt_epi32 (suba, subsum);
-                        auto res = _mm256_or_si256(sum, cmp);
+                        auto res = _mm256_or_si256(sum, c);
                         return from_vec<T>(res);
                     } else if constexpr (sizeof(T) == 8) {
                         auto mask = _mm256_set_epi32(sign_mask, 0, sign_mask, 0, sign_mask, 0, sign_mask, 0);
                         auto sum = _mm256_add_epi64(l, r);
                         auto subsum = _mm256_sub_epi64(sum, mask);
                         auto suba = _mm256_sub_epi64(l, mask);
-                        auto cmp = _mm256_cmpgt_epi64(suba, subsum);
-                        return from_vec<T>(_mm256_or_si256(sum, cmp));
+                        auto c = _mm256_cmpgt_epi64(suba, subsum);
+                        return from_vec<T>(_mm256_or_si256(sum, c));
                     }
                 }
             } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
@@ -337,6 +336,75 @@ namespace ui::x86 {
             );
         }
     }
+
+    template <bool Merge, std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto sub(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T>;
+
+    template <bool Merge = true, std::size_t N, std::integral T, std::integral U>
+        requires (std::is_signed_v<T> != std::is_signed_v<U>)
+    UI_ALWAYS_INLINE auto sat_add(
+        Vec<N, T> const& lhs,
+        Vec<N, U> const& rhs
+    ) noexcept -> Vec<N, T> {
+        auto sum = add(lhs, rcast<T>(rhs));
+        // Case 1: T is signed and U unsigned
+        //      lhs + rhs <= max(T)
+        //      lhs <= max(T) - rhs
+        //      return max(T) if lhs > max(T) - rhs
+        if constexpr (std::is_signed_v<T>) {
+            auto mx = Vec<N, U>::load(std::numeric_limits<T>::max());
+            auto gt = cmp(mx, rhs, op::greater_equal_t{}); // mx > rhs
+            auto r0 = bitwise_and(rcast<U>(gt), rhs); // mx > rhs
+            auto r1 = bitwise_and(
+                rcast<U>(bitwise_not(gt)),
+                rhs
+            ); // mx <= rhs
+
+            // lhs <= max(T) - rhs
+            auto upper_r0 = rcast<T>(sub<true>(mx, r0)); // max(T) - rhs => [0, max(T)]
+            auto t0 = cmp(lhs, upper_r0, op::less_equal_t{}); // lhs <= [0, max(T)]
+            auto res_0 = bitwise_or(
+                bitwise_and(rcast<T>(t0), sum),
+                bitwise_and(rcast<T>(mx), bitwise_not(rcast<T>(t0)))
+            );
+
+            // lhs <= -(rhs - max(T))
+            auto upper_r1 = negate(rcast<T>(sub<true>(r1, mx)));
+            auto t1 = cmp(lhs, upper_r1, op::less_equal_t{}); // lhs <= -(rhs - max(T))
+            auto res_1 = bitwise_or(
+                bitwise_and(rcast<T>(t1), sum),
+                bitwise_and(rcast<T>(mx), bitwise_not(rcast<T>(t1)))
+            );
+            return bitwise_or(res_0, res_1);
+        } else {
+            // Case 2: T is unsigned and T is signed
+            //      lhs + rhs <= max(T)
+            //      lhs <= max(T) - rhs
+            //      rhs < 0 then lhs - rhs <= max(T) => lhs > rhs
+            //      rhs >= 0 then lhs <= max(T) - rhs
+            auto mx = Vec<N, T>::load(std::numeric_limits<T>::max());
+            auto t0 = rcast<T>(cmp(lhs, rcast<T>(rhs), op::greater_t{})); // lhs > rhs
+            auto is_neg = rcast<T>(cmp(rhs, op::less_zero_t{})); // rhs < 0
+
+            auto res_0 = bitwise_and(
+                t0,
+                sum
+            );
+
+            // l: 255 + r: -128
+            // l > r => 255 > -128 => true
+            auto diff = sub<true>(mx, rcast<T>(rhs));
+            auto t1 = rcast<T>(cmp(lhs, diff, op::less_equal_t{})); // lhs <= max(T) - rhs
+            auto t2 = bitwise_or(is_neg, t1);
+            return bitwise_or(res_0, bitwise_or(
+                bitwise_and(bitwise_not(t2), mx),
+                bitwise_and(sum, t2)
+            ));
+        }
+    }
 // !MARK
 
 // MARK: Pairwise Addition
@@ -346,7 +414,7 @@ namespace ui::x86 {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        static constexpr auto size = sizeof(lhs);
+        static constexpr auto size = sizeof(T) * N;
         if constexpr (N == 2) {
             return emul::padd(lhs, rhs);
         } else {
