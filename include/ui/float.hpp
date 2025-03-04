@@ -440,7 +440,7 @@ namespace ui {
                 (exp_field << 7) |
                 (fp.mantissa & 0x7F)
             );
-            return std::bit_cast<bfloat16_t>(bits);
+            return std::bit_cast<bfloat16>(bits);
         }
     }
     
