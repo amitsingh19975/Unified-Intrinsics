@@ -102,7 +102,7 @@
     #if defined(__FMA__) || defined(__FMA4__)
         #define UI_SUPPORT_FMA
     #endif
-    
+
     #if !defined(UI_SUPPORT_FMA) && defined(UI_COMPILER_MSVC) && defined(__AVX2__)
         #define UI_SUPPORT_FMA
     #endif
