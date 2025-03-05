@@ -98,6 +98,16 @@
     #define UI_HAS_BFLOAT_16
 #endif
 
+#ifndef UI_SUPPORT_FMA
+    #if defined(__FMA__) || defined(__FMA4__)
+        #define UI_SUPPORT_FMA
+    #endif
+    
+    #if !defined(UI_SUPPORT_FMA) && defined(UI_COMPILER_MSVC) && defined(__AVX2__)
+        #define UI_SUPPORT_FMA
+    #endif
+#endif
+
 #ifdef __SIZEOF_INT128__
     #define UI_HAS_INT128
     namespace ui {
