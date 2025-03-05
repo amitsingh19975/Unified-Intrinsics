@@ -37,7 +37,7 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, double>) {
                     return from_vec<T>(_mm_sub_pd(l, r));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(sub(cast<float>(l), cast<float>(r)));
+                    return cast<T>(sub(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     if constexpr (sizeof(T) == 1) {
                         return from_vec<T>(_mm_sub_epi8(l, r));
@@ -61,7 +61,7 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, double>) {
                     return from_vec<T>(_mm256_sub_pd(l, r));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(sub(cast<float>(l), cast<float>(r)));
+                    return cast<T>(sub(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                     if constexpr (sizeof(T) == 1) {
@@ -89,7 +89,7 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, double>) {
                     return from_vec<T>(_mm512_sub_pd(l, r));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(sub(cast<float>(l), cast<float>(r)));
+                    return cast<T>(sub(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     if constexpr (sizeof(T) == 1) {
                         return from_vec<T>(_mm512_sub_epi8(l, r));
@@ -116,9 +116,27 @@ namespace ui::x86 {
     UI_ALWAYS_INLINE auto widening_sub(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
-    ) noexcept {
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         return sub(cast<result_t>(lhs), cast<result_t>(rhs));
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto widening_sub(
+        Vec<N, T> const& lhs,
+        Vec<N, internal::widening_result_t<T>> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        return sub(cast<result_t>(lhs), rhs);
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto widening_sub(
+        Vec<N, internal::widening_result_t<T>> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, internal::widening_result_t<T>> {
+        using result_t = internal::widening_result_t<T>;
+        return sub(lhs, cast<result_t>(rhs));
     }
 
 // MARK: Narrowing Addition
@@ -145,7 +163,7 @@ namespace ui::x86 {
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (std::is_signed_v<T>) {
-                        auto mx = _mm_set1_epi8(static_cast<T>(0x8000));
+                        auto mx = _mm_set1_epi16(static_cast<std::int16_t>(0x8000));
                         l = _mm_add_epi16(l, mx);
                         r = _mm_add_epi16(r, mx);
                     }
@@ -179,7 +197,7 @@ namespace ui::x86 {
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (std::is_signed_v<T>) {
-                        auto mx = _mm256_set1_epi8(static_cast<T>(0x8000));
+                        auto mx = _mm256_set1_epi16(static_cast<std::int16_t>(0x8000));
                         l = _mm256_add_epi16(l, mx);
                         r = _mm256_add_epi16(r, mx);
                     }
@@ -215,7 +233,7 @@ namespace ui::x86 {
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (std::is_signed_v<T>) {
-                        auto mx = _mm512_set1_epi8(static_cast<T>(0x8000));
+                        auto mx = _mm512_set1_epi16(static_cast<std::int16_t>(0x8000));
                         l = _mm512_add_epi16(l, mx);
                         r = _mm512_add_epi16(r, mx);
                     }
@@ -401,9 +419,9 @@ namespace ui::x86 {
                         return emul::sat_sub(lhs, rhs);
                     } else {
                         auto mask = _mm_set_epi32(int_max_mask, 0x0, int_max_mask, 0x0);
-                        auto res = sub(a, b);
-                        auto suba = sub(a, mask);
-                        auto subb = sub(b, mask);
+                        auto res = to_vec(sub(lhs, rhs));
+                        auto suba = to_vec(sub(lhs, from_vec<T>(mask)));
+                        auto subb = to_vec(sub(rhs, from_vec<T>(mask)));
                         auto c = _mm_cmpgt_epi64(suba, subb);
                         return from_vec<T>(_mm_and_si128(res, c));
                     }
@@ -467,9 +485,9 @@ namespace ui::x86 {
                         auto sat_val = _mm256_xor_si256(a_arith, _mm256_set1_epi64x(0x7FFF'FFFF'FFFF'FFFFULL));
                         return from_vec<T>(_mm256_blendv_epi8(diff, sat_val, ovf_mask));
                     } else {
-                        auto res = sub(a, b);
-                        auto suba = sub(a, sign_mask);
-                        auto subb = sub(b, sign_mask);
+                        auto res = to_vec(sub(lhs, rhs));
+                        auto suba = to_vec(sub(lhs, from_vec<T>(sign_mask)));
+                        auto subb = to_vec(sub(rhs, from_vec<T>(sign_mask)));
                         auto c = _mm256_cmpgt_epi64(suba, subb);
                         return from_vec<T>(_mm256_and_si256(res, c));
                     }
@@ -537,19 +555,9 @@ namespace ui::x86 {
                         auto sat_val = _mm512_xor_si512(a_arith, _mm512_set1_epi64x(0x7FFF'FFFF'FFFF'FFFFULL));
                         return from_vec<T>(_mm512_blendv_epi8(diff, sat_val, ovf_mask));
                     } else {
-                        auto mask = _mm512_set_epi32(
-                            int_max_mask, 0x0,
-                            int_max_mask, 0x0,
-                            int_max_mask, 0x0,
-                            int_max_mask, 0x0,
-                            int_max_mask, 0x0,
-                            int_max_mask, 0x0,
-                            int_max_mask, 0x0,
-                            int_max_mask, 0x0
-                        );
-                        auto res = sub(a, b);
-                        auto suba = sub(a, sign_mask);
-                        auto subb = sub(b, sign_mask);
+                        auto res = to_vec(sub(lhs, rhs));
+                        auto suba = to_vec(sub(lhs, from_vec<T>(sign_mask)));
+                        auto subb = to_vec(sub(rhs, from_vec<T>(sign_mask)));
                         auto c = _mm512_cmpgt_epi64(suba, subb);
                         return from_vec<T>(_mm512_and_si512(res, c));
                     }

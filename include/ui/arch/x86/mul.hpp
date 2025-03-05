@@ -236,7 +236,7 @@ namespace ui::x86 {
                     auto res = _mm_fmadd_pd(l, r, a);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs)));
+                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs), op));
                 }
             } else if constexpr (bits * 2 == sizeof(__m128)) {
                 auto tl = fit_to_vec(lhs);
@@ -258,7 +258,7 @@ namespace ui::x86 {
                     auto res = _mm256_fmadd_pd(l, r, a);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs)));
+                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs), op));
                 }
             }
 
@@ -274,7 +274,7 @@ namespace ui::x86 {
                     auto res = _mm512_fmadd_pd(l, r, a);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs)));
+                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs), op));
                 }
             }
             #endif
@@ -311,7 +311,7 @@ namespace ui::x86 {
                     auto res = _mm_fnmadd_pd(l, r, a);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs)));
+                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs), op));
                 }
             } else if constexpr (bits * 2 == sizeof(__m128)) {
                 auto tl = fit_to_vec(lhs);
@@ -333,7 +333,7 @@ namespace ui::x86 {
                     auto res = _mm256_fnmadd_pd(l, r, a);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs)));
+                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs), op));
                 }
             }
 
@@ -349,7 +349,7 @@ namespace ui::x86 {
                     auto res = _mm512_fnmadd_pd(l, r, a);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs)));
+                    return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(lhs), cast<float>(rhs), op));
                 }
             }
             #endif

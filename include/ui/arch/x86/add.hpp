@@ -37,7 +37,7 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, double>) {
                     return from_vec<T>(_mm_add_pd(l, r));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(add(cast<float>(l), cast<float>(r)));
+                    return cast<T>(add(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     if constexpr (sizeof(T) == 1) {
                         return from_vec<T>(_mm_add_epi8(l, r));
@@ -61,7 +61,7 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, double>) {
                     return from_vec<T>(_mm256_add_pd(l, r));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(add(cast<float>(l), cast<float>(r)));
+                    return cast<T>(add(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                     if constexpr (sizeof(T) == 1) {
@@ -89,7 +89,7 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, double>) {
                     return from_vec<T>(_mm512_add_pd(l, r));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(add(cast<float>(l), cast<float>(r)));
+                    return cast<T>(add(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     if constexpr (sizeof(T) == 1) {
                         return from_vec<T>(_mm512_add_epi8(l, r));
@@ -425,7 +425,7 @@ namespace ui::x86 {
                     auto res = _mm_hadd_ps(l, r);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(padd(cast<float>(l), cast<float>(r)));
+                    return cast<T>(padd(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     if constexpr (sizeof(T) == 2) {
                         auto res = _mm_hadd_epi16(l, r);
@@ -458,7 +458,7 @@ namespace ui::x86 {
                     auto res = _mm256_hadd_pd(l, r);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<T>(padd(cast<float>(l), cast<float>(r)));
+                    return cast<T>(padd(cast<float>(lhs), cast<float>(rhs)));
                 } else {
                     if constexpr (sizeof(T) == 2) {
                         auto res = _mm256_hadd_epi16(l, r);
@@ -506,7 +506,7 @@ namespace ui::x86 {
                     a = _mm_add_ss(a, _mm_shuffle_ps(a, a, 1));
                     return _mm_cvtss_f32(a);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return static_cast<T>(fold(cast<float>(v)));
+                    return static_cast<T>(fold(cast<float>(v), op));
                 } else {
                     if constexpr (sizeof(T) == 1) {
                         auto b = _mm_unpackhi_epi64(a, a);
@@ -545,7 +545,7 @@ namespace ui::x86 {
                     auto hi = _mm256_extractf128_pd(a, 1);
                     return fold<false>(from_vec<T>(_mm_add_pd(lo, hi)), op);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return static_cast<T>(fold(cast<float>(v)));
+                    return static_cast<T>(fold(cast<float>(v), op));
                 } else {
                     auto lo = _mm256_castsi256_si128(a);
                     auto hi = _mm256_extracti128_si256(a, 1);
