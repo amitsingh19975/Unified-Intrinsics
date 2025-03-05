@@ -41,7 +41,7 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
     static constexpr auto N = Fixture<TestType>::N;
     auto v = DataGenerator<N, type>::make();
 
-    INFO("[Vec]: " << std::format("{}", v));
+    INFO(std::format("[Vec<{}>]: {}", get_type_name<type>(), v));
 
     static constexpr auto min = std::numeric_limits<type>::min();
     static constexpr auto max = std::numeric_limits<type>::max();

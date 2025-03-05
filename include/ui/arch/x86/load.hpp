@@ -51,6 +51,8 @@ namespace ui::x86 {
                     return from_vec<T>(_mm512_set1_pd(val));
                 }
                 #endif
+            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                return rcast<T>(load<N>(std::bit_cast<std::uint16_t>(val)));
             } else {
                 auto temp = static_cast<std::make_signed_t<T>>(val);
                 if constexpr (size == sizeof(__m128)) {
@@ -105,7 +107,7 @@ namespace ui::x86 {
     UI_ALWAYS_INLINE static constexpr auto load(
         Vec<M, T> const& v
     ) noexcept -> Vec<N, T> {
-        return load(v[Lane]);
+        return load<N>(v[Lane]);
     }
 
     template <std::size_t N, typename T>

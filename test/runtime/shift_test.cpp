@@ -115,6 +115,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
             auto bs = sat_add(v, Vec<N, type>::load(33));
             auto res = insert_shift_left<2>(v, bs);
             constexpr auto mask = utype((1 << 2) - 1);
+            INFO(std::format("isl<2>(v, bs): {:0b}", res));
             for (auto i = 0u; i < N; ++i) {
                 auto a = type(v[i]) & mask;
                 auto b = type(bs[i]); 
@@ -123,7 +124,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
                 auto ans = a | sb;
 
                 INFO("['" << i << "']: " <<
-                    std::format("{} == {}", ans, res[i])
+                    std::format("{:08b} == {:08b}", ans, res[i])
                 );
                 REQUIRE(ans == res[i]);
             }
@@ -234,7 +235,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
         using utype = std::make_unsigned_t<type>;
         static constexpr auto N = 16ul;
         auto v = DataGenerator<N, type>::make();
-        INFO("[Vec]: " << std::format("{}", v));
+        INFO("[Vec]: " << std::format("{:0b}", v));
         static constexpr auto min = std::numeric_limits<type>::min();
         static constexpr auto max = std::numeric_limits<type>::max();
         THEN("Elements are correct") {
@@ -313,6 +314,8 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
             auto bs = sat_add(v, Vec<N, type>::load(33));
             auto res = insert_shift_left<2>(v, bs);
             constexpr auto mask = utype((1 << 2) - 1);
+            INFO(std::format("bs: {:0b}", res));
+            INFO(std::format("isl<2>(v, bs): {:0b}", res));
             for (auto i = 0u; i < N; ++i) {
                 auto a = type(v[i]) & mask;
                 auto b = type(bs[i]); 
@@ -321,7 +324,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
                 auto ans = a | sb;
 
                 INFO("['" << i << "']: " <<
-                    std::format("{} == {}", ans, res[i])
+                    std::format("{:016b} == {:016b}", ans, res[i])
                 );
                 REQUIRE(ans == res[i]);
             }
@@ -917,36 +920,6 @@ TEST_CASE( VEC_ARCH_NAME " Right Shift", "[shift][right]" ) {
             REQUIRE(res[31] == 8);
         }
 
-        WHEN("Narrowing right shift") {
-            /*auto res = narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating narrowing right shift") {
-            /*auto res = sat_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Rounding narrowing right shift") {
-            /*auto res = rounding_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating unsigned narrowing right shift") {
-            /*auto res = sat_unsigned_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating rounding narrowing right shift") {
-            /*auto res = sat_rounding_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating rounding unsigned narrowing right shift") {
-            /*auto res = sat_rounding_unsigned_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
         WHEN("Insert right shift") {
             auto bs = sat_add(v, Vec<N, type>::load(33));
             auto res = insert_shift_right<2>(v, bs);
@@ -1076,36 +1049,6 @@ TEST_CASE( VEC_ARCH_NAME " Right Shift", "[shift][right]" ) {
             REQUIRE(res[31] == 8);
         }
 
-        WHEN("Narrowing right shift") {
-            /*auto res = narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating narrowing right shift") {
-            /*auto res = sat_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Rounding narrowing right shift") {
-            /*auto res = rounding_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating unsigned narrowing right shift") {
-            /*auto res = sat_unsigned_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating rounding narrowing right shift") {
-            /*auto res = sat_rounding_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
-        WHEN("Saturating rounding unsigned narrowing right shift") {
-            /*auto res = sat_rounding_unsigned_narrowing_shift_right<2>(v);*/
-            // This not compile
-        }
-
         WHEN("Insert right shift") {
             auto bs = sat_add(v, Vec<N, type>::load(33));
             auto res = insert_shift_right<2>(v, bs);
@@ -1173,6 +1116,16 @@ TEST_CASE( VEC_ARCH_NAME " Right Shift", "[shift][right]" ) {
 
         WHEN("Rounding right shift") {
             auto res = rounding_shift_right(v, Vec<N, utype>::load(2));
+            using wtype = ui::internal::widening_result_t<type>;
+            for (auto i = 0u; i < N; ++i) {
+                auto temp = wtype(v[i] + (wtype(1) << (2 - 1))); 
+                INFO(std::format("[{}]: ({:08b} >> {})[{:08b}] == {:08b}", i, temp, 2, type(temp >> 2), res[i]));
+                REQUIRE(static_cast<type>(temp >> 2) == res[i]);
+            }
+        }
+
+        WHEN("Rounding right shift with a constant count") {
+            auto res = rounding_shift_right<2>(v);
             using wtype = ui::internal::widening_result_t<type>;
             for (auto i = 0u; i < N; ++i) {
                 auto temp = wtype(v[i] + (wtype(1) << (2 - 1))); 
@@ -2029,6 +1982,19 @@ TEST_CASE( VEC_ARCH_NAME " Right Shift", "[shift][right]" ) {
 
         WHEN("Rounding right shift") {
             auto res = rounding_shift_right(v, Vec<N, utype>::load(2));
+            INFO(std::format("[round(V >> 2)]: {:0x}", res));
+            REQUIRE(res[0] == -2305843009213693952ll);
+            REQUIRE(res[1] ==  2305843009213693952ll);
+            REQUIRE(res[2] ==  0); 
+            REQUIRE(res[3] ==  0); 
+            REQUIRE(res[4] ==  1); 
+            REQUIRE(res[5] ==  1); 
+            REQUIRE(res[6] ==  1); 
+            REQUIRE(res[7] ==  1); 
+        }
+
+        WHEN("Rounding right shift with constant count") {
+            auto res = rounding_shift_right<2>(v);
             INFO(std::format("[round(V >> 2)]: {:0x}", res));
             REQUIRE(res[0] == -2305843009213693952ll);
             REQUIRE(res[1] ==  2305843009213693952ll);

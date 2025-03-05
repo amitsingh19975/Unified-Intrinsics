@@ -170,6 +170,13 @@ namespace ui::x86 {
             }
         }
     }
+
+    template <bool Merge, std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto sat_sub(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T>;
+
     template <std::size_t N, std::integral T>
         requires (std::is_arithmetic_v<T> && std::is_signed_v<T>)
     UI_ALWAYS_INLINE auto sat_negate(
@@ -179,55 +186,7 @@ namespace ui::x86 {
         if constexpr (N == 1) {
             return emul::sat_negate(v);
         } else {
-            if constexpr (size == sizeof(__m128)) {
-                if constexpr (sizeof(T) == 1) {
-                    return from_vec<T>(_mm_subs_epi8(_mm_setzero_si128(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 2) {
-                    return from_vec<T>(_mm_subs_epi16(_mm_setzero_si128(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 4) {
-                    return from_vec<T>(_mm_subs_epi32(_mm_setzero_si128(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 8) {
-                    return from_vec<T>(_mm_subs_epi64(_mm_setzero_si128(), to_vec(v)));
-                }
-            } else if constexpr (size * 2 == sizeof(__m128)) {
-                return sat_negate(from_vec<T>(fit_to_vec(v))).lo;
-            }
-
-            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
-            if constexpr (size == sizeof(__m256)) {
-                if constexpr (sizeof(T) == 1) {
-                    return from_vec<T>(_mm256_subs_epi8(_mm256_setzero_si256(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 2) {
-                    return from_vec<T>(_mm256_subs_epi16(_mm256_setzero_si256(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 4) {
-                    return from_vec<T>(_mm256_subs_epi32(_mm256_setzero_si256(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 8) {
-                    return from_vec<T>(_mm256_subs_epi64(_mm256_setzero_si256(), to_vec(v)));
-                }
-            } else if constexpr (size * 2 == sizeof(__m256)) {
-                return sat_negate(from_vec<T>(fit_to_vec(v))).lo;
-            }
-            #endif
-
-            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-            if constexpr (size == sizeof(__m512)) {
-                if constexpr (sizeof(T) == 1) {
-                    return from_vec<T>(_mm512_subs_epi8(_mm512_setzero_si512(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 2) {
-                    return from_vec<T>(_mm512_subs_epi16(_mm512_setzero_si512(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 4) {
-                    return from_vec<T>(_mm512_subs_epi32(_mm512_setzero_si512(), to_vec(v)));
-                } else if constexpr (sizeof(T) == 8) {
-                    return from_vec<T>(_mm512_subs_epi64(_mm512_setzero_si512(), to_vec(v)));
-                }
-            } else if constexpr (size * 2 == sizeof(__m512)) {
-                return sat_negate(from_vec<T>(fit_to_vec(v))).lo;
-            }
-            #endif
-            return join(
-                sat_negate(v.lo),
-                sat_negate(v.hi)
-            );
+            return sat_sub(Vec<N, T>{}, v);
         }
     }
 // !MARK

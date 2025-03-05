@@ -23,10 +23,10 @@ namespace ui::x86 {
     template <bool Merge = true, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto shift_left(
         Vec<N, T> const& v,
-        Vec<N, std::make_unsigned_t<T>> const& s
+        Vec<N, std::make_signed_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return emul::shift_left(v, s);
+            return emul::shift_left(v, rcast<std::make_unsigned_t<T>>(s));
         } else {
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
             if constexpr (size == sizeof(__m128)) {
@@ -75,9 +75,17 @@ namespace ui::x86 {
                 shift_left<false>(lhs.hi, s.lo)
             );
             #else
-            return emul::shift_left(v, s);
+            return emul::shift_left(v, rcast<std::make_unsigned_t<T>>(s));
             #endif
         }
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto shift_left(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        return shift_left(v, rcast<std::make_signed_t<T>>(s)); 
     }
  
     template <unsigned Shift, bool Merge = true, std::size_t N, std::integral T>
@@ -185,6 +193,14 @@ namespace ui::x86 {
     ) noexcept -> Vec<N, T> {
         return emul::sat_shift_left(v, s);
     }
+
+    template <unsigned Shift, std::size_t N, std::integral T>
+        requires (Shift < (sizeof(T) * 8))
+    UI_ALWAYS_INLINE auto sat_shift_left(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T> {
+        return emul::sat_shift_left<Shift>(v);
+    }
 // !MARK
 
 // MARK: Vector rounding shift left
@@ -215,7 +231,7 @@ namespace ui::x86 {
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         auto vt = cast<result_t>(v);
-        return shift_left<Shift>(v);
+        return shift_left<Shift>(vt);
     }
 // !MARK
 
@@ -223,10 +239,10 @@ namespace ui::x86 {
     template <bool Merge = true, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto shift_right(
         Vec<N, T> const& v,
-        Vec<N, std::make_unsigned_t<T>> const& s
+        Vec<N, std::make_signed_t<T>> const& s
     ) noexcept -> Vec<N, T> {
         if constexpr (N == 1) {
-            return emul::shift_right(v, s);
+            return emul::shift_right(v, rcast<std::make_unsigned_t<T>>(s));
         } else {
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
             if constexpr (size == sizeof(__m128)) {
@@ -311,9 +327,17 @@ namespace ui::x86 {
                 shift_right<false>(lhs.hi, s.lo)
             );
             #else
-            return emul::shift_right(v, s);
+            return emul::shift_right(v, rcast<std::make_unsigned_t<T>>(s));
             #endif
         }
+    }
+
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto shift_right(
+        Vec<N, T> const& v,
+        Vec<N, std::make_unsigned_t<T>> const& s
+    ) noexcept -> Vec<N, T> {
+        return shift_right(v, rcast<std::make_signed_t<T>>(s));
     }
 
     template <unsigned Shift, bool Merge = true, std::size_t N, std::integral T>
@@ -322,30 +346,55 @@ namespace ui::x86 {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
         alignas(16) static constexpr int16_t mask0_16[9] = {0x0000, 0x0080, 0x00c0, 0x00e0, 0x00f0,  0x00f8, 0x00fc, 0x00fe, 0x00ff};
+        alignas(16) static constexpr uint16_t mask1_16[9] = {0xffff, 0xff7f, 0xff3f, 0xff1f, 0xff0f,  0xff07, 0xff03, 0xff01, 0xff00};                        
         static constexpr auto size = sizeof(v);
         if constexpr (N == 1) {
             return emul::shift_right<Shift>(v);
         } else {
             if constexpr (size == sizeof(__m128)) {
                 auto a = to_vec(v);
-                auto zero = _mm_setzero_si128();
                 if constexpr (sizeof(T) == 1) {
-                    auto mask0 = _mm_set1_epi16(mask0_16[Shift]);
-                    auto a_sign = _mm_cmpgt_epi8(zero, a);
-                    auto r = _mm_srai_epi16(a, Shift);
-                    auto a_sign_mask =  _mm_and_si128(mask0, a_sign);
-                    r =  _mm_andnot_si128(mask0, r);
-                    auto res = _mm_or_si128(r, a_sign_mask);
-                    return from_vec<T>(res);
+                    if constexpr (std::is_signed_v<T>) {
+                        auto zero = _mm_setzero_si128();
+                        auto mask0 = _mm_set1_epi16(mask0_16[Shift]);
+                        auto a_sign = _mm_cmpgt_epi8(zero, a);
+                        auto r = _mm_srai_epi16(a, Shift);
+                        auto a_sign_mask =  _mm_and_si128(mask0, a_sign);
+                        r =  _mm_andnot_si128(mask0, r);
+                        auto res = _mm_or_si128(r, a_sign_mask);
+                        return from_vec<T>(res);
+                    } else {
+                        auto mask0 = _mm_set1_epi16(mask1_16[Shift]);
+                        auto res = _mm_srli_epi16(a, Shift);
+                        return from_vec<T>(_mm_and_si128(res, mask0));
+                    }
                 } else if constexpr (sizeof(T) == 2) {
-                    auto res = _mm_srai_epi16(a, Shift);
+                    __m128i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm_srai_epi16(a, Shift);
+                    } else {
+                        res = _mm_srli_epi16(a, Shift);
+                    }
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 4) {
-                    auto res = _mm_srai_epi32(a, Shift);
+                    __m128i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm_srai_epi32(a, Shift);
+                    } else {
+                        res = _mm_srli_epi32(a, Shift);
+                    }
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 8) {
-                    auto res = _mm_srai_epi64(a, Shift);
-                    return from_vec<T>(res);
+                    __m128i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
+                        res = _mm_srai_epi64(a, Shift);
+                        return from_vec<T>(res);
+                        #endif
+                    } else {
+                        res = _mm_srli_epi64(a, Shift);
+                        return from_vec<T>(res);
+                    }
                 }
             } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                 return shift_right<Shift>(from_vec<T>(fit_to_vec(v))).lo;
@@ -353,28 +402,59 @@ namespace ui::x86 {
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
             if constexpr (size == sizeof(__m256)) {
                 auto a = to_vec(v);
-                auto zero = _mm256_setzero_si256();
                 if constexpr (sizeof(T) == 1) {
-                    auto mask0 = _mm256_set1_epi16(mask0_16[Shift]);
-                    auto a_sign = _mm256_cmpgt_epi8(zero, a);
-                    auto r = _mm256_srai_epi16(a, Shift);
-                    auto a_sign_mask = _mm256_and_si256(mask0, a_sign);
-                    r =  _mm256_andnot_si128(mask0, r);
-                    auto res = _mm256_or_si256(r, a_sign_mask);
-                    return from_vec<T>(res);
+                    if constexpr (std::is_signed_v<T>) {
+                        auto zero = _mm256_setzero_si256();
+                        auto mask0 = _mm256_set1_epi16(mask0_16[Shift]);
+                        auto a_sign = _mm256_cmpgt_epi8(zero, a);
+                        auto r = _mm256_srai_epi16(a, Shift);
+                        auto a_sign_mask = _mm256_and_si256(mask0, a_sign);
+                        r =  _mm256_andnot_si256(mask0, r);
+                        auto res = _mm256_or_si256(r, a_sign_mask);
+                        return from_vec<T>(res);
+                    } else {
+                        auto mask0 = _mm256_set1_epi16(mask1_16[Shift]);
+                        auto res = _mm256_srli_epi16(a, Shift);
+                        return from_vec<T>(_mm256_and_si256(res, mask0));
+                    }
                 } else if constexpr (sizeof(T) == 2) {
-                    auto res = _mm256_srai_epi16(a, Shift);
+                    __m256i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm256_srai_epi16(a, Shift);
+                    } else {
+                        res = _mm256_srli_epi16(a, Shift);
+                    }
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 4) {
-                    auto res = _mm256_srai_epi32(a, Shift);
+                    __m256i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm256_srai_epi32(a, Shift);
+                    } else {
+                        res = _mm256_srli_epi32(a, Shift);
+                    }
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 8) {
+                    __m256i res;
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-                    auto res = _mm256_srai_epi64(a, Shift);
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm256_srai_epi64(a, Shift);
+                    } else {
+                        res = _mm256_srli_epi64(a, Shift);
+                    }
                     #else
-                    auto as = _mm256_srai_epi32(a, Shift); // arithmetic shift
-                    auto ls = _mm256_srli_epi64(a, Shift); // logical shift
-                    auto res = _mm256_blend_epi32(as, ls, 0xAA);
+                    auto t0 = _mm256_srli_epi64(a, Shift); // a >> Shift
+                    if constexpr (std::is_signed_v<T>) {
+                        auto zero = _mm256_setzero_si256();
+                        auto sign_mask = _mm256_cmpgt_epi64(zero, a); // a < 0
+                        auto add_mask = _mm256_slli_epi64(
+                            _mm256_set1_epi64x(~0ULL), // 0xff...ff
+                            64 - Shift
+                        ); // 1s << (64- Shift)
+                        auto corr = _mm256_and_si256(sign_mask, add_mask);
+                        res = _mm256_or_si256(t0, corr);
+                    } else {
+                        res = t0;
+                    }
                     #endif
                     return from_vec<T>(res);
                 }
@@ -388,22 +468,42 @@ namespace ui::x86 {
                 auto a = to_vec(v);
                 auto zero = _mm512_setzero_si512();
                 if constexpr (sizeof(T) == 1) {
-                    alignas(16) static constexpr int16_t mask0_16[9] = {0x0000, 0x0080, 0x00c0, 0x00e0, 0x00f0,  0x00f8, 0x00fc, 0x00fe, 0x00ff};
-                    auto mask0 = _mm512_set1_epi16(mask0_16[Shift]);
-                    auto a_sign = _mm512_cmpgt_epi8(zero, a);
-                    auto r = _mm512_srai_epi16(a, Shift);
-                    auto a_sign_mask = _mm512_and_si512(mask0, a_sign);
-                    r =  _mm512_andnot_si128(mask0, r);
-                    auto res = _mm512_or_si512(r, a_sign_mask);
-                    return from_vec<T>(res);
+                    if constexpr (std::is_signed_v<T>) {
+                        auto mask0 = _mm512_set1_epi16(mask0_16[Shift]);
+                        auto a_sign = _mm512_cmpgt_epi8(zero, a);
+                        auto r = _mm512_srai_epi16(a, Shift);
+                        auto a_sign_mask = _mm512_and_si512(mask0, a_sign);
+                        r =  _mm512_andnot_si128(mask0, r);
+                        auto res = _mm512_or_si512(r, a_sign_mask);
+                        return from_vec<T>(res);
+                    } else {
+                        auto mask0 = _mm512_set1_epi16(mask1_16[Shift]);
+                        auto res = _mm512_srli_epi16(a, Shift);
+                        return from_vec<T>(_mm512_and_si512(res, mask0));
+                    }
                 } else if constexpr (sizeof(T) == 2) {
-                    auto res = _mm512_srai_epi16(a, Shift);
+                    __m512i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm512_srai_epi16(a, Shift);
+                    } else {
+                        res = _mm512_srli_epi16(a, Shift);
+                    }
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 4) {
-                    auto res = _mm512_srai_epi32(a, Shift);
+                    __m512i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm512_srai_epi32(a, Shift);
+                    } else {
+                        res = _mm512_srli_epi32(a, Shift);
+                    }
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 8) {
-                    auto res = _mm512_srai_epi64(a, Shift);
+                    __m512i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm512_srai_epi64(a, Shift);
+                    } else {
+                        res = _mm512_srli_epi64(a, Shift);
+                    }
                     return from_vec<T>(res);
                 }
             } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
@@ -456,17 +556,19 @@ namespace ui::x86 {
             alignas(16) static constexpr std::uint16_t mask2b[9] = {0x0000, 0x0101, 0x0202, 0x0404, 0x0808, 0x1010, 0x2020, 0x4040, 0x8080};;
             if constexpr (size == sizeof(__m128)) {
                 if constexpr (sizeof(T) == 1) {
-                    auto r = shift_right<Shift>(v);
-                    auto m1 = Vec<N, T>::load(mask2b[Shift]);
-                    auto mb = bitwise_and(v, m1);
-                    mb = shift_right<Shift - 1>(mb);
-                    return from_vec<T>(_mm_add_epi8(to_vec(r), to_vec(mb)));
+                    auto r = to_vec(shift_right<Shift>(v));
+                    auto m1 = _mm_set1_epi16(mask2b[Shift]);
+                    auto mb = _mm_and_si128(to_vec(v), m1);
+                    mb = _mm_srli_epi16(mb, Shift - 1);
+                    return from_vec<T>(_mm_add_epi8(r, mb));
                 } else {
                     static constexpr auto bits = sizeof(T) * 8;
-                    auto mb = shift_left<bits - Shift>(v);
-                    mb = shift_right<bits - 1>(mb);
+                    auto vt = rcast<std::make_unsigned_t<T>>(v);
+                    auto mb = shift_right<bits - 1>(
+                        shift_left<bits - Shift>(vt)
+                    );
                     auto res = shift_right<Shift>(v);
-                    return add<true>(res, mb);
+                    return add<true>(res, rcast<T>(mb));
                 }
             } else if constexpr (size * 2 == sizeof(__m128)) {
                 if constexpr (sizeof(T) == 1) {
@@ -490,17 +592,20 @@ namespace ui::x86 {
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (size == sizeof(__m256)) {
                 if constexpr (sizeof(T) == 1) {
-                    auto r = shift_right<Shift>(v);
-                    auto m1 = Vec<N, T>::load(mask2b[Shift]);
-                    auto mb = bitwise_and(v, m1);
-                    mb = shift_right<Shift - 1>(mb);
-                    return from_vec<T>(_mm256_add_epi8(to_vec(r), to_vec(mb)));
+                    auto r = to_vec(shift_right<Shift>(v));
+                    auto m1 = _mm256_set1_epi16(mask2b[Shift]);
+                    auto mb = _mm256_and_si256(to_vec(v), m1);
+                    mb = _mm256_srli_epi16(mb, Shift - 1);
+                    return from_vec<T>(_mm256_add_epi8(r, mb));
                 } else {
                     static constexpr auto bits = sizeof(T) * 8;
-                    auto mb = shift_left<bits - Shift>(v);
-                    mb = shift_right<bits - 1>(mb);
+                    auto vt = rcast<std::make_unsigned_t<T>>(v);
+                    auto mb = shift_right<bits - 1>(
+                        shift_left<bits - Shift>(vt)
+                    );
                     auto res = shift_right<Shift>(v);
-                    return add<true>(res, mb);
+                    auto temp = add<true>(res, rcast<T>(mb));
+                    return temp;
                 }
             } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
                 if constexpr (sizeof(T) == 1) {
@@ -533,10 +638,12 @@ namespace ui::x86 {
                     return from_vec<T>(_mm512_add_epi8(to_vec(r), to_vec(mb)));
                 } else {
                     static constexpr auto bits = sizeof(T) * 8;
-                    auto mb = shift_left<bits - Shift>(v);
-                    mb = shift_right<bits - 1>(mb);
+                    auto vt = rcast<std::make_unsigned_t<T>>(v);
+                    auto mb = shift_right<bits - 1>(
+                        shift_left<bits - Shift>(vt)
+                    );
                     auto res = shift_right<Shift>(v);
-                    return add<true>(res, mb);
+                    return add<true>(res, rcast<T>(mb));
                 }
             } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
                 if constexpr (sizeof(T) == 1) {
@@ -618,9 +725,7 @@ namespace ui::x86 {
     UI_ALWAYS_INLINE auto sat_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = internal::narrowing_result_t<T>;
-        auto shifted = sat_shift_right<Shift>(v);
-        return cast<result_t>(shifted);
+        return emul::sat_narrowing_shift_right<Shift>(v);
     }
 
     template <unsigned Shift, std::size_t N, std::integral T>
@@ -628,9 +733,7 @@ namespace ui::x86 {
     UI_ALWAYS_INLINE auto sat_unsigned_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = std::make_unsigned_t<internal::narrowing_result_t<T>>;
-        auto shifted = sat_shift_right<Shift>(v);
-        return cast<result_t>(shifted);
+        return emul::sat_unsigned_narrowing_shift_right<Shift>(v);
     }
 // !MARK
 
@@ -640,18 +743,14 @@ namespace ui::x86 {
     UI_ALWAYS_INLINE auto sat_rounding_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = internal::narrowing_result_t<T>;
-        auto shifted = sat_rounding_shift_right<Shift>(v);
-        return cast<result_t>(shifted);
+        return emul::sat_rounding_narrowing_shift_right<Shift>(v);
     }
     template <unsigned Shift, std::size_t N, std::integral T>
         requires ((Shift > 0 && Shift < sizeof(T) * 8) && sizeof(T) > 1 && std::is_signed_v<T>)
     UI_ALWAYS_INLINE auto sat_rounding_unsigned_narrowing_shift_right(
         Vec<N, T> const& v
     ) noexcept {
-        using result_t = std::make_unsigned_t<internal::narrowing_result_t<T>>;
-        auto shifted = sat_rounding_shift_right<Shift>(v);
-        return cast<result_t>(shifted);
+        return emul::sat_rounding_unsigned_narrowing_shift_right<Shift>(v);
     }
 // !MARK
 
@@ -680,22 +779,25 @@ namespace ui::x86 {
 
     template <unsigned Shift, std::size_t N, std::integral T>
         requires (Shift < (sizeof(T) * 8))
-    UI_ALWAYS_INLINE auto shift_left(
+    UI_ALWAYS_INLINE auto insert_shift_left(
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
+        using utype = std::make_unsigned_t<T>;
+        auto ta = rcast<utype>(a);
+        auto tb = rcast<utype>(b);
         if constexpr (sizeof(T) == 1) {
-            alignas(16) static constexpr std::uint8_t maskRight[8] = {0x0, 0x1, 0x3, 0x7, 0x0f, 0x1f, 0x3f, 0x7f};
-            auto mask = Vec<N, T>::load(maskRight[Shift]);
-            auto b_shift = shift_left<Shift>(b);
-            auto a_masked = bitwise_and(a, mask);
-            return bitwise_or(b_shift, a_masked);
+            alignas(16) static constexpr std::uint8_t mask_right[8] = {0x0, 0x1, 0x3, 0x7, 0x0f, 0x1f, 0x3f, 0x7f};
+            auto mask = Vec<N, utype>::load(mask_right[Shift]);
+            auto b_shift = shift_left<Shift>(tb);
+            auto a_masked = bitwise_and(ta, mask);
+            return rcast<T>(bitwise_or(b_shift, a_masked));
         } else {
             static constexpr auto bits = sizeof(T) * 8;
-            auto b_shift = shift_left<Shift>(b);
-            auto a_c = shift_left<bits - Shift>(a);
+            auto b_shift = shift_left<Shift>(tb);
+            auto a_c = shift_left<bits - Shift>(ta);
             a_c = shift_right<bits - Shift>(a_c);
-            return bitwise_or(b_shift, a_c);
+            return rcast<T>(bitwise_or(b_shift, a_c));
         }
     }
  
@@ -717,18 +819,21 @@ namespace ui::x86 {
         Vec<N, T> const& a,
         Vec<N, T> const& b
     ) noexcept -> Vec<N, T> {
+        using utype = std::make_unsigned_t<T>;
+        auto ta = rcast<utype>(a);
+        auto tb = rcast<utype>(b);
         if constexpr (sizeof(T) == 1) {
-            alignas(16) static constexpr std::uint8_t maskRight[9] = {0x0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
-            auto mask = Vec<N, T>::load(maskRight[Shift]);
-            auto b_shift = shift_right<Shift>(b);
-            auto a_masked = bitwise_and(a, mask);
-            return bitwise_or(b_shift, a_masked);
+            alignas(16) static constexpr std::uint8_t mask_right[9] = {0x0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+            auto mask = Vec<N, utype>::load(mask_right[Shift]);
+            auto b_shift = shift_right<Shift>(tb);
+            auto a_masked = bitwise_and(ta, mask);
+            return rcast<T>(bitwise_or(b_shift, a_masked));
         } else {
             static constexpr auto bits = sizeof(T) * 8;
-            auto b_shift = shift_right<Shift>(b);
-            auto a_c = shift_right<bits - Shift>(a);
+            auto b_shift = shift_right<Shift>(tb);
+            auto a_c = shift_right<bits - Shift>(ta);
             a_c = shift_left<bits - Shift>(a_c);
-            return bitwise_or(b_shift, a_c);
+            return rcast<T>(bitwise_or(b_shift, a_c));
         }
     }
 // !MARK
