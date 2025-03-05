@@ -48,6 +48,8 @@ namespace ui {
     #include "x86/sub.hpp"
     #include "x86/abs.hpp"
     #include "x86/minmax.hpp"
+    #include "x86/mul.hpp"
+    #include "x86/bit.hpp"
 
     namespace ui {
         using namespace x86;
