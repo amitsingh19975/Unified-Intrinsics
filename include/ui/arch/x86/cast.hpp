@@ -910,15 +910,15 @@ namespace ui::x86 {
                 if constexpr (sizeof(m) == sizeof(__m128)) {
                     OP(mm, 128)
                 } else if constexpr (sizeof(m) == sizeof(__m256)) {
-                    OP(mm, 256)
+                    OP(mm256, 256)
                 }
             #else
                 if constexpr (sizeof(m) == sizeof(__m128)) {
                     OP(mm, 128)
                 } else if constexpr (sizeof(m) == sizeof(__m256)) {
-                    OP(mm, 256)
+                    OP(mm256, 256)
                 } else {
-                    OP(mm, 512)
+                    OP(mm512, 512)
                 }
             #endif
 
