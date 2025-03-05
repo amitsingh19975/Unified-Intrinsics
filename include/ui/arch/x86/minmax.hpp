@@ -79,11 +79,6 @@ namespace ui::x86 {
                         return from_vec<T>(_mm256_max_epu32(to_vec(lhs), to_vec(rhs)));
                     }
                 }
-            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                return max(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
 
@@ -112,11 +107,6 @@ namespace ui::x86 {
                         return from_vec<T>(_mm512_max_epu32(to_vec(lhs), to_vec(rhs)));
                     }
                 }
-            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
-                return max(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
             return join(
@@ -191,11 +181,6 @@ namespace ui::x86 {
                         return from_vec<T>(_mm256_min_epu32(to_vec(lhs), to_vec(rhs)));
                     }
                 }
-            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                return min(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
 
@@ -224,11 +209,6 @@ namespace ui::x86 {
                         return from_vec<T>(_mm512_min_epu32(to_vec(lhs), to_vec(rhs)));
                     }
                 }
-            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
-                return min(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
             return join(
@@ -326,11 +306,6 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<T>(maxnm(cast<float>(lhs), cast<float>(rhs)));
                 }
-            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                return maxnm(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
 
@@ -367,11 +342,6 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<T>(maxnm(cast<float>(lhs), cast<float>(rhs)));
                 }
-            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
-                return maxnm(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
             return join(
@@ -465,11 +435,6 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<T>(minnm(cast<float>(lhs), cast<float>(rhs)));
                 }
-            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                return minnm(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
 
@@ -506,11 +471,6 @@ namespace ui::x86 {
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<T>(minnm(cast<float>(lhs), cast<float>(rhs)));
                 }
-            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
-                return minnm(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
             return join(
@@ -732,12 +692,6 @@ namespace ui::x86 {
 
                         return from_vec<T>(_mm256_castpd_si256(blended_pd));
                     }
-                } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                    return pminmax_helper(
-                        from_vec<T>(fit_to_vec(lhs)),
-                        from_vec<T>(fit_to_vec(rhs)),
-                        fn
-                    ).lo;
                 }
                 #endif
 
@@ -848,7 +802,7 @@ namespace ui::x86 {
                     }
                 } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                     return fold_helper(
-                        from_vec<T>(fit_to_vec(v)), op
+                        join(v, v), op
                     );
                 }
 
@@ -887,10 +841,6 @@ namespace ui::x86 {
                         auto t = fn(lo, hi);
                         return fold_helper<false>(from_vec<T>(t), op);
                     }
-                } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                    return fold_helper(
-                        from_vec<T>(fit_to_vec(v)), op
-                    );
                 }
                 #endif
 
@@ -922,8 +872,6 @@ namespace ui::x86 {
                 }
             }
         }
-
-    
     }
 
     template <std::size_t N, typename T>
