@@ -153,20 +153,17 @@ namespace ui::x86 {
              }
          } else {
             static constexpr auto bits = N * sizeof(T) * 8;
-            if constexpr (sizeof(T) == 2) {
-                if constexpr (N == 1) {
-                   return _mm_cvtsi16_si128(std::bit_cast<std::int16_t>(v));
-                } if constexpr (N == 2) {
-                   return _mm_cvtsi32_si128(std::bit_cast<std::int32_t>(v));
-                }
-            } else if constexpr (sizeof(T) == 4) {
-                if constexpr (N == 1) {
-                   return _mm_cvtsi32_si128(std::bit_cast<std::int16_t>(v));
-                }
-            }
-            if constexpr (bits * 2 == 128) {
+            if constexpr (bits == 8) {
+                return _mm_cvtsi32_si128(static_cast<std::int32_t>(std::bit_cast<std::int8_t>(v))); 
+            } else if constexpr (bits == 16) {
+                return _mm_cvtsi32_si128(static_cast<std::int32_t>(std::bit_cast<std::int32_t>(v)));
+            } else if constexpr (bits == 32) {
+                return _mm_cvtsi32_si128(std::bit_cast<std::int32_t>(v));
+            } else if constexpr (bits == 64) {
                 return _mm_cvtsi64_si128(std::bit_cast<std::int64_t>(v));
-            } else if constexpr (bits * 2 == 256) {
+            }
+
+            if constexpr (bits * 2 == 256) {
                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
                 return _mm256_castsi128_si256(to_vec(v));
                 #endif
@@ -178,7 +175,7 @@ namespace ui::x86 {
                 static_assert(bits >= 64, "N * sizeof(T) * 8 must be at least 64 bits");
                 static_assert(bits <= 256, "N * sizeof(T) * 8 must be at most 256 bits");
             }
-         } 
+         }
     }
 
 
