@@ -5,11 +5,9 @@
 #include "../emul/logical.hpp"
 #include <algorithm>
 #include <bit>
-#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <type_traits>
 
 namespace ui::x86 {
