@@ -93,8 +93,8 @@ namespace ui {
             constexpr auto make_mask = []<std::size_t... Is>(std::index_sequence<Is...>) {
                 return Vec<N, T>::load(((Is != 0 ? ~T(0) : 0))...);
             };
-            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v) {
-                return shuffle<(Is + 1)..., 0>(v);
+            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v_) {
+                return shuffle<(Is + 1)..., 0>(v_);
             };
             auto mask = make_mask(std::make_index_sequence<N>{});
 
@@ -144,8 +144,8 @@ namespace ui {
                 return mask_t<N, T>::load(((Is == 0 ? ~T(0) : 0))...);
             };
 
-            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v) {
-                return shuffle<0, Is...>(v);
+            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v_) {
+                return shuffle<0, Is...>(v_);
             };
             auto mask = make_mask(std::make_index_sequence<N>{});
             sign_mask = bitwise_and(sign_mask, mask);
@@ -181,8 +181,8 @@ namespace ui {
                 return Vec<N, T>::load(((Is != 0 ? ~T(0) : 0))...);
             };
 
-            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v) {
-                return shuffle<0, Is...>(v);
+            constexpr auto helper = []<std::size_t... Is>(std::index_sequence<Is...>, Vec<N, T> const& v_) {
+                return shuffle<0, Is...>(v_);
             };
             auto mask = make_mask(std::make_index_sequence<N>{});
 
