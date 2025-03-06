@@ -22,15 +22,20 @@ namespace ui::emul {
             if constexpr (std::floating_point<From>) {
                 static constexpr auto min = std::numeric_limits<To>::min();
                 static constexpr auto max = std::numeric_limits<To>::max();
+                using type = std::conditional_t<
+                    std::same_as<From, float16> || std::same_as<From, bfloat16>,
+                    float,
+                    From
+                >;
                 if constexpr (std::integral<To>) {
-					if (v_ == std::numeric_limits<From>::infinity()) {
-						return max;
-					} else if (v_ == -std::numeric_limits<From>::infinity()) {
-						return min;
-					}
-					return static_cast<To>(v_);
+                    if (v_ == std::numeric_limits<From>::infinity()) {
+                        return max;
+                    } else if (v_ == -std::numeric_limits<From>::infinity()) {
+                        return min;
+                    }
+                    return static_cast<To>(type(v_));
                 } else {
-                    return static_cast<To>(float(v_));
+                    return static_cast<To>(type(v_));
                 }
             }
             return static_cast<To>(v_);
