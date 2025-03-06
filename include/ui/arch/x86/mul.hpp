@@ -300,7 +300,7 @@ namespace ui::x86 {
             #endif
             return join(
                 fused_mul_acc(acc.lo, lhs.lo, rhs.lo, op),
-                fused_mul_acc(acc.lo, lhs.hi, rhs.hi, op)
+                fused_mul_acc(acc.hi, lhs.hi, rhs.hi, op)
             );
         }
     #else
@@ -375,7 +375,7 @@ namespace ui::x86 {
             #endif
             return join(
                 fused_mul_acc(acc.lo, lhs.lo, rhs.lo, op),
-                fused_mul_acc(acc.lo, lhs.hi, rhs.hi, op)
+                fused_mul_acc(acc.hi, lhs.hi, rhs.hi, op)
             );
         }
     #else
