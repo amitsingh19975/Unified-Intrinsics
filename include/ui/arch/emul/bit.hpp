@@ -57,14 +57,17 @@ namespace ui::emul {
 // !MARK
 
 // MARK: Bitwise select
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto bitwise_select(
         mask_t<N, T> const& cond,
         Vec<N, T> const& true_,
         Vec<N, T> const& false_
     ) noexcept -> Vec<N, T> {
-	return map([](auto c, auto t, auto f) {
-	    return static_cast<T>((c & t) | (~c & f));
+	return map([](mask_inner_t<T> c, T t, T f) {
+	    using type = mask_inner_t<T>;
+	    auto t0 = std::bit_cast<type>(t);
+	    auto f0 = std::bit_cast<type>(f);
+	    return std::bit_cast<T>(static_cast<type>((c & t0) | (~c & f0)));
 	}, cond, true_, false_);
     }
 // !MARK
