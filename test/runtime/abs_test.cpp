@@ -384,7 +384,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Absolute Operations", "[absolute][64bit]" ) {
         WHEN("Abs difference") {
             auto res = abs_diff(v, Vec<N, type>::load(10));
             INFO(std::format("abs_diff(v, 10s): {}", res));
-            type ts[] = { 9223372036854775798ll, 9223372036854775797ll, 10, 9, 8, 7, 6,
+            type ts[] = { -9223372036854775798ll, 9223372036854775797ll, 10, 9, 8, 7, 6,
   5 };
             for (auto i = 0ul; i < N; ++i) {
                 INFO(std::format("{} == {}", res[i], ts[i]));
@@ -396,7 +396,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Absolute Operations", "[absolute][64bit]" ) {
         WHEN("Accumulating abs difference") {
             auto res = abs_acc_diff(Vec<N, type>::load(1), v, Vec<N, type>::load(10));
             INFO(std::format("abs_acc_diff(1s, v, 10s): {}", res));
-            type ts[] = { 9223372036854775799, 9223372036854775798, 11, 10,
+            type ts[] = { -9223372036854775797ll, 9223372036854775798ll, 11, 10,
   9, 8, 7, 6 };
             for (auto i = 0ul; i < N; ++i) {
                 INFO(std::format("{} == {}", res[i], ts[i]));
