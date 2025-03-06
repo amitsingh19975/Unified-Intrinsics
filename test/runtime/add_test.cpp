@@ -320,9 +320,10 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
             REQUIRE(res[31] == 58);
         }
 
-        WHEN("Saturating Add with unsigned") {
+        WHEN("Saturating Add with signed") {
             auto bs = DataGenerator<N, otype>::make();
             auto res = sat_add(v, bs);
+            INFO(std::format("bs: {}", bs));
             INFO(std::format("sat_add(v, bs): {}", res));
             REQUIRE(res[ 0] == min);
             REQUIRE(res[ 1] == max);
@@ -550,7 +551,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
             REQUIRE(res[15] == 26);
         }
 
-        WHEN("Saturating Add with unsigned") {
+        WHEN("Saturating Add with signed") {
             auto bs = DataGenerator<N, otype>::make();
             auto res = sat_add(v, bs);
             INFO(std::format("sat_add(v, bs): {}", res));
@@ -746,7 +747,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
             REQUIRE(res[15] == 26);
         }
 
-        WHEN("Saturating Add with unsigned") {
+        WHEN("Saturating Add with signed") {
             auto bs = DataGenerator<N, otype>::make();
             auto res = sat_add(v, bs);
             INFO(std::format("sat_add(v, bs): {}", res));
@@ -936,7 +937,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
             REQUIRE(res[15] == 26);
         }
 
-        WHEN("Saturating Add with unsigned") {
+        WHEN("Saturating Add with signed") {
             auto bs = DataGenerator<N, otype>::make();
             auto res = sat_add(v, bs);
             INFO(std::format("sat_add(v, bs): {}", res));
@@ -1134,7 +1135,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
             REQUIRE(res[15] == 26);
         }
 
-        WHEN("Saturating Add with unsigned") {
+        WHEN("Saturating Add with signed") {
             auto bs = DataGenerator<N, otype>::make();
             auto res = sat_add(v, bs);
             INFO(std::format("sat_add(v, bs): {}", res));
@@ -1276,7 +1277,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Addition", "[addition][64bit]" ) {
             REQUIRE(res[15] == 26);
         }
 
-        WHEN("Saturating Add with unsigned") {
+        WHEN("Saturating Add with signed") {
             auto bs = DataGenerator<N, otype>::make();
             auto res = sat_add(v, bs);
             INFO(std::format("sat_add(v, bs): {}", res));
@@ -1390,7 +1391,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Addition", "[addition][64bit]" ) {
             REQUIRE(res[15] == 26);
         }
 
-        WHEN("Saturating Add with unsigned") {
+        WHEN("Saturating Add with signed") {
             auto bs = DataGenerator<N, otype>::make();
             auto res = sat_add(v, bs);
             INFO(std::format("sat_add(v, bs): {}", res));
@@ -1662,7 +1663,7 @@ TEST_CASE( VEC_ARCH_NAME " float64 Addition", "[addition][float64]" ) {
     WHEN("Pairwise Addition") {
         auto res = padd(v, v);
         INFO(std::format("padd(v, v): {}", res));
-        
+
         REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(max, eps<double>));
         REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(1,   eps<double>));
         REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(5,   eps<double>));
