@@ -174,10 +174,20 @@ namespace ui::x86 {
         Vec<N, T> const& rhs,
         op::add_t op
     ) noexcept -> Vec<N, T> {
-        return add(
-            acc,
-            mul(lhs, rhs)
-        );
+        if constexpr (::ui::internal::is_fp16<T>) {
+            auto a = cast<float>(acc);
+            auto l = cast<float>(lhs);
+            auto r = cast<float>(rhs);
+            return cast<T>(add(
+                a,
+                mul(l, r)
+            ));
+        } else {
+            return add(
+                acc,
+                mul(lhs, rhs)
+            );
+        }
     }
 
     template <std::size_t N, typename T>
@@ -187,10 +197,20 @@ namespace ui::x86 {
         Vec<N, T> const& rhs,
         op::sub_t op
     ) noexcept -> Vec<N, T> {
-        return sub(
-            acc,
-            mul(lhs, rhs)
-        );
+        if constexpr (::ui::internal::is_fp16<T>) {
+            auto a = cast<float>(acc);
+            auto l = cast<float>(lhs);
+            auto r = cast<float>(rhs);
+            return cast<T>(sub(
+                a,
+                mul(l, r)
+            ));
+        } else {
+            return sub(
+                acc,
+                mul(lhs, rhs)
+            );
+        }
     }
 
     namespace internal {
