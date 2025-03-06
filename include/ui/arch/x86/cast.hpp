@@ -1580,7 +1580,7 @@ namespace ui::x86 {
                              vt,
                              Matcher {
                                 case_maker<4> = [fn](auto const& v_) {
-                                    return fn(join(v_, v_));
+                                    return fn(join(v_, v_)).lo;
                                 },
                                 case_maker<8> = fn
                                 #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
