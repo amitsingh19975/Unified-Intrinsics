@@ -8,16 +8,36 @@
 
 namespace ui::emul {
 
+    namespace internal {
+        using namespace ::ui::internal;
+
+        template <typename T>
+        UI_ALWAYS_INLINE static constexpr auto abs_diff_helper(
+            T l,
+            T r
+        ) -> T {
+            if constexpr (std::integral<T>) {
+                using utype = std::make_unsigned_t<T>;
+                auto l0 = static_cast<utype>(l);
+                auto r0 = static_cast<utype>(r);
+                auto lr = l0 - r0;
+                auto rl = r0 - l0;
+                auto tmp = l >= r ? lr : rl;
+                return static_cast<T>(tmp);
+            } else {
+                return l >= r ? l - r : r - l;
+            }
+        }
+    } // namespace internal
+
 // MARK: Difference
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto abs_diff(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return map([](auto l, auto r) {
-            return static_cast<T>(
-                l > r ? (l - r) : (r - l)
-            );
+        return map([](T l, T r) -> T {
+            return internal::abs_diff_helper(l, r);
         }, lhs, rhs);
     }
 // !MARK
@@ -30,8 +50,10 @@ namespace ui::emul {
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using result_t = internal::widening_result_t<T>;
         return map([](auto l, auto r) {
+            auto l0 = static_cast<result_t>(l);
+            auto r0 = static_cast<result_t>(r);
             return static_cast<result_t>(
-                l > r ? (l - r) : (r - l)
+                l > r ? (l0 - r0) : (r0 - l0)
             );
         }, lhs, rhs);
     }
@@ -44,8 +66,9 @@ namespace ui::emul {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return map([](auto a, auto l, auto r){
-            return static_cast<T>(a + (l > r ? l - r : r - l));
+        return map([](T a, T l, T r){
+            auto res = internal::abs_diff_helper(l, r);
+            return static_cast<T>(a + res);
         }, acc, lhs, rhs);
     }
 // !MARK
