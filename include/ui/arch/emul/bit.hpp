@@ -63,9 +63,8 @@ namespace ui::emul {
         Vec<N, T> const& true_,
         Vec<N, T> const& false_
     ) noexcept -> Vec<N, T> {
-	return map([](auto a_, auto b_, auto c_) {
-            static constexpr auto max = std::numeric_limits<mask_inner_t<T>>::max();
-	    return static_cast<T>(a_ == max ? b_ : c_);
+	return map([](auto c, auto t, auto f) {
+	    return static_cast<T>((c & t) | (~c & f));
 	}, cond, true_, false_);
     }
 // !MARK
