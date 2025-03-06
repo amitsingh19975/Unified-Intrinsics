@@ -50,6 +50,8 @@ namespace ui {
     #include "x86/minmax.hpp"
     #include "x86/mul.hpp"
     #include "x86/bit.hpp"
+    #include "x86/rounding.hpp"
+    #include "x86/div.hpp"
 
     namespace ui {
         using namespace x86;
