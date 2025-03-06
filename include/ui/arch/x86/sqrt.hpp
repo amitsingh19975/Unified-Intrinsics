@@ -11,7 +11,7 @@
 
 namespace ui::x86 {
 
-    template<bool Merge = false, std::size_t N, typename T>
+    template<bool Merge = true, std::size_t N, typename T>
     UI_ALWAYS_INLINE auto sqrt(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
