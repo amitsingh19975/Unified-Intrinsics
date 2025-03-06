@@ -348,11 +348,11 @@ namespace ui {
         using vec_type = decltype(fn(args[0]...));
 
         auto helper = [&]<std::size_t... Is>(std::index_sequence<Is...>) -> Vec<N, vec_type> {
-            auto lane = [&](std::size_t i) {
+            auto lane = [&](std::size_t i) -> vec_type {
                 return fn(args[i]...);
             };
 
-            std::array<vec_type, N> res = { lane(Is)... };
+            std::array<vec_type, N> res { lane(Is)... };
             return Vec<N, vec_type>::load(res.data(), res.size());
         };
         return helper(std::make_index_sequence<N>{});
