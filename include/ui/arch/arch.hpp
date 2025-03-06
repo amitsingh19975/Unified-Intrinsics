@@ -52,6 +52,7 @@ namespace ui {
     #include "x86/bit.hpp"
     #include "x86/rounding.hpp"
     #include "x86/div.hpp"
+    #include "x86/sqrt.hpp"
 
     namespace ui {
         using namespace x86;
