@@ -152,12 +152,22 @@ namespace ui::x86 {
                 if constexpr (sizeof(T) == 2) {
                     sum = shift_right<8>(sum);
                     auto v = to_vec(sum);
-                    auto res = _mm_packs_epi16(v, v);
+                    __m128i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm_packs_epi16(v, v);
+                    } else {
+                        res = _mm_packus_epi16(v, v);
+                    }
                     return from_vec<result_t>(res).lo;
                 } else if constexpr (sizeof(T) == 4) {
                     sum = shift_right<16>(sum);
                     auto v = to_vec(sum);
-                    auto res = _mm_packs_epi32(v, v);
+                    __m128i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm_packs_epi32(v, v);
+                    } else {
+                        res = _mm_packus_epi32(v, v);
+                    }
                     return from_vec<result_t>(res).lo;
                 } else if constexpr (sizeof(T) == 8) {
                     auto res = _mm_shuffle_epi32(to_vec(sum), _MM_SHUFFLE(2, 0, 3, 1));
@@ -172,13 +182,35 @@ namespace ui::x86 {
                 if constexpr (sizeof(T) == 2) {
                     sum = shift_right<8>(sum);
                     auto v = to_vec(sum);
-                    auto res = _mm256_packs_epi16(v, v);
-                    return from_vec<result_t>(res).lo;
+                    __m256i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm256_packs_epi16(v, v);
+                    } else {
+                        res = _mm256_packus_epi16(v, v);
+                    }
+                    // FIXME: We rely on compiler for extraction. Need to check if compiler
+                    // produces better assembly or hand-written on then change this.
+                    auto temp = from_vec<result_t>(res);
+                    return join(
+                        temp.lo.lo,
+                        temp.hi.lo
+                    );
                 } else if constexpr (sizeof(T) == 4) {
                     sum = shift_right<16>(sum);
                     auto v = to_vec(sum);
-                    auto res = _mm256_packs_epi32(v, v);
-                    return from_vec<result_t>(res).lo;
+                    __m256i res;
+                    if constexpr (std::is_signed_v<T>) {
+                        res = _mm256_packs_epi32(v, v);
+                    } else {
+                        res = _mm256_packus_epi32(v, v);
+                    }
+                    // FIXME: We rely on compiler for extraction. Need to check if compiler
+                    // produces better assembly or hand-written on then change this.
+                    auto temp = from_vec<result_t>(res);
+                    return join(
+                        temp.lo.lo,
+                        temp.hi.lo
+                    );
                 } else if constexpr (sizeof(T) == 8) {
                     auto v = _mm256_castsi256_pd(_mm256_shuffle_epi32(to_vec(sum), _MM_SHUFFLE(2, 0, 3, 1)));
                     auto res = _mm256_castpd_si256(_mm256_permute4x64_pd(v, _MM_SHUFFLE(0, 0, 2, 0)));
@@ -343,6 +375,14 @@ namespace ui::x86 {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T>;
 
+    template <std::size_t N, typename T>
+        requires (std::is_arithmetic_v<T>)
+    UI_ALWAYS_INLINE auto bitwise_select(
+        mask_t<N, T> const& cond,
+        Vec<N, T> const& true_,
+        Vec<N, T> const& false_
+    ) noexcept -> Vec<N, T>; 
+
     template <bool Merge = true, std::size_t N, std::integral T, std::integral U>
         requires (std::is_signed_v<T> != std::is_signed_v<U>)
     UI_ALWAYS_INLINE auto sat_add(
@@ -356,53 +396,64 @@ namespace ui::x86 {
         //      return max(T) if lhs > max(T) - rhs
         if constexpr (std::is_signed_v<T>) {
             auto mx = Vec<N, U>::load(std::numeric_limits<T>::max());
-            auto gt = cmp(mx, rhs, op::greater_equal_t{}); // mx > rhs
-            auto r0 = bitwise_and(rcast<U>(gt), rhs); // mx > rhs
-            auto r1 = bitwise_and(
-                rcast<U>(bitwise_not(gt)),
-                rhs
-            ); // mx <= rhs
 
-            // lhs <= max(T) - rhs
-            auto upper_r0 = rcast<T>(sub<true>(mx, r0)); // max(T) - rhs => [0, max(T)]
-            auto t0 = cmp(lhs, upper_r0, op::less_equal_t{}); // lhs <= [0, max(T)]
-            auto res_0 = bitwise_or(
-                bitwise_and(rcast<T>(t0), sum),
-                bitwise_and(rcast<T>(mx), bitwise_not(rcast<T>(t0)))
-            );
+            // Check if rhs is too large (> INT_MAX)
+            auto rhs_too_large = cmp(rhs, mx, op::greater_t{});
 
-            // lhs <= -(rhs - max(T))
-            auto upper_r1 = negate(rcast<T>(sub<true>(r1, mx)));
-            auto t1 = cmp(lhs, upper_r1, op::less_equal_t{}); // lhs <= -(rhs - max(T))
-            auto res_1 = bitwise_or(
-                bitwise_and(rcast<T>(t1), sum),
-                bitwise_and(rcast<T>(mx), bitwise_not(rcast<T>(t1)))
+            // Check if the addition would overflow (lhs > max(T) - rhs)
+            auto safe_max = sub<true>(mx, rhs);
+            auto would_overflow = cmp(lhs, rcast<T>(safe_max), op::greater_t{});
+
+            // Combine overflow conditions
+            auto overflow_mask = rcast<T>(bitwise_or(rhs_too_large, would_overflow));
+
+            // Use max(T) for overflow cases, otherwise use sum
+            return bitwise_or(
+                bitwise_and(overflow_mask, rcast<T>(mx)),
+                bitwise_notand(overflow_mask, sum)
             );
-            return bitwise_or(res_0, res_1);
         } else {
-            // Case 2: T is unsigned and T is signed
-            //      lhs + rhs <= max(T)
-            //      lhs <= max(T) - rhs
-            //      rhs < 0 then lhs - rhs <= max(T) => lhs > rhs
-            //      rhs >= 0 then lhs <= max(T) - rhs
+            // Case 2: T is unsigned and U is signed
             auto mx = Vec<N, T>::load(std::numeric_limits<T>::max());
-            auto t0 = rcast<T>(cmp(lhs, rcast<T>(rhs), op::greater_t{})); // lhs > rhs
-            auto is_neg = rcast<T>(cmp(rhs, op::less_zero_t{})); // rhs < 0
 
-            auto res_0 = bitwise_and(
-                t0,
-                sum
+            // Check if rhs is negative
+            auto rhs_negative = cmp(rhs, op::less_zero_t{});
+
+            // For negative rhs, we need to do a subtraction instead
+            // If rhs is negative and |rhs| <= lhs, then result is lhs - |rhs|
+            auto abs_rhs = bitwise_select(rhs_negative, negate(rhs), rhs);
+            auto safe_subtraction = cmp(lhs, rcast<T>(abs_rhs), op::greater_equal_t{});
+
+            // For negative rhs, compute lhs - |rhs| directly instead of using sum
+            auto neg_result = sub(lhs, rcast<T>(abs_rhs));
+
+            // If rhs is positive, check if would overflow
+            auto safe_max = sub<true>(mx, rcast<T>(rhs));
+            auto positive_overflow = bitwise_notand(
+                rhs_negative,
+                cmp(lhs, safe_max, op::greater_t{})
             );
 
-            // l: 255 + r: -128
-            // l > r => 255 > -128 => true
-            auto diff = sub<true>(mx, rcast<T>(rhs));
-            auto t1 = rcast<T>(cmp(lhs, diff, op::less_equal_t{})); // lhs <= max(T) - rhs
-            auto t2 = bitwise_or(is_neg, t1);
-            return bitwise_or(res_0, bitwise_or(
-                bitwise_and(bitwise_not(t2), mx),
-                bitwise_and(sum, t2)
-            ));
+            // Create overflow mask for positive rhs case
+            auto overflow_mask = positive_overflow;
+
+            // Select between:
+            // - mx when overflow_mask is true (positive rhs overflow)
+            // - neg_result when rhs is negative and safe_subtraction is true
+            // - 0 when rhs is negative and safe_subtraction is false
+            // - sum otherwise (positive rhs, no overflow)
+
+            auto zero = Vec<N, T>{};
+            auto result_for_neg = bitwise_select(safe_subtraction, neg_result, zero);
+
+            // First select between regular sum and max based on overflow mask
+            auto pos_result = bitwise_or(
+                bitwise_and(overflow_mask, mx),
+                bitwise_notand(overflow_mask, sum)
+            );
+
+            // Then select between positive and negative cases
+            return bitwise_select(rhs_negative, result_for_neg, pos_result);
         }
     }
 // !MARK
@@ -423,6 +474,7 @@ namespace ui::x86 {
                 auto r = to_vec(rhs);
                 if constexpr (std::same_as<T, float>) {
                     auto res = _mm_hadd_ps(l, r);
+                    res = _mm_shuffle_ps(res, res, _MM_SHUFFLE(3,1, 2, 0));
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<T>(padd(cast<float>(lhs), cast<float>(rhs)));
@@ -453,9 +505,12 @@ namespace ui::x86 {
                 auto r = to_vec(rhs);
                 if constexpr (std::same_as<T, float>) {
                     auto res = _mm256_hadd_ps(l, r);
+                    auto perm = _mm256_setr_epi32(0, 1, 4, 5, 2, 3, 6, 7);
+                    res = _mm256_permutevar8x32_ps(res, perm);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, double>) {
                     auto res = _mm256_hadd_pd(l, r);
+                    res = _mm256_permute4x64_pd(res, 0xD8);
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<T>(padd(cast<float>(lhs), cast<float>(rhs)));
