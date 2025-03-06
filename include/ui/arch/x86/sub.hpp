@@ -171,13 +171,14 @@ namespace ui::x86 {
                     auto res = _mm_sub_epi16(l, avg);
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
-                    auto a = shift_right<1>(lhs);
-                    auto b = shift_right<1>(rhs);
-                    auto res = to_vec(sub(a, b));
-                    auto t0 = from_vec<T>(_mm_andnot_si128(to_vec(a), to_vec(b)));
-                    t0 = shift_left<sizeof(T) * 8 - 1>(t0);
-                    t0 = shift_right<sizeof(T) * 8 - 1>(t0);
-                    return sub(from_vec<T>(res), t0);
+                    static constexpr auto bits = sizeof(T) * 8;
+                    auto a = shift_right<1>(lhs); // lhs / 2
+                    auto b = shift_right<1>(rhs); // rhs / 2
+                    auto res = sub(a, b); // (lhs - rhs) / 2
+                    auto t0 = bitwise_notand(lhs, rhs); 
+                    t0 = shift_left<bits - 1>(t0);
+                    t0 = rcast<T>(shift_right<bits - 1>(rcast<std::make_unsigned_t<T>>(t0)));
+                    return sub(res, t0);
                 }
             } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                 return halving_sub(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
@@ -205,16 +206,15 @@ namespace ui::x86 {
                     auto res = _mm256_sub_epi16(l, avg);
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
-                    auto a = shift_right<1>(lhs);
-                    auto b = shift_right<1>(rhs);
-                    auto res = to_vec(sub(a, b));
-                    auto t0 = from_vec<T>(_mm256_andnot_si256(to_vec(a), to_vec(b)));
-                    t0 = shift_left<sizeof(T) * 8 - 1>(t0);
-                    t0 = shift_right<sizeof(T) * 8 - 1>(t0);
-                    return sub(from_vec<T>(res), t0);
+                    static constexpr auto bits = sizeof(T) * 8;
+                    auto a = shift_right<1>(lhs); // lhs / 2
+                    auto b = shift_right<1>(rhs); // rhs / 2
+                    auto res = sub(a, b); // (lhs - rhs) / 2
+                    auto t0 = bitwise_notand(lhs, rhs); 
+                    t0 = shift_left<bits - 1>(t0);
+                    t0 = rcast<T>(shift_right<bits - 1>(rcast<std::make_unsigned_t<T>>(t0)));
+                    return sub(res, t0);
                 }
-            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                return halving_sub(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
             #endif
 
@@ -241,16 +241,15 @@ namespace ui::x86 {
                     auto res = _mm512_sub_epi16(l, avg);
                     return from_vec<T>(res);
                 } else if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
-                    auto a = shift_right<1>(lhs);
-                    auto b = shift_right<1>(rhs);
-                    auto res = to_vec(sub(a, b));
-                    auto t0 = from_vec<T>(_mm512_andnot_si512(to_vec(a), to_vec(b)));
-                    t0 = shift_left<sizeof(T) * 8 - 1>(t0);
-                    t0 = shift_right<sizeof(T) * 8 - 1>(t0);
-                    return sub(from_vec<T>(res), t0);
+                    static constexpr auto bits = sizeof(T) * 8;
+                    auto a = shift_right<1>(lhs); // lhs / 2
+                    auto b = shift_right<1>(rhs); // rhs / 2
+                    auto res = sub(a, b); // (lhs - rhs) / 2
+                    auto t0 = bitwise_notand(lhs, rhs); 
+                    t0 = shift_left<bits - 1>(t0);
+                    t0 = rcast<T>(shift_right<bits - 1>(rcast<std::make_unsigned_t<T>>(t0)));
+                    return sub(res, t0);
                 }
-            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
-                return halving_sub(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
             #endif
             return join(
@@ -312,7 +311,13 @@ namespace ui::x86 {
                         auto s = _mm256_srli_epi16(res, 8);
                         res = _mm256_packus_epi16(s, s);
                     }
-                    return from_vec<result_t>(res).lo;
+                    // FIXME: We rely on compiler for extraction. Need to check if compiler
+                    // produces better assembly or hand-written on then change this.
+                    auto temp = from_vec<result_t>(res);
+                    return join(
+                        temp.lo.lo,
+                        temp.hi.lo
+                    );
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (std::is_signed_v<T>) {
                         auto s = _mm256_srai_epi32(res, 16);
@@ -321,7 +326,13 @@ namespace ui::x86 {
                         auto s = _mm256_srli_epi32(res, 16);
                         res = _mm256_packus_epi32(s, s);
                     }
-                    return from_vec<result_t>(res).lo;
+                    // FIXME: We rely on compiler for extraction. Need to check if compiler
+                    // produces better assembly or hand-written on then change this.
+                    auto temp = from_vec<result_t>(res);
+                    return join(
+                        temp.lo.lo,
+                        temp.hi.lo
+                    );
                 } else if constexpr (sizeof(T) == 8) {
                     auto r0 = _mm256_castsi256_si128(_mm256_permutevar8x32_epi32(res, _mm256_set_epi32(
                         1, 3, 5, 7, 1, 3, 5, 7
@@ -329,37 +340,10 @@ namespace ui::x86 {
                     r0 = _mm_shuffle_epi32(r0, _MM_SHUFFLE(0,1,2,3));
                     return from_vec<result_t>(r0);
                 }
-            } else if constexpr (size * 2 == sizeof(__m256) && Merge) {
-                return high_narrowing_sub(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
             #endif
 
-            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
-            if constexpr (size == sizeof(__m512)) {
-                auto res = to_vec(sub(lhs, rhs));
-                if constexpr (sizeof(T) == 2) {
-                    if constexpr (std::is_signed_v<T>) {
-                        auto s = _mm512_srai_epi16(res, 8);
-                        res = _mm512_packs_epi16(s, s);
-                    } else {
-                        auto s = _mm512_srli_epi16(res, 8);
-                        res = _mm512_packus_epi16(s, s);
-                    }
-                    return from_vec<result_t>(res).lo;
-                } else if constexpr (sizeof(T) == 4) {
-                    if constexpr (std::is_signed_v<T>) {
-                        auto s = _mm512_srai_epi32(res, 16);
-                        res = _mm512_packs_epi32(s, s);
-                    } else {
-                        auto s = _mm512_srli_epi32(res, 16);
-                        res = _mm512_packus_epi32(s, s);
-                    }
-                    return from_vec<result_t>(res).lo;
-                }
-            } else if constexpr (size * 2 == sizeof(__m512) && Merge) {
-                return high_narrowing_sub(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
-            }
-            #endif
+            // TODO: Add avx512 support
             return join(
                 high_narrowing_sub<false>(lhs.lo, rhs.lo),
                 high_narrowing_sub<false>(lhs.hi, rhs.hi)
