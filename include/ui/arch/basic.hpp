@@ -294,6 +294,9 @@ namespace ui::internal {
         }
         return static_cast<To>(v);
     }
+
+    template <typename T>
+    concept is_fp16 = std::same_as<T, float16> || std::same_as<T, bfloat16>;
 } // namespace ui::internal
 
 #endif // AMT_UI_ARCH_BASIC_HPP
