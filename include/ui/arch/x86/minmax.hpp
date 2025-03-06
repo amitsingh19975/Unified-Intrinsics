@@ -736,7 +736,7 @@ namespace ui::x86 {
                         auto mx = fn(t0, t1);
                         return from_vec<T>(mx)[0];
                     } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                        return fold_helper(cast<float>(v));
+                        return fold_helper(cast<float>(v), op);
                     } else if constexpr (sizeof(T) == 1) {
                         if constexpr (is_max) {
                             if constexpr (std::is_signed_v<T>) {
@@ -824,7 +824,7 @@ namespace ui::x86 {
                         auto t2 = _mm256_permute_pd(t1, 5);
                         return from_vec<T>(fn(t1, t2))[0];
                     } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                        return fold_helper(cast<float>(v));
+                        return fold_helper(cast<float>(v), op);
                     } else if constexpr (sizeof(T) == 1) {
                         auto lo = _mm256_castsi256_si128(a);
                         auto hi = _mm256_extracti128_si256(a, 1);
@@ -881,34 +881,39 @@ namespace ui::x86 {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         return internal::pminmax_helper(lhs, rhs, [](auto l, auto r) {
+            using type = std::conditional_t<
+                std::same_as<T, float16> || std::same_as<T, bfloat16>,
+                float,
+                T
+            >;
             if constexpr (sizeof(l) == sizeof(__m128)) {
-                if constexpr (std::same_as<T, float>) return _mm_max_ps(l, r);
-                else if constexpr (std::same_as<T, double>) return _mm_max_pd(l, r);
-                else if constexpr (std::is_signed_v<T>) {
-                    if constexpr (sizeof(T) == 1) return _mm_max_epi8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm_max_epi16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm_max_epi32(l, r);
+                if constexpr (std::same_as<type, float>) return _mm_max_ps(l, r);
+                else if constexpr (std::same_as<type, double>) return _mm_max_pd(l, r);
+                else if constexpr (std::is_signed_v<type>) {
+                    if constexpr (sizeof(type) == 1) return _mm_max_epi8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm_max_epi16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm_max_epi32(l, r);
                     else return _mm_cmpgt_epi64(l, r);
                 } else {
-                    if constexpr (sizeof(T) == 1) return _mm_max_epu8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm_max_epu16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm_max_epu32(l, r);
+                    if constexpr (sizeof(type) == 1) return _mm_max_epu8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm_max_epu16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm_max_epu32(l, r);
                     else return _mm_cmpgt_epi64(l, r);
                 }
             }
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (sizeof(l) == sizeof(__m256)) {
-                if constexpr (std::same_as<T, float>) return _mm256_max_ps(l, r);
-                else if constexpr (std::same_as<T, double>) return _mm256_max_pd(l, r);
-                else if constexpr (std::is_signed_v<T>) {
-                    if constexpr (sizeof(T) == 1) return _mm256_max_epi8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm256_max_epi16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm256_max_epi32(l, r);
+                if constexpr (std::same_as<type, float>) return _mm256_max_ps(l, r);
+                else if constexpr (std::same_as<type, double>) return _mm256_max_pd(l, r);
+                else if constexpr (std::is_signed_v<type>) {
+                    if constexpr (sizeof(type) == 1) return _mm256_max_epi8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm256_max_epi16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm256_max_epi32(l, r);
                     else return _mm256_cmpgt_epi64(l, r);
                 } else {
-                    if constexpr (sizeof(T) == 1) return _mm256_max_epu8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm256_max_epu16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm256_max_epu32(l, r);
+                    if constexpr (sizeof(type) == 1) return _mm256_max_epu8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm256_max_epu16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm256_max_epu32(l, r);
                     else return _mm256_cmpgt_epi64(l, r);
                 }
             }
@@ -941,7 +946,12 @@ namespace ui::x86 {
         Vec<N, T> const& y
     ) noexcept -> Vec<N, T> {
         return internal::pminmax_helper(x, y, [](auto l, auto r) {
-            return to_vec(maxnm(from_vec<T>(l), from_vec<T>(r)));
+            using type = std::conditional_t<
+                std::same_as<T, float16> || std::same_as<T, bfloat16>,
+                float,
+                T
+            >;
+            return to_vec(maxnm(from_vec<type>(l), from_vec<type>(r)));
         });
     }
 
@@ -972,34 +982,39 @@ namespace ui::x86 {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         return internal::pminmax_helper(lhs, rhs, [](auto l, auto r) {
+            using type = std::conditional_t<
+                std::same_as<T, float16> || std::same_as<T, bfloat16>,
+                float,
+                T
+            >;
             if constexpr (sizeof(l) == sizeof(__m128)) {
-                if constexpr (std::same_as<T, float>) return _mm_min_ps(l, r);
-                else if constexpr (std::same_as<T, double>) return _mm_min_pd(l, r);
-                else if constexpr (std::is_signed_v<T>) {
-                    if constexpr (sizeof(T) == 1) return _mm_min_epi8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm_min_epi16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm_min_epi32(l, r);
+                if constexpr (std::same_as<type, float>) return _mm_min_ps(l, r);
+                else if constexpr (std::same_as<type, double>) return _mm_min_pd(l, r);
+                else if constexpr (std::is_signed_v<type>) {
+                    if constexpr (sizeof(type) == 1) return _mm_min_epi8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm_min_epi16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm_min_epi32(l, r);
                     else return _mm_cmpgt_epi64(r, l);
                 } else {
-                    if constexpr (sizeof(T) == 1) return _mm_min_epu8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm_min_epu16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm_min_epu32(l, r);
+                    if constexpr (sizeof(type) == 1) return _mm_min_epu8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm_min_epu16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm_min_epu32(l, r);
                     else return _mm_cmpgt_epi64(r, l);
                 }
             }
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (sizeof(l) == sizeof(__m256)) {
-                if constexpr (std::same_as<T, float>) return _mm256_min_ps(l, r);
-                else if constexpr (std::same_as<T, double>) return _mm256_min_pd(l, r);
-                else if constexpr (std::is_signed_v<T>) {
-                    if constexpr (sizeof(T) == 1) return _mm256_min_epi8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm256_min_epi16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm256_min_epi32(l, r);
+                if constexpr (std::same_as<type, float>) return _mm256_min_ps(l, r);
+                else if constexpr (std::same_as<type, double>) return _mm256_min_pd(l, r);
+                else if constexpr (std::is_signed_v<type>) {
+                    if constexpr (sizeof(type) == 1) return _mm256_min_epi8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm256_min_epi16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm256_min_epi32(l, r);
                     else return _mm256_cmpgt_epi64(r, l);
                 } else {
-                    if constexpr (sizeof(T) == 1) return _mm256_min_epu8(l, r);
-                    else if constexpr (sizeof(T) == 2) return _mm256_min_epu16(l, r);
-                    else if constexpr (sizeof(T) == 4) return _mm256_min_epu32(l, r);
+                    if constexpr (sizeof(type) == 1) return _mm256_min_epu8(l, r);
+                    else if constexpr (sizeof(type) == 2) return _mm256_min_epu16(l, r);
+                    else if constexpr (sizeof(type) == 4) return _mm256_min_epu32(l, r);
                     else return _mm256_cmpgt_epi64(r, l);
                 }
             }
@@ -1032,7 +1047,12 @@ namespace ui::x86 {
         Vec<N, T> const& y
     ) noexcept -> Vec<N, T> {
         return internal::pminmax_helper(x, y, [](auto l, auto r) {
-            return to_vec(minnm(from_vec<T>(l), from_vec<T>(r)));
+            using type = std::conditional_t<
+                std::same_as<T, float16> || std::same_as<T, bfloat16>,
+                float,
+                T
+            >;
+            return to_vec(minnm(from_vec<type>(l), from_vec<type>(r)));
         });
     }
 
