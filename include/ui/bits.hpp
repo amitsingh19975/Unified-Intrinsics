@@ -3,6 +3,7 @@
 
 #include "arch/arch.hpp"
 #include "ui/base_vec.hpp"
+#include <cstdint>
 #include <type_traits>
 #include <utility>
 
@@ -111,14 +112,31 @@ namespace ui {
         }
     }
 
+    namespace internal {
+        template <unsigned S, typename T>
+        constexpr auto shift_across_lane_helper() noexcept {
+            if constexpr (S > 32) return std::uint64_t{};
+            else if constexpr (S > 16) return std::uint32_t{};
+            else if constexpr (S > 8) return std::uint16_t{};
+            else return T{};
+        };
+    } // namespace internal
+
     template <unsigned S, std::size_t N, std::integral T>
         requires (S > sizeof(T) * 8)
     UI_ALWAYS_INLINE static constexpr auto shift_left_across_lane(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        static constexpr auto bits = sizeof(T) * 8;
-        auto t0 = shift_left_across_lane<8>(v);
-        return shift_left_across_lane<S - bits>(t0);
+        using utype = decltype(::ui::internal::shift_across_lane_helper<S, T>());
+        using type = std::conditional_t<std::is_signed_v<T>, std::make_signed_t<utype>, utype>;
+        static constexpr auto bits = sizeof(utype) * 8;
+
+        auto t0 = rcast<T>(shift_left_across_lane<bits>(rcast<type>(v)));
+        if constexpr (S < bits) {
+            return t0;
+        } else {
+            return shift_left_across_lane<S - bits>(t0);
+        }
     }
 
     template <unsigned S, std::size_t N, std::integral T>
@@ -203,9 +221,16 @@ namespace ui {
     UI_ALWAYS_INLINE static constexpr auto shift_right_across_lane(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        static constexpr auto bits = sizeof(T) * 8;
-        auto t0 = shift_right_across_lane<8>(v);
-        return shift_right_across_lane<S - bits>(t0);
+        using utype = decltype(::ui::internal::shift_across_lane_helper<S, T>());
+        using type = std::conditional_t<std::is_signed_v<T>, std::make_signed_t<utype>, utype>;
+        static constexpr unsigned bits = sizeof(utype) * 8;
+
+        auto t0 = rcast<T>(shift_right_across_lane<bits>(rcast<type>(v)));
+        if constexpr (S < bits) {
+            return t0;
+        } else {
+            return shift_right_across_lane<S - bits>(t0);
+        }
     }
 
     template <unsigned S, std::size_t N, std::integral T>
@@ -213,9 +238,16 @@ namespace ui {
     UI_ALWAYS_INLINE static constexpr auto logical_shift_right_across_lane(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        static constexpr auto bits = sizeof(T) * 8;
-        auto t0 = logical_shift_right_across_lane<8>(v);
-        return logical_shift_right_across_lane<S - bits>(t0);
+        using utype = decltype(::ui::internal::shift_across_lane_helper<S, T>());
+        using type = std::conditional_t<std::is_signed_v<T>, std::make_signed_t<utype>, utype>;
+        static constexpr unsigned bits = sizeof(utype) * 8;
+
+        auto t0 = rcast<T>(logical_shift_right_across_lane<bits>(rcast<type>(v)));
+        if constexpr (S < bits) {
+            return t0;
+        } else {
+            return logical_shift_right_across_lane<S - bits>(t0);
+        }
     }
 } // namespace ui
 
