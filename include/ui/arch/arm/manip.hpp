@@ -2,12 +2,15 @@
 #define AMT_UI_ARCH_ARM_MANIPULATION_HPP
 
 #include "cast.hpp"
+#include "shift.hpp"
+#include "logical.hpp"
 #include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <type_traits>
+#include <utility>
 
 namespace ui::arm::neon {
 
@@ -1260,6 +1263,52 @@ namespace ui::arm::neon {
     }
 
 // !MARK
-}
+
+} // namespace ui::arm::neon
+
+namespace ui {
+// MARK: IntMask
+    template <std::size_t N, typename T>
+    inline constexpr IntMask<N, T>::IntMask(mask_t<N, T> const& m) noexcept {
+        using namespace arm::neon;
+
+        using mtype = mask_inner_t<T>;
+        if constexpr (is_packed) {
+            if constexpr (sizeof(T) == 1) {
+                static const constexpr std::uint8_t md[16] = {
+                      1 << 0, 1 << 1, 1 << 2, 1 << 3,
+                      1 << 4, 1 << 5, 1 << 6, 1 << 7,
+                      1 << 0, 1 << 1, 1 << 2, 1 << 3,
+                      1 << 4, 1 << 5, 1 << 6, 1 << 7,
+                };
+
+                auto ext = rcast<mtype>(shift_right<7>(rcast<std::make_signed_t<T>>(m)));
+                auto masked = bitwise_and(Vec<N, mtype>::load(md, N), ext); 
+
+                if constexpr (N == 16) {
+                    auto t0 = vzip_u8(to_vec(masked.lo), to_vec(masked.hi));
+                    auto t1 = rcast<base_type>(join(from_vec<T>(t0.val[0]), from_vec<T>(t0.val[1])));
+                    mask = static_cast<base_type>(vaddvq_u16(to_vec(t1)));
+                } else if constexpr (N == 8) {
+                    mask = static_cast<base_type>(vaddv_u8(to_vec(masked)));
+                }
+            } else {
+                auto ext = rcast<mtype>(shift_right<7>(rcast<std::make_signed_t<T>>(m)));
+                auto helper = [&ext]<std::size_t... Is>(std::index_sequence<Is...>) -> base_type {
+                    auto res = base_type{};
+                    ((res |= (base_type(ext[Is] & 1) << Is)),...);
+                    return res;
+                };
+                mask = helper(std::make_index_sequence<N>{});
+            }
+        } else {
+            auto tmp = rcast<std::uint16_t>(m);
+            auto s = narrowing_shift_right<4>(tmp);
+            mask = std::bit_cast<base_type>(rcast<std::uint64_t>(s));
+        }
+    }
+
+// !MARK
+} // namespace ui
 
 #endif // AMT_UI_ARCH_ARM_MANIPULATION_HPP

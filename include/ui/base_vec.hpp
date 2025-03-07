@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <cstring>
 #include <initializer_list>
+#include <iterator>
 #include <span>
 #include <cstring>
 #include <type_traits>
@@ -386,6 +387,221 @@ namespace ui {
         return join<sizeof...(Ts) + 1, T0::elements, typename T0::element_t>({ temp.data(), temp.size() });
     }
 
+    namespace internal {
+        template <std::size_t N, typename T>
+        constexpr auto get_int_mask_type() {
+            if constexpr (N == 8) return std::uint8_t{};
+            else if constexpr (N == 16) return std::uint16_t{};
+            else if constexpr (N == 32) return std::uint32_t{};
+            else if constexpr (N == 64) return std::uint64_t{};
+        }
+    } // namespace internal
+
+    template <std::size_t N, typename T>
+    struct IntMask {
+        using size_type = std::size_t;
+        static constexpr bool is_packed = []{
+            if constexpr (sizeof(T) == 1 && N == 16) {
+                #ifdef UI_CPU_ARM64
+                return false;
+                #else
+                return true;
+                #endif
+            }
+            return true;
+        }();
+        using base_type = std::conditional_t<is_packed, decltype(internal::get_int_mask_type<N, T>()), std::uint64_t>;
+
+        static_assert(!std::is_void_v<base_type>, "invalid N; it cannot be represented using machine integer type");
+
+        static constexpr base_type all_mask = is_packed ? ~base_type{} : 0xffff'ffff'ffff'ffffll;
+
+        base_type mask;
+
+        constexpr IntMask() noexcept = default;
+        constexpr IntMask(IntMask const&) noexcept = default;
+        constexpr IntMask(IntMask &&) noexcept = default;
+        constexpr IntMask& operator=(IntMask const&) noexcept = default;
+        constexpr IntMask& operator=(IntMask &&) noexcept = default;
+        constexpr ~IntMask() noexcept = default;
+
+        constexpr IntMask(base_type m) noexcept
+            : mask(m)
+        {}
+
+        constexpr IntMask(mask_t<N, T> const& m) noexcept;
+
+        constexpr auto operator[](size_type k) const noexcept -> bool {
+            assert((k < sizeof(T) * 8) && "out of bound");
+            if constexpr (is_packed) {
+                return mask & (1 << k);
+            } else {
+                return mask & (1 << (k * 8 - 1));
+            }
+        }
+
+        constexpr auto all() const noexcept -> bool {
+            if constexpr (is_packed) {
+                return mask == ~base_type{};
+            } else {
+                return mask == all_mask;
+            }
+        }
+
+        constexpr auto any() const noexcept -> bool {
+            if constexpr (is_packed) {
+                return mask & ~base_type{};
+            } else {
+                return mask & all_mask;
+            }
+        }
+
+        constexpr auto none() const noexcept -> bool {
+            return !any();
+        }
+
+        constexpr auto operator&(IntMask other) const noexcept -> IntMask {
+            return { mask & other.mask };
+        }
+
+        constexpr auto operator&(base_type other) const noexcept -> IntMask {
+            return { mask & other };
+        }
+
+        constexpr auto operator|(IntMask other) const noexcept -> IntMask {
+            return { mask | other.mask };
+        }
+
+        constexpr auto operator|(base_type other) const noexcept -> IntMask {
+            return { mask | other };
+        }
+
+        constexpr auto operator^(IntMask other) const noexcept -> IntMask {
+            return { mask ^ other.mask };
+        }
+
+        constexpr auto operator^(base_type other) const noexcept -> IntMask {
+            return { mask ^ other };
+        }
+
+        constexpr auto operator~() const noexcept -> IntMask {
+            return { ~mask };
+        }
+
+        constexpr auto first_match() const noexcept -> size_type {
+            auto res = static_cast<size_type>(std::countr_zero(mask));
+            if constexpr (is_packed) return res;
+            else return res >> 2;
+        }
+
+        constexpr auto last_match() const noexcept -> size_type {
+            return N - first_match();
+        }
+
+        constexpr operator bool() const noexcept {
+            return static_cast<bool>(mask);
+        }
+
+        struct Iterator {
+            using value_type = unsigned;
+            using reference = value_type&;
+            using const_reference = value_type const&;
+            using pointer = value_type*;
+            using const_pointer = value_type const*;
+            using difference_type = std::ptrdiff_t;
+            using iterator_category = std::forward_iterator_tag;
+
+            constexpr Iterator() noexcept = default; 
+            constexpr Iterator(Iterator const&) noexcept = default;
+            constexpr Iterator(Iterator &&) noexcept = default;
+            constexpr Iterator& operator=(Iterator const&) noexcept = default;
+            constexpr Iterator& operator=(Iterator &&) noexcept = default;
+            constexpr ~Iterator() noexcept = default;
+
+            constexpr Iterator(base_type m) noexcept
+                : m_mask(m)
+                , m_index(get_index(m))
+            {
+                if constexpr (!is_packed) {
+                    m_mask &= 0x8888'8888'8888'8888;
+                }
+            }
+
+            constexpr const_pointer operator*() const noexcept { return &m_index; }
+            constexpr pointer operator->() noexcept { return m_index; }
+
+            constexpr Iterator& operator++() noexcept { 
+                m_mask &= m_mask - 1;
+                m_index = get_index(m_mask);
+                return *this;
+            }
+
+            constexpr Iterator& operator++(int) noexcept { 
+                auto temp = *this;
+                ++(*this);
+                return temp;
+            }
+
+            friend constexpr auto operator==(Iterator lhs, Iterator rhs) noexcept {
+                return lhs.m_mask == rhs.m_mask;
+            }
+
+            friend constexpr auto operator!=(Iterator lhs, Iterator rhs) noexcept {
+                return lhs.m_mask != rhs.m_mask;
+            }
+        private:
+            static constexpr auto get_index(base_type m) noexcept -> value_type {
+                auto temp = static_cast<value_type>(std::countr_zero(m));
+                if constexpr (!is_packed) return temp >> 2;
+                return temp;
+            }
+        private:
+            base_type m_mask{};
+            value_type m_index{};
+        };
+
+
+        using iterator = Iterator;
+        using const_iterator = iterator const;
+        using reverse_iterator = std::reverse_iterator<iterator>;
+        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+        constexpr auto begin() const noexcept -> const_iterator {
+            return { mask };
+        }
+
+        constexpr auto end() const noexcept -> const_iterator {
+            return {};
+        }
+
+        constexpr auto begin() noexcept -> iterator {
+            return { mask };
+        }
+
+        constexpr auto end() noexcept -> iterator {
+            return {};
+        }
+
+        constexpr auto rbegin() const noexcept -> const_reverse_iterator {
+           return std::reverse_iterator(begin()); 
+        }
+
+        constexpr auto rend() const noexcept -> const_reverse_iterator {
+           return std::reverse_iterator(end()); 
+        }
+
+        constexpr auto rbegin() noexcept -> reverse_iterator {
+           return std::reverse_iterator(begin()); 
+        }
+
+        constexpr auto rend() noexcept -> reverse_iterator {
+           return std::reverse_iterator(end()); 
+        }
+    };
+
+
+    template <std::size_t N, typename T>
+    IntMask(Vec<N, T> const& m) noexcept -> IntMask<N, T>;
 } // namespace ui
 
 #endif // AMT_UI_BASE_VEC_HPP
