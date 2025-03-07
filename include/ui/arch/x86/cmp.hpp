@@ -7,11 +7,9 @@
 #include "minmax.hpp"
 #include <algorithm>
 #include <bit>
-#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <type_traits>
 
 namespace ui::x86 {
@@ -288,9 +286,9 @@ namespace ui::x86 {
                 auto l = to_vec(lhs);
                 auto r = to_vec(rhs);
                 if constexpr (std::same_as<T, float>) {
-                    return from_vec<result_t>(_mm256_castps_si256(_mm256_cmp_ps(l, r, _CMP_GE_OQ)));
+                    return from_vec<result_t>(_mm256_castps_si256(_mm256_cmp_ps(l, r, _CMP_LE_OQ)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return from_vec<result_t>(_mm256_castpd_si256(_mm256_cmp_pd(l, r, _CMP_GE_OQ)));
+                    return from_vec<result_t>(_mm256_castpd_si256(_mm256_cmp_pd(l, r, _CMP_LE_OQ)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<result_t>(cmp(cast<float>(lhs), cast<float>(rhs), op));
                 } else if constexpr (std::is_signed_v<T>) {
@@ -377,13 +375,15 @@ namespace ui::x86 {
                     }
                  } else {
                     if constexpr (sizeof(T) == 1) {
-                        auto zeros = _mm_setzero_si128();
-                        auto res = _mm_subs_epu8(l, r);
-                        return from_vec<result_t>(_mm_cmpgt_epi8(res, zeros));
+                        auto sign = _mm_set1_epi8(0x80);
+                        auto a = _mm_sub_epi8(l, sign);
+                        auto b = _mm_sub_epi8(r, sign);
+                        return from_vec<result_t>(_mm_cmpgt_epi8(a, b));
                     } else if constexpr (sizeof(T) == 2) {
-                        auto zeros = _mm_setzero_si128();
-                        auto res = _mm_subs_epu16(l, r);
-                        return from_vec<result_t>(_mm_cmpgt_epi16(res, zeros));
+                        auto sign = _mm_set1_epi16(0x8000);
+                        auto a = _mm_sub_epi16(l, sign);
+                        auto b = _mm_sub_epi16(r, sign);
+                        return from_vec<result_t>(_mm_cmpgt_epi16(a, b));
                     } else if constexpr (sizeof(T) == 4) {
                         auto sign = _mm_set1_epi32(0x8000'0000);
                         auto a = _mm_sub_epi32(l, sign);
@@ -425,13 +425,15 @@ namespace ui::x86 {
                 } else {
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
                     if constexpr (sizeof(T) == 1) {
-                        auto zeros = _mm256_setzero_si256();
-                        auto res = _mm256_subs_epu8(l, r);
-                        return from_vec<result_t>(_mm256_cmpgt_epi8(res, zeros));
+                        auto sign = _mm256_set1_epi8(0x80);
+                        auto a = _mm256_sub_epi8(l, sign);
+                        auto b = _mm256_sub_epi8(r, sign);
+                        return from_vec<result_t>(_mm256_cmpgt_epi8(a, b));
                     } else if constexpr (sizeof(T) == 2) {
-                        auto zeros = _mm256_setzero_si256();
-                        auto res = _mm256_subs_epu16(l, r);
-                        return from_vec<result_t>(_mm256_cmpgt_epi16(res, zeros));
+                        auto sign = _mm256_set1_epi16(0x8000);
+                        auto a = _mm256_sub_epi16(l, sign);
+                        auto b = _mm256_sub_epi16(r, sign);
+                        return from_vec<result_t>(_mm256_cmpgt_epi16(a, b));
                     } else if constexpr (sizeof(T) == 4) {
                         auto sign = _mm256_set1_epi32(0x8000'0000);
                         auto a = _mm256_sub_epi32(l, sign);
@@ -492,6 +494,11 @@ namespace ui::x86 {
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T>;
 
+    template <std::size_t N, std::integral T>
+    UI_ALWAYS_INLINE auto sat_abs(
+        Vec<N, T> const& v
+    ) noexcept -> Vec<N, T>;
+
 // MARK: Absolute greater than or equal to
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto cmp(
@@ -499,11 +506,19 @@ namespace ui::x86 {
         Vec<N, T> const& rhs,
         [[maybe_unused]] op::abs_greater_equal_t op
     ) noexcept -> mask_t<N, T> {
-        return cmp(
-            abs<true>(lhs),
-            abs<true>(rhs),
-            op::greater_equal_t{}
-        );
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::greater_equal_t{}
+            );
+        } else {
+            return cmp(
+                abs<true>(lhs),
+                abs<true>(rhs),
+                op::greater_equal_t{}
+            );
+        }
     }
 // !MARK
 
@@ -514,11 +529,19 @@ namespace ui::x86 {
         Vec<N, T> const& rhs,
         [[maybe_unused]] op::abs_less_equal_t op
     ) noexcept -> mask_t<N, T> {
-        return cmp(
-            abs<true>(lhs),
-            abs<true>(rhs),
-            op::less_equal_t{}
-        );
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::less_equal_t{}
+            );
+        } else {
+            return cmp(
+                abs<true>(lhs),
+                abs<true>(rhs),
+                op::less_equal_t{}
+            );
+        }
     }
 // !MARK
 
@@ -529,11 +552,19 @@ namespace ui::x86 {
         Vec<N, T> const& rhs,
         [[maybe_unused]] op::abs_greater_t op
     ) noexcept -> mask_t<N, T> {
-        return cmp(
-            abs<true>(lhs),
-            abs<true>(rhs),
-            op::greater_t{}
-        );
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::greater_t{}
+            );
+        } else {
+            return cmp(
+                abs<true>(lhs),
+                abs<true>(rhs),
+                op::greater_t{}
+            );
+        }
     }
 // !MARK
 
@@ -544,11 +575,19 @@ namespace ui::x86 {
         Vec<N, T> const& rhs,
         [[maybe_unused]] op::abs_less_t op
     ) noexcept -> mask_t<N, T> {
-        return cmp(
-            abs<true>(lhs),
-            abs<true>(rhs),
-            op::less_t{}
-        );
+        if constexpr (std::integral<T>) {
+            return cmp(
+                sat_abs(lhs),
+                sat_abs(rhs),
+                op::less_t{}
+            );
+        } else {
+            return cmp(
+                abs<true>(lhs),
+                abs<true>(rhs),
+                op::less_t{}
+            );
+        }
     }
 // !MARK
 

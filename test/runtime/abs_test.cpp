@@ -32,7 +32,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Absolute Operations", "[absolute][8bit]" ) {
             INFO(std::format("abs_diff(v, 10s): {}", res));
             type ts[] = { -118, 117, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
             for (auto i = 0ul; i < N; ++i) {
-                INFO(std::format("{} == {}", int(res[i]), int(ts[i])));
+                INFO(std::format("[{}]: {} == {}", i, int(res[i]), int(ts[i])));
                 REQUIRE(res[i] == ts[i]);
             }
         }
@@ -99,7 +99,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Absolute Operations", "[absolute][8bit]" ) {
             INFO(std::format("abs_diff(v, 10s): {}", res));
             type ts[] = { 10, 245, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
             for (auto i = 0ul; i < N; ++i) {
-                INFO(std::format("{} == {}", int(res[i]), int(ts[i])));
+                INFO(std::format("[{}]: {} == {}", i, int(res[i]), int(ts[i])));
                 REQUIRE(res[i] == ts[i]);
             }
         }
@@ -387,7 +387,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Absolute Operations", "[absolute][64bit]" ) {
             type ts[] = { -9223372036854775798ll, 9223372036854775797ll, 10, 9, 8, 7, 6,
   5 };
             for (auto i = 0ul; i < N; ++i) {
-                INFO(std::format("{} == {}", res[i], ts[i]));
+                INFO(std::format("[{}]: {} == {}", i, res[i], ts[i]));
                 REQUIRE(res[i] == ts[i]);
             }
         }

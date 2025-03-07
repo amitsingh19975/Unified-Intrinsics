@@ -561,7 +561,6 @@ namespace ui::x86 {
 
 // MARK: Bitwise select
     template <std::size_t N, typename T>
-        requires (std::is_arithmetic_v<T>)
     UI_ALWAYS_INLINE auto bitwise_select(
         mask_t<N, T> const& cond,
         Vec<N, T> const& true_,
@@ -578,7 +577,7 @@ namespace ui::x86 {
                 if constexpr (std::same_as<T, float>) {
                     return from_vec<T>(_mm_blendv_ps(f, t, _mm_castsi128_ps(c)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return from_vec<T>(_mm_blendv_ps(f, t, _mm_castsi128_pd(c)));
+                    return from_vec<T>(_mm_blendv_pd(f, t, _mm_castsi128_pd(c)));
                 } else if constexpr (sizeof(T) == 1) {
                     return from_vec<T>(_mm_blendv_epi8(f, t, c));
                 } else {
@@ -600,9 +599,9 @@ namespace ui::x86 {
                 auto t = to_vec(true_);
                 auto f = to_vec(false_);
                 if constexpr (std::same_as<T, float>) {
-                    return from_vec<T>(_mm256_blendv_ps(f, t, _mm_castsi128_ps(c)));
+                    return from_vec<T>(_mm256_blendv_ps(f, t, _mm256_castsi256_ps(c)));
                 } else if constexpr (std::same_as<T, double>) {
-                    return from_vec<T>(_mm256_blendv_ps(f, t, _mm_castsi128_pd(c)));
+                    return from_vec<T>(_mm256_blendv_pd(f, t, _mm256_castsi256_pd(c)));
                 } else if constexpr (sizeof(T) == 1) {
                     return from_vec<T>(_mm256_blendv_epi8(f, t, c));
                 } else {

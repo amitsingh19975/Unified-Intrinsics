@@ -7,11 +7,9 @@
 #include "../emul/abs.hpp"
 #include <algorithm>
 #include <bit>
-#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <type_traits>
 #include "sub.hpp"
 #include "add.hpp"
@@ -129,12 +127,28 @@ namespace ui::x86 {
     }
 
     template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto bitwise_select(
+        mask_t<N, T> const& cond,
+        Vec<N, T> const& true_,
+        Vec<N, T> const& false_
+    ) noexcept -> Vec<N, T>;
+
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto abs_diff(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        auto diff = sub(lhs, rhs); 
-        return abs(diff);
+        if constexpr (std::is_signed_v<T>) {
+            auto s0 = sub(lhs, rhs);
+            auto s1 = sub(rhs, lhs);
+            auto c = cmp(lhs, rhs, op::greater_t{});
+            auto temp = bitwise_select(c, s0, s1);
+            return temp;
+        } else {
+            auto s0 = sat_sub(lhs, rhs);
+            auto s1 = sat_sub(rhs, lhs);
+            return bitwise_or(s0, s1);
+        }
     }
 
     template <std::size_t N, typename T>

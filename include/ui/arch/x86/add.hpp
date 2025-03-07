@@ -7,11 +7,9 @@
 #include "../emul/add.hpp"
 #include <algorithm>
 #include <bit>
-#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <type_traits>
 
 namespace ui::x86 {
@@ -376,7 +374,6 @@ namespace ui::x86 {
     ) noexcept -> Vec<N, T>;
 
     template <std::size_t N, typename T>
-        requires (std::is_arithmetic_v<T>)
     UI_ALWAYS_INLINE auto bitwise_select(
         mask_t<N, T> const& cond,
         Vec<N, T> const& true_,
