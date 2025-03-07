@@ -25,7 +25,7 @@ This library aims to unify vector intrinsics. If an instrinsic exists in arm but
     - [x] Matrix support
     - [x] Support for float16 and bfloat16
 - [x] Generic implementation (Let the compiler decide)
-- [x] Write wrappers `x86` (`SSE`, `AVX`, `AVX2`, and `AVX512`)
+- [x] Write wrappers `x86` (`SSE`, `AVX 256`, and `AVX512`)
     - [x] Absolute Ops
     - [x] Addition
     - [x] Bit Manipulation
