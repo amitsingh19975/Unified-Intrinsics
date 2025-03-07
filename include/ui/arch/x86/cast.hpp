@@ -7,6 +7,7 @@
 #include "../../vec_headers.hpp"
 #include "../../float.hpp"
 #include "../../matrix.hpp"
+#include "../emul/cast.hpp"
 #include <bit>
 #include <concepts>
 #include <cstdint>
@@ -16,6 +17,8 @@
 #include "basic.hpp"
 
 namespace ui::x86 {
+    using emul::rcast;
+
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE constexpr auto to_vec(Vec<N, T> const& v) noexcept {
        if constexpr (std::floating_point<T>) {

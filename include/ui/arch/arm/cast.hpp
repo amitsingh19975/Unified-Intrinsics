@@ -7,6 +7,7 @@
 #include "../../vec_headers.hpp"
 #include "../../float.hpp"
 #include "../../matrix.hpp"
+#include "../emul/cast.hpp"
 #include <arm_neon.h>
 #include <bit>
 #include <concepts>
@@ -15,6 +16,8 @@
 #include <type_traits>
 
 namespace ui::arm::neon {
+    using emul::rcast;
+
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE constexpr auto to_vec(Vec<N, T> const& v) noexcept {
         if constexpr (std::floating_point<T>) {
@@ -1258,28 +1261,6 @@ namespace ui::arm::neon {
     template <typename To, std::size_t N, std::integral From>
     UI_ALWAYS_INLINE auto sat_cast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
         return internal::CastImpl<To, true>{}(v);
-    }
-
-    // reinterpret cast
-    template <typename To, std::size_t N, typename From>
-        requires (sizeof(To) == sizeof(From))
-    UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
-        return std::bit_cast<Vec<N, To>>(v);
-    }
-
-    template <typename To, std::size_t N, typename From>
-        requires (sizeof(To) < sizeof(From))
-    UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept {
-        static constexpr auto ratio = sizeof(From) / sizeof(To);
-        return std::bit_cast<Vec<N * ratio, To>>(v);
-    }
-
-    template <typename To, std::size_t N, typename From>
-        requires (sizeof(To) > sizeof(From))
-    UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept {
-        static constexpr auto ratio = sizeof(To) / sizeof(From);
-        static_assert(N / ratio > 0, "up-cast is not possible because 'To' type is way bigger than the vector register");
-        return std::bit_cast<Vec<N / ratio, To>>(v);
     }
 
     template <typename T>

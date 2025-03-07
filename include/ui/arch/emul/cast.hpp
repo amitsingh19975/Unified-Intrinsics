@@ -50,11 +50,28 @@ namespace ui::emul {
         }, v);
     }
 
-    // retinterpret cast
+    // reinterpret cast
     template <typename To, std::size_t N, typename From>
+        requires (sizeof(To) == sizeof(From))
     UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept -> Vec<N, To> {
         return std::bit_cast<Vec<N, To>>(v);
     }
+
+    template <typename To, std::size_t N, typename From>
+        requires (sizeof(To) < sizeof(From))
+    UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept {
+        static constexpr auto ratio = sizeof(From) / sizeof(To);
+        return std::bit_cast<Vec<N * ratio, To>>(v);
+    }
+
+    template <typename To, std::size_t N, typename From>
+        requires (sizeof(To) > sizeof(From))
+    UI_ALWAYS_INLINE constexpr auto rcast(Vec<N, From> const& v) noexcept {
+        static constexpr auto ratio = sizeof(To) / sizeof(From);
+        static_assert(N / ratio > 0, "up-cast is not possible because 'To' type is way bigger than the vector register");
+        return std::bit_cast<Vec<N / ratio, To>>(v);
+    }
+
 
     UI_ALWAYS_INLINE constexpr auto to_vec(auto const& v) noexcept {
         return v;
