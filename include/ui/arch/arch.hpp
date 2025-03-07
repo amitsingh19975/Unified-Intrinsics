@@ -54,6 +54,7 @@ namespace ui {
     #include "x86/div.hpp"
     #include "x86/sqrt.hpp"
     #include "x86/reciprocal.hpp"
+    #include "x86/manip.hpp"
 
     namespace ui {
         using namespace x86;
