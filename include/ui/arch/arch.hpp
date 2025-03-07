@@ -79,7 +79,8 @@ namespace ui {
     #include "emul/shift.hpp"
     #include "emul/sub.hpp"
     #include "emul/sqrt.hpp"
-    #include "arm/permute.hpp"
+    #include "emul/permute.hpp"
+    #include "emul/int_mask.hpp"
 
     namespace ui {
         using namespace emul;
