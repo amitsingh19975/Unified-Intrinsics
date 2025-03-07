@@ -710,7 +710,46 @@ namespace ui::x86 {
         }
     }
 // !MARK
-
 } // namespace ui::x86
+
+namespace ui {
+// MARK: IntMask
+    template <std::size_t N, typename T>
+    inline constexpr IntMask<N, T>::IntMask(mask_t<N, T> const& m) noexcept {
+        using namespace x86;
+
+        using mtype = mask_inner_t<T>;
+        if constexpr (is_packed) {
+            if constexpr (sizeof(T) == 1) {
+                if constexpr (N == 16) {
+                    mask = static_cast<base_type>(_mm_movemask_epi8(to_vec(m)));
+                    return;
+                }
+
+                if constexpr (N == 32) {
+                    #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+                    mask = static_cast<base_type>(_mm256_movemask_epi8(to_vec(m)));
+                    return;
+                    #endif
+                }
+            }
+
+            auto ext = rcast<mtype>(shift_right<7>(rcast<std::make_signed_t<T>>(m)));
+            auto helper = [&ext]<std::size_t... Is>(std::index_sequence<Is...>) -> base_type {
+                auto res = base_type{};
+                ((res |= (base_type((ext[Is] & 1) << Is))),...);
+                return res;
+            };
+            mask = helper(std::make_index_sequence<N>{});
+        } else {
+            auto tmp = rcast<std::uint16_t>(m);
+            auto s = narrowing_shift_right<4>(tmp);
+            mask = std::bit_cast<base_type>(rcast<std::uint64_t>(s));
+        }
+    }
+
+// !MARK
+} // namespace ui
+
 
 #endif // AMT_UI_ARCH_X86_MANIP_HPP 
