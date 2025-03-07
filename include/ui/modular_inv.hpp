@@ -20,15 +20,15 @@ namespace ui::maths {
         template <std::size_t Iter = 1, bool M = false, typename T>
             requires (std::is_arithmetic_v<T>)
         static constexpr auto calculate_reciprocal(T n, T nr = T(1)) noexcept -> T {
-            constexpr auto iter = [](T n, T nr) {
+            constexpr auto iter = [](T n_, T nr_) {
                 for (auto i = std::size_t{}; i < Iter; ++i) {
-                    T t = 2 - n * nr; 
+                    T t = 2 - n_ * nr_; 
                     if constexpr (M) {
-                       t = t * nr; 
+                       t = t * nr_; 
                     } 
-                    nr = t;
+                    nr_ = t;
                 }
-                return nr;
+                return nr_;
             };
             if constexpr (std::integral<T>) {
                 return iter(n, nr);
