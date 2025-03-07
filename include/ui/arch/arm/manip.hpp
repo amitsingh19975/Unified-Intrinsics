@@ -13,7 +13,7 @@ namespace ui::arm::neon {
 
 // MARK: Copy vector lane
     template <unsigned ToLane, unsigned FromLane, std::size_t N, std::size_t M, typename T>
-        requires (ToLane < N && FromLane < M && std::is_arithmetic_v<T>)
+        requires (ToLane < N && FromLane < M)
     UI_ALWAYS_INLINE auto copy(
         Vec<N, T> const& to,
         Vec<M, T> const& from
