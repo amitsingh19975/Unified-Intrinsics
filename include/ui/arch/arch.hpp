@@ -55,6 +55,7 @@ namespace ui {
     #include "x86/sqrt.hpp"
     #include "x86/reciprocal.hpp"
     #include "x86/manip.hpp"
+    #include "arm/permute.hpp"
 
     namespace ui {
         using namespace x86;
