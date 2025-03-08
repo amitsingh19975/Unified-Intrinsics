@@ -1292,7 +1292,7 @@ namespace ui {
                 auto ext = rcast<mtype>(shift_right<7>(rcast<std::make_signed_t<T>>(m)));
                 auto helper = [&ext]<std::size_t... Is>(std::index_sequence<Is...>) -> base_type {
                     auto res = base_type{};
-                    ((res |= (base_type(ext[Is] & 1) << Is)),...);
+                    ((res |= (base_type((ext[Is] & 1) << Is))),...);
                     return res;
                 };
                 mask = helper(std::make_index_sequence<N>{});
