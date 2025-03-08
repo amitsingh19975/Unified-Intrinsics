@@ -3,7 +3,8 @@
 
 #include "float.hpp"
 #include "base_vec.hpp"
-#include "ui/matrix.hpp"
+#include "matrix.hpp"
+#include "arch/cpu_info.hpp"
 #include <concepts>
 #include <format>
 #include <iterator>
@@ -109,6 +110,50 @@ namespace std {
                 format_to(out, "]\n");
             }
             return format_to(out, "]");
+        }
+    };
+
+    template <>
+    struct formatter<ui::CpuInfo> {
+        constexpr auto parse(format_parse_context& ctx) {
+            return ctx.begin();
+        }
+
+        constexpr auto humanize_size(std::size_t size) const -> std::string {
+            auto s0 = size % 1024;
+            auto s1 = size / 1024;
+            if (s1 == 0) return std::format("{}B", s0);
+            s0 = s1 % 1024;
+            s1 = s1 / 1024;
+            if (s1 == 0) return std::format("{}KiB", s0);
+           
+            s0 = s1 % 1024;
+            s1 = s1 / 1024;
+            if (s1 == 0) return std::format("{}MiB", s0);
+
+            s0 = s1 % 1024;
+            s1 = s1 / 1024;
+            if (s1 == 0) return std::format("{}GiB", s0);
+            return std::format("{}B", s1);
+        }
+
+        auto format(ui::CpuInfo const& info, auto& ctx) const {
+            auto&& out = ctx.out();
+            format_to(out, "{{\n");
+            format_to(out, "\tMemory Size: {}\n", humanize_size(info.mem));
+            format_to(out, "\tCache Line Size: {}\n", humanize_size(info.cacheline));
+            format_to(out, "\tCache: [");
+            for (auto [l, s]: info.cache) {
+                format_to(out, "(Level: {}, Size: {}), ", l, humanize_size(s));
+            }
+            format_to(out, "]\n");
+
+            format_to(out, "\tInstruction Cache: [");
+            for (auto [l, s]: info.icache) {
+                format_to(out, "(Level: {}, Size: {}), ", l, humanize_size(s));
+            }
+            format_to(out, "]\n");
+            return format_to(out, "}}");
         }
     };
 }

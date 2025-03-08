@@ -1,3 +1,4 @@
+#include "ui/arch/cpu_info.hpp"
 #include "ui/base_vec.hpp"
 #include "ui/vec_op.hpp"
 #include "ui/float.hpp"

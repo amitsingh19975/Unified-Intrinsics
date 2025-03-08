@@ -116,4 +116,33 @@
     }
 #endif
 
+#ifndef UI_CACHE_LINE_SIZE
+    #ifdef UI_ARM_HAS_NEON
+        #define UI_CACHE_LINE_SIZE 128
+    #elif defined(UI_COMPILER_MSVC)
+      #if defined(_M_ARM) || defined(_M_ARM64)
+        #define UI_CACHE_LINE_SIZE 64
+      #elif defined(_M_X64) || defined(_M_IX86)
+        #define UI_CACHE_LINE_SIZE 64
+      #else
+        #define UI_CACHE_LINE_SIZE 64  // default assumption
+      #endif
+
+    // GCC/Clang
+    #elif defined(UI_COMPILER_GCC) || defined(UI_COMPILER_CLANG)
+      #if defined(__aarch64__)
+        #define UI_CACHE_LINE_SIZE 64
+      #elif defined(__arm__)
+        #define UI_CACHE_LINE_SIZE 32
+      #elif defined(__x86_64__) || defined(__i386__)
+        #define UI_CACHE_LINE_SIZE 64
+      #else
+        #define UI_CACHE_LINE_SIZE 64  // default fallback
+      #endif
+
+    #else
+      #define UI_CACHE_LINE_SIZE 64  // default assumption
+    #endif
+#endif
+
 #endif // AMT_UI_FEATURES_HPP
