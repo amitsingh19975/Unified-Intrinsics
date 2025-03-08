@@ -32,7 +32,7 @@
     #include <sys/sysinfo.h>
 #endif
 
-namespace ui::arm::neon {
+namespace ui {
     struct CacheInfo {
         std::uint8_t level;
         unsigned size;
@@ -165,38 +165,38 @@ namespace ui::arm::neon {
             // _SC_LEVEL1_DCACHE_LINESIZE is available on some systems.
             long cl = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
             if (cl > 0)
-                res.cacheline = static_cast<std::size_t>(cl);
+                res.cacheline = static_cast<unsigned>(cl);
 
             // Get cache sizes (if available)
             long l1d = sysconf(_SC_LEVEL1_DCACHE_SIZE);
             if (l1d > 0)
-                res.cache.push_back({ 1, static_cast<std::size_t>(l1d) });
+                res.cache.push_back({ 1, static_cast<unsigned>(l1d) });
 
             long l2 = sysconf(_SC_LEVEL2_CACHE_SIZE);
             if (l2 > 0)
-                res.cache.push_back({ 2, static_cast<std::size_t>(l2) });
+                res.cache.push_back({ 2, static_cast<unsigned>(l2) });
 
             long l3 = sysconf(_SC_LEVEL3_CACHE_SIZE);
             if (l3 > 0)
-                res.cache.push_back({ 3, static_cast<std::size_t>(l3) });
+                res.cache.push_back({ 3, static_cast<unsigned>(l3) });
 
             // For instruction caches, some systems define these macros.
             #ifdef _SC_LEVEL1_ICACHE_SIZE
             long l1i = sysconf(_SC_LEVEL1_ICACHE_SIZE);
             if (l1i > 0)
-                res.icache.push_back({ 1, static_cast<std::size_t>(l1i) });
+                res.icache.push_back({ 1, static_cast<unsigned>(l1i) });
             #endif
 
             #ifdef _SC_LEVEL2_ICACHE_SIZE
             long l2i = sysconf(_SC_LEVEL2_ICACHE_SIZE);
             if (l2i > 0)
-                res.icache.push_back({ 2, static_cast<std::size_t>(l2i) });
+                res.icache.push_back({ 2, static_cast<unsigned>(l2i) });
             #endif
 
             #ifdef _SC_LEVEL3_ICACHE_SIZE
             long l3i = sysconf(_SC_LEVEL3_ICACHE_SIZE);
             if (l3i > 0)
-                res.icache.push_back({ 3, static_cast<std::size_t>(l3i) });
+                res.icache.push_back({ 3, static_cast<unsigned>(l3i) });
             #endif
 
             return res;
@@ -208,6 +208,6 @@ namespace ui::arm::neon {
         return internal::cpu_info_helper();
     }
 
-} // ui::arm::neon
+} // ui
 
 #endif // AMT_UI_ARCH_ARM_INFO_HPP 
