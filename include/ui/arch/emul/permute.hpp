@@ -1,10 +1,10 @@
-#ifndef AMT_UI_ARCH_PERMUTE_HPP
-#define AMT_UI_ARCH_PERMUTE_HPP
+#ifndef AMT_UI_ARCH_EMUL_PERMUTE_HPP
+#define AMT_UI_ARCH_EMUL_PERMUTE_HPP
 
 #include "cast.hpp"
-#include "ui/maths.hpp"
+#include "../../maths.hpp"
 
-namespace ui {
+namespace ui::emul {
 
     namespace internal {
         #if defined(UI_COMPILER_CLANG) || defined(UI_COMPILER_GCC)
@@ -43,6 +43,6 @@ namespace ui {
             return Vec<R, T>::load(x[Is]...);
         #endif
     }
-} // ui
+} // ui::emul
 
-#endif // AMT_UI_ARCH_PERMUTE_HPP 
+#endif // AMT_UI_ARCH_EMUL_PERMUTE_HPP 

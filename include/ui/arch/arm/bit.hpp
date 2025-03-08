@@ -5,7 +5,6 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 #include "../emul/bit.hpp"
 #include "add.hpp"
 

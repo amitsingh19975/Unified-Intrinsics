@@ -2,11 +2,8 @@
 #define AMT_UI_ARCH_ARM_MINMAX_HPP
 
 #include "cast.hpp"
-#include <bit>
 #include <concepts>
 #include <cstddef>
-#include <algorithm>
-#include <type_traits>
 #include "../emul/minmax.hpp"
 
 namespace ui::arm::neon {

@@ -2,14 +2,9 @@
 #define AMT_UI_ARCH_ARM_SUB_HPP
 
 #include "cast.hpp"
-#include <algorithm>
-#include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
-#include <limits>
-#include <type_traits>
 #include "../basic.hpp"
 #include "../emul/sub.hpp"
 #include "logical.hpp"

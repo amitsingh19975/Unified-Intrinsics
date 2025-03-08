@@ -2,15 +2,12 @@
 #define AMT_UI_ARCH_ARM_CMP_HPP
 
 #include "cast.hpp"
-#include <bit>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <type_traits>
 #include "../emul/cmp.hpp"
 #include "abs.hpp"
-#include "ui/base.hpp"
 
 namespace ui::arm::neon { 
 

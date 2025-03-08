@@ -6,7 +6,6 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
 namespace ui::arm::neon {
 // MARK: Multiplication

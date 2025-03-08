@@ -5,10 +5,8 @@
 #include "sub.hpp"
 #include "mul.hpp"
 #include "rounding.hpp"
-#include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <cstdlib>
 #include <limits>
 
 namespace ui::arm::neon {

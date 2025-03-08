@@ -2,11 +2,8 @@
 #define AMT_UI_ARCH_ARM_ROUNDING_HPP
 
 #include "cast.hpp"
-#include <cassert>
-#include <cfenv>
 #include <concepts>
 #include <cstddef>
-#include <cstdlib>
 #include <limits>
 #include "../emul/rounding.hpp"
 

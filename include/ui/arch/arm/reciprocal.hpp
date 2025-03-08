@@ -2,12 +2,8 @@
 #define AMT_UI_ARCH_ARM_RECIPROCAL_HPP
 
 #include "cast.hpp"
-#include <cassert>
-#include <cfenv>
 #include <concepts>
 #include <cstddef>
-#include <cstdlib>
-#include <type_traits>
 #include "../emul/reciprocal.hpp"
 
 namespace ui::arm::neon {

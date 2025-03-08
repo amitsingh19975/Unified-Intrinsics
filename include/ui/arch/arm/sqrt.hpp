@@ -3,10 +3,8 @@
 
 #include "cast.hpp"
 #include "../emul/sqrt.hpp"
-#include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <cstdlib>
 
 namespace ui::arm::neon {
 
