@@ -31,6 +31,7 @@ namespace ui {
     #include "arm/sub.hpp"
     #include "arm/sqrt.hpp"
     #include "arm/permute.hpp"
+    #include "arm/prefetch.hpp"
 
     namespace ui {
         using namespace arm::neon;
@@ -55,7 +56,8 @@ namespace ui {
     #include "x86/sqrt.hpp"
     #include "x86/reciprocal.hpp"
     #include "x86/manip.hpp"
-    #include "arm/permute.hpp"
+    #include "x86/permute.hpp"
+    #include "x86/prefetch.hpp"
 
     namespace ui {
         using namespace x86;
@@ -81,6 +83,8 @@ namespace ui {
     #include "emul/sqrt.hpp"
     #include "emul/permute.hpp"
     #include "emul/int_mask.hpp"
+    #include "emul/permute.hpp"
+    #include "emul/prefetch.hpp"
 
     namespace ui {
         using namespace emul;
