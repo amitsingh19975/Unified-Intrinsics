@@ -46,5 +46,10 @@ This library aims to unify vector intrinsics. If an instrinsic exists in arm but
     - [x] Matrix support
     - [x] Support for float16 and bfloat16
 - [x] Writing tests
+- [x] CpuInfo using OS APIs
+    - [x] Get cache info and instruction cache info
+    - [x] Get memory size
+    - [x] Get cacheline size
+    - [x] Add compile-time macro for cacheline (it is not accurate; for accurate size, use `cpu_info` at runtime and read the field `cacheline`)
 - [ ] Writing proper examples
 
