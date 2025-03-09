@@ -40,7 +40,9 @@ namespace ui::maths {
         num |= (num >> 4);
         num |= (num >> 8);
         num |= (num >> 16);
-        num |= (num >> 32);
+        if constexpr (sizeof(num) == 8) {
+            num |= (num >> 32);
+        }
         ++num;
         return num;
     }

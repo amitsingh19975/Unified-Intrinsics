@@ -3,7 +3,9 @@
 
 #include "features.hpp"
 
-#if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+#ifdef UI_EMPSCRIPTEN_WASM_SIMD
+    #include <wasm_simd128.h>
+#elif UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
     #include <immintrin.h>
 #elif UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SSE41
     #include <smmintrin.h>
@@ -16,8 +18,6 @@
             #include <arm_bf16.h>
         #endif
     #endif
-#elif defined(__wasm_simd128__)
-    #include <wasm_simd128.h>
 #endif
 
 #endif // AMT_UI_VEC_HEADERS_HPP

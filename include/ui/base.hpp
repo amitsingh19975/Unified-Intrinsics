@@ -1,8 +1,20 @@
 #ifndef AMT_UI_BASE_HPP
 #define AMT_UI_BASE_HPP
 
+#ifndef UI_EMPSCRIPTEN
+    #ifdef __EMSCRIPTEN__
+        #define UI_EMPSCRIPTEN
+    #endif
+#endif
+
+#ifndef UI_EMPSCRIPTEN_WASM_SIMD
+    #if defined(UI_EMPSCRIPTEN) && defined(__wasm_simd128__)
+        #define UI_EMPSCRIPTEN_WASM_SIMD
+    #endif
+#endif
+
 #if !defined(UI_OS_ANDROID) && !defined(UI_OS_IOS) && !defined(UI_OS_WIN) && \
-    !defined(UI_OS_UNIX) && !defined(UI_OS_MAC)
+    !defined(UI_OS_UNIX) && !defined(UI_OS_MAC) && !defined(UI_EMPSCRIPTEN)
 
     #ifdef __APPLE__
         #include <TargetConditionals.h>

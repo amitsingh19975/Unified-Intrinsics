@@ -90,12 +90,14 @@
     #include <float.h>
 #endif
 
-#if defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN) || __has_keyword(_Float16)
-    #define UI_HAS_FLOAT_16
-#endif
+#ifndef UI_EMPSCRIPTEN
+    #if defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN) || __has_keyword(_Float16)
+        #define UI_HAS_FLOAT_16
+    #endif
 
-#if defined(__STDCPP_BFLOAT16_T__)
-    #define UI_HAS_BFLOAT_16
+    #if defined(__STDCPP_BFLOAT16_T__)
+        #define UI_HAS_BFLOAT_16
+    #endif
 #endif
 
 #ifndef UI_SUPPORT_FMA

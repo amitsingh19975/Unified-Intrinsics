@@ -11,10 +11,6 @@
 #include <type_traits>
 #include <limits>
 
-#ifdef UI_ARM_HAS_NEON
-    #include <arm_neon.h>
-#endif
-
 namespace ui {
 
     namespace internal {
@@ -273,7 +269,7 @@ namespace ui {
         explicit constexpr operator base_type() const noexcept {
             return data;
         }
-        
+
         template <typename T>
             requires (std::convertible_to<float, T>)
         explicit constexpr operator T() const noexcept {
@@ -517,32 +513,6 @@ namespace ui {
 
 } // namespace ui
 
-#if !defined(UI_HAS_CUSTOM_FLOAT16_IMPL) && defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-namespace ui::internal {
-    UI_ALWAYS_INLINE auto load_f16(ui::float16 v) noexcept -> float16x4_t {
-        auto temp = vdup_n_u16(std::bit_cast<std::uint16_t>(v));
-        return std::bit_cast<float16x4_t>(temp);
-    }
-    UI_ALWAYS_INLINE auto get_first(float16x4_t m) noexcept -> float16_t {
-        struct Wrapper {
-            float16_t data[4];
-        };
-        auto temp = std::bit_cast<Wrapper>(m);
-        return temp.data[0];
-    }
-
-    UI_ALWAYS_INLINE auto mask_get_first(uint16x4_t m) noexcept -> std::uint16_t {
-        struct Wrapper {
-            std::uint16_t data[4];
-        };
-        auto temp = std::bit_cast<Wrapper>(m);
-        return temp.data[0];
-    }
-
-} // ui::internal
-#endif
-
-
 #include <format>
 
 namespace std {
@@ -721,7 +691,7 @@ namespace std {
                 case Radix::bin: {
                     return format_to(ctx.out(), "| (sign)0b{:b} | (exp)0b{:0{}b} | (mantissa)0b{:0{}b} |", s, e + static_cast<int>(fp_rep::bias), fp_rep::exponent_bits, m, fp_rep::mantissa_bits);
                 }
-            }            
+            }
         }
     };
 }

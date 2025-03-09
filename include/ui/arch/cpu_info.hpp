@@ -28,7 +28,7 @@
 #  endif
 #elif defined(UI_OS_MAC)
     #include <sys/sysctl.h>
-#else
+#elif defined(UI_OS_UNIX) || defined(UI_OS_ANDROID)
     #include <sys/sysinfo.h>
 #endif
 
@@ -145,7 +145,7 @@ namespace ui {
 
             return res;
         }
-        #else
+        #elif defined(UI_OS_UNIX) || defined(UI_OS_ANDROID)
         inline static auto cpu_info_helper() -> CpuInfo {
             auto res = CpuInfo {
                 .cache = {},
@@ -199,6 +199,16 @@ namespace ui {
                 res.icache.push_back({ 3, static_cast<unsigned>(l3i) });
             #endif
 
+            return res;
+        }
+        #else
+        inline static auto cpu_info_helper() -> CpuInfo {
+            auto res = CpuInfo {
+                .cache = {},
+                .icache = {},
+                .cacheline = UI_CACHE_LINE_SIZE,
+                .mem = 4 * 1024 * 1024,
+            };
             return res;
         }
         #endif

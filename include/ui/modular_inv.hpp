@@ -20,9 +20,9 @@ namespace ui::maths {
         template <std::size_t Iter = 1, bool M = false, typename T>
             requires (std::is_arithmetic_v<T>)
         static constexpr auto calculate_reciprocal(T n, T nr = T(1)) noexcept -> T {
-            constexpr auto iter = [](T n_, T nr_) {
+            constexpr auto iter = []<typename U>(U n_, U nr_) -> U {
                 for (auto i = std::size_t{}; i < Iter; ++i) {
-                    T t = 2 - n_ * nr_; 
+                    U t = 2 - n_ * nr_; 
                     if constexpr (M) {
                        t = t * nr_; 
                     } 
