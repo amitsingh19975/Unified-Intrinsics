@@ -8,7 +8,6 @@
 #include <print>
 #include <cmath>
 #include "ui.hpp"
-#include "ui/base.hpp"
 #include "utils.hpp"
 
 using namespace ui;
@@ -476,7 +475,7 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
         auto res = mul(v, type(2));
         for (auto i = 0ul; i < N; ++i) {
             type l = res[i];
-            type r = type(v[i] * 2);
+            type r = type(v[i] * type(2));
             INFO(std::format("[{}]: {} == {}", i, l, r));
             REQUIRE_THAT(ftype(l), Catch::Matchers::WithinRel(ftype(r), eps<ftype>));
         }

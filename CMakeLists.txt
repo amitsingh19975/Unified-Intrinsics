@@ -20,6 +20,7 @@ include(cmake/Sanitizers.cmake)
 enable_sanitizers(ui_project_options)
 
 include(cmake/StaticAnalyzers.cmake)
+include(cmake/Emscripten.cmake)
 
 option(ENABLE_PCH "Enable Precompiled Headers" OFF)
 if(ENABLE_PCH)

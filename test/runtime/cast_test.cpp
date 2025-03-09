@@ -1837,8 +1837,8 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 			auto res = cast<bfloat16>(v);
 			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
 
-			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(INT32_MIN , eps<float>));
-			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INT32_MAX , eps<float>));
+			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(float(INT32_MIN) , eps<float>));
+			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(float(INT32_MAX) , eps<float>));
 			REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(3         , eps<float>));
 			REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(4         , eps<float>));
 		}
@@ -1847,8 +1847,8 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 			auto res = cast<float>(v);
 			static_assert(std::same_as<decltype(res)::element_t, float>);
 
-			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT32_MIN , eps<float>));
-			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT32_MAX , eps<float>));
+			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(float(INT32_MIN) , eps<float>));
+			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(float(INT32_MAX) , eps<float>));
 			REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3         , eps<float>));
 			REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4         , eps<float>));
 		}
@@ -1857,8 +1857,8 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 			auto res = cast<double>(v);
 			static_assert(std::same_as<decltype(res)::element_t, double>);
 
-			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT32_MIN , eps<double>));
-			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT32_MAX , eps<double>));
+			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(INT32_MIN) , eps<double>));
+			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double(INT32_MAX) , eps<double>));
 			REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3         , eps<double>));
 			REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4         , eps<double>));
 		}
@@ -2238,8 +2238,8 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 			auto res = cast<bfloat16>(v);
 			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
 
-			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(INT64_MIN , eps<float>));
-			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INT64_MAX , eps<float>));
+			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(float(INT64_MIN) , eps<float>));
+			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(float(INT64_MAX) , eps<float>));
 			REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(3         , eps<float>));
 			REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(4         , eps<float>));
 		}
@@ -2248,8 +2248,8 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 			auto res = cast<float>(v);
 			static_assert(std::same_as<decltype(res)::element_t, float>);
 
-			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT64_MIN , eps<float>));
-			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT64_MAX , eps<float>));
+			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(float(INT64_MIN) , eps<float>));
+			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(float(INT64_MAX) , eps<float>));
 			REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3         , eps<float>));
 			REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4         , eps<float>));
 		}
@@ -2258,8 +2258,8 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 			auto res = cast<double>(v);
 			static_assert(std::same_as<decltype(res)::element_t, double>);
 
-			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT64_MIN , eps<double>));
-			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT64_MAX , eps<double>));
+			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(INT64_MIN) , eps<double>));
+			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double(INT64_MAX) , eps<double>));
 			REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3         , eps<double>));
 			REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4         , eps<double>));
 		}
@@ -2816,45 +2816,45 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 			REQUIRE(res[3]  == 4);
 		}
 
-		/*WHEN("Casting to float16 integer") {*/
-		/*	auto res = cast<float16>(v);*/
-		/*	static_assert(std::same_as<decltype(res)::element_t, float16>);*/
-		/**/
-		/*	REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));*/
-		/*	REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));*/
-		/*	REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(3.12f     , eps<float>));*/
-		/*	REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(4.12f     , eps<float>));*/
-		/*}*/
-		/**/
-		/*WHEN("Casting to bfloat16 integer") {*/
-		/*	auto res = cast<bfloat16>(v);*/
-		/*	static_assert(std::same_as<decltype(res)::element_t, bfloat16>);*/
-		/**/
-		/*	REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));*/
-		/*	REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));*/
-		/*	REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(3.12f     , eps<float>));*/
-		/*	REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(4.12f     , eps<float>));*/
-		/*}*/
-		/**/
-		/*WHEN("Casting to float32 integer") {*/
-		/*	auto res = cast<float>(v);*/
-		/*	static_assert(std::same_as<decltype(res)::element_t, float>);*/
-		/**/
-		/*	REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(-INFINITY , eps<float>));*/
-		/*	REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel( INFINITY , eps<float>));*/
-		/*	REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3.12f     , eps<float>));*/
-		/*	REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4.12f     , eps<float>));*/
-		/*}*/
-		/**/
-		/*WHEN("Casting to float64 integer") {*/
-		/*	auto res = cast<double>(v);*/
-		/*	static_assert(std::same_as<decltype(res)::element_t, double>);*/
-		/**/
-		/*	REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(-INFINITY) , eps<double>));*/
-		/*	REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double( INFINITY) , eps<double>));*/
-		/*	REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3.12      , eps<double>));*/
-		/*	REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4.12      , eps<double>));*/
-		/*}*/
+		WHEN("Casting to float16 integer") {
+			auto res = cast<float16>(v);
+			static_assert(std::same_as<decltype(res)::element_t, float16>);
+
+			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
+			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
+			REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(3.12f     , eps<float>));
+			REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(4.12f     , eps<float>));
+		}
+
+		WHEN("Casting to bfloat16 integer") {
+			auto res = cast<bfloat16>(v);
+			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+
+			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
+			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
+			REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(3.12f     , eps<float>));
+			REQUIRE_THAT(float(res[ 3]), Catch::Matchers::WithinRel(4.12f     , eps<float>));
+		}
+
+		WHEN("Casting to float32 integer") {
+			auto res = cast<float>(v);
+			static_assert(std::same_as<decltype(res)::element_t, float>);
+
+			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(-INFINITY , eps<float>));
+			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel( INFINITY , eps<float>));
+			REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3.12f     , eps<float>));
+			REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4.12f     , eps<float>));
+		}
+
+		WHEN("Casting to float64 integer") {
+			auto res = cast<double>(v);
+			static_assert(std::same_as<decltype(res)::element_t, double>);
+
+			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(-INFINITY) , eps<double>));
+			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double( INFINITY) , eps<double>));
+			REQUIRE_THAT(res[ 2], Catch::Matchers::WithinRel(3.12      , eps<double>));
+			REQUIRE_THAT(res[ 3], Catch::Matchers::WithinRel(4.12      , eps<double>));
+		}
 	}
 }
 

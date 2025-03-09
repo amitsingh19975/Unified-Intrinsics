@@ -1461,7 +1461,7 @@ TEST_CASE( VEC_ARCH_NAME " Float16 Addition", "[addition][float16]" ) {
         INFO(std::format("add(v, v): {}", res));
 
         for (auto i = 0ul; i < N; ++i) {
-            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i] * 2), eps<float>));
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i]) * 2, eps<float>));
         }
     }
 

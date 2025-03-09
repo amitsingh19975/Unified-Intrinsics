@@ -781,7 +781,7 @@ TEST_CASE( VEC_ARCH_NAME " Float16 Subtraction", "[subtraction][float16]" ) {
     WHEN("Normal subtraction") {
         auto res = sub(v, Vec<N, type>::load(10));
         for (auto i = 0ul; i < N; ++i) {
-            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i] - 10), eps<float>));
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i]) - 10, eps<float>));
         }
     }
 }
