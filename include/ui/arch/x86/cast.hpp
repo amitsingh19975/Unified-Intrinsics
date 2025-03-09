@@ -103,7 +103,7 @@ namespace ui::x86 {
              }
          } 
     }
-    
+
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE constexpr auto fit_to_vec(Vec<N, T> const& v) noexcept {
        if constexpr (std::floating_point<T>) {
@@ -265,80 +265,7 @@ namespace ui::x86 {
     #endif
 
     namespace internal {
-        template <std::size_t N, typename Fn>
-        struct Case {
-            static constexpr auto pattern = N;
-            template <typename... Args>
-            constexpr decltype(auto) operator()(Args&&... args) const noexcept 
-                requires std::invocable<Fn, Args...>
-            {
-                return std::invoke(fn, std::forward<Args>(args)...);
-            }
-
-            template <typename Tn>
-            constexpr Case<N, Tn> operator=(Tn&& f) const noexcept {
-                return { .fn = std::forward<Tn>(f) };
-            }
-
-            Fn fn;
-        };
-
-        template <std::size_t N>
-        static constexpr auto case_maker = Case<N, void*>(nullptr);
-
-        template <typename... Cs>
-        struct Matcher {
-            using base_type = std::tuple<Cs...>;
-            base_type cases;
-
-            template <std::size_t P>
-            static constexpr auto can_match_case = ((P == Cs::pattern) || ...);
-
-            constexpr Matcher() noexcept = default;
-            constexpr Matcher(Cs&&... cs) noexcept requires (sizeof...(Cs) > 1)
-                : cases(std::forward<Cs>(cs)...)
-            {}
-            constexpr Matcher(Matcher const& fn) noexcept = default;
-            constexpr Matcher(Matcher && fn) noexcept = default;
-            constexpr Matcher& operator=(Matcher const& fn) noexcept = default;
-            constexpr Matcher& operator=(Matcher && fn) noexcept = default;
-            constexpr ~Matcher() noexcept = default;
-
-            template <std::size_t P, typename... Args>
-                requires can_match_case<P>
-            constexpr decltype(auto) match(Args&&... args) const noexcept {
-                return invoke_helper<0, P>(std::forward<Args>(args)...); 
-            }
-
-
-        private:
-            template <std::size_t I = 0, std::size_t P, typename... Args>
-            constexpr decltype(auto) invoke_helper(Args&&... args) const noexcept {
-                if constexpr (sizeof... (Cs) <= I) return;
-                else if constexpr (std::tuple_element_t<I, base_type>::pattern == P) {
-                    return std::invoke(std::get<I>(cases), std::forward<Args>(args)...);
-                } else {
-                    return invoke_helper<I + 1, P>(std::forward<Args>(args)...);
-                }
-            }
-        };
-
-        template<typename... Ts>
-        Matcher(Ts...) -> Matcher<Ts...>;
-
-        template<typename... Ts>
-        struct Overloaded: Ts... { using Ts::operator()...; };
-
-        template<typename... Ts>
-        Overloaded(Ts...) -> Overloaded<Ts...>;
-
-        template <typename T>
-        concept not_void = !std::is_void_v<T>;
-
-        template <std::size_t P, typename M, typename... Args>
-        concept is_case_invocable = (M::template can_match_case<P>) && requires (M const& m) {
-            { m.template match<P>(std::declval<Args>()...) } -> not_void;
-        };
+        using namespace ::ui::internal;
 
         template <typename To, bool Saturating, typename M, std::size_t N, typename T>
         UI_ALWAYS_INLINE auto cast_iter_chunk(Vec<N, T> const& v, M const& m) noexcept -> Vec<N, To> {
