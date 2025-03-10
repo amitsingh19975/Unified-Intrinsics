@@ -6,7 +6,6 @@
 #include <limits>
 #include <type_traits>
 #include "abs.hpp"
-#include "ui/base.hpp"
 
 namespace ui::emul {
 
