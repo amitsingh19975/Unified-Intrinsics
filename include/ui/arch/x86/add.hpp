@@ -110,7 +110,7 @@ namespace ui::x86 {
         }
     }
 
-    template <bool Merge = true, std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto widening_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -119,16 +119,28 @@ namespace ui::x86 {
         return add(cast<result_t>(lhs), cast<result_t>(rhs));
     }
 
+    template <bool Merge, std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto sub(
+        Vec<N, T> const& lhs,
+        Vec<N, T> const& rhs
+    ) noexcept -> Vec<N, T>;
+
 // MARK: Narrowing Addition
-    template <bool Merge = true, std::size_t N, std::integral T>
+    template <bool Round = false, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto halving_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        auto t0 = bitwise_and(lhs, rhs);
-        auto t1 = bitwise_xor(lhs, rhs);
-        auto t2 = shift_right<1>(t1); 
-        return add(t0, t2);
+        if constexpr (Round) {
+            auto t0 = bitwise_and(lhs, rhs);
+            auto t1 = bitwise_xor(lhs, rhs);
+            auto t2 = shift_right<1>(t1); 
+            return add(t0, t2);
+        } else {
+            auto tmp = sub<true>(rhs, lhs);
+            tmp = shift_right<1>(tmp);
+            return add(lhs, tmp);
+        }
     }
 
     /**
@@ -247,7 +259,7 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(T) == 2) {
                         return from_vec<T>(_mm_adds_epi16(l, r));
                     } else if constexpr (sizeof(T) == 4) {
-                        auto sign = _mm_set1_epi32(0x7fffffff);
+                        auto sign = _mm_set1_epi32(0x7FFF'FFFF);
                         auto res = _mm_add_epi32(l, r);
                         // (~(l ^ r)) & (l ^ res) => checks if carry
 
@@ -274,15 +286,15 @@ namespace ui::x86 {
                 } else {
                     static constexpr auto sign_mask = static_cast<std::int32_t>(0x8000'0000);
                     if constexpr (sizeof(T) == 1) {
-                        return from_vec<T>(_mm_adds_epi8(l, r));
+                        return from_vec<T>(_mm_adds_epu8(l, r));
                     } else if constexpr (sizeof(T) == 2) {
-                        return from_vec<T>(_mm_adds_epi16(l, r));
+                        return from_vec<T>(_mm_adds_epu16(l, r));
                     } else if constexpr (sizeof(T) == 4) {
-                        auto sign = _mm_set1_epi32(0x8000'0000);
+                        auto sign = _mm_set1_epi32(sign_mask);
                         auto sum = _mm_add_epi32(l, r);
                         auto subsum = _mm_sub_epi32(sum, sign);
                         auto suba = _mm_sub_epi32(l, sign); 
-                        auto c = _mm_cmpgt_epi32 (suba, subsum);
+                        auto c = _mm_cmpgt_epi32(suba, subsum);
                         auto res = _mm_or_si128(sum, c);
                         return from_vec<T>(res);
                     } else if constexpr (sizeof(T) == 8) {
@@ -367,12 +379,6 @@ namespace ui::x86 {
         }
     }
 
-    template <bool Merge, std::size_t N, typename T>
-    UI_ALWAYS_INLINE auto sub(
-        Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T>;
-
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto bitwise_select(
         mask_t<N, T> const& cond,
@@ -422,7 +428,7 @@ namespace ui::x86 {
             auto safe_subtraction = cmp(lhs, rcast<T>(abs_rhs), op::greater_equal_t{});
 
             // For negative rhs, compute lhs - |rhs| directly instead of using sum
-            auto neg_result = sub(lhs, rcast<T>(abs_rhs));
+            auto neg_result = sub<true>(lhs, rcast<T>(abs_rhs));
 
             // If rhs is positive, check if would overflow
             auto safe_max = sub<true>(mx, rcast<T>(rhs));
@@ -498,7 +504,7 @@ namespace ui::x86 {
                     ).lo;
                 }
             }
-            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
+            #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (size == sizeof(__m256)) {
                 auto l = to_vec(lhs);
                 auto r = to_vec(rhs);
