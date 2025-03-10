@@ -700,18 +700,7 @@ namespace std {
 
 
 static constexpr auto operator==(ui::float16 lhs, ui::float16 rhs) noexcept -> bool {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
-    if (lhs.is_nan() || rhs.is_nan()) return false;
-    if (lhs.is_zero() == rhs.is_zero()) return true;
-    return lhs.data == rhs.data;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return mask_get_first(vceq_f16(load_f16(lhs), load_f16(rhs))) == 0xffff;
-        #else
-        return lhs.data == rhs.data;
-        #endif
-    #endif
+    return float(lhs) == float(rhs);
 }
 
 static constexpr auto operator!=(ui::float16 lhs, ui::float16 rhs) noexcept -> bool {
@@ -743,40 +732,7 @@ static constexpr auto operator!=(T lhs, ui::float16 rhs) noexcept -> bool {
 }
 
 static constexpr auto operator<(ui::float16 lhs, ui::float16 rhs) noexcept -> bool {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
-    // 1. NaN != any number or NaN
-    if (lhs.is_nan() || rhs.is_nan()) return false;
-    // 2. lhs is +ve infinity is always bigger than any number
-    if (lhs.is_inf(true)) {
-        return false;
-    }
-    // 3. lhs is -ve inf < rhs is +ve inf
-    if (lhs.is_inf(false)) {
-        if (rhs.is_inf(false)) return false;
-        return true;
-    }
-    // 4. +0 == -0
-    if (lhs.is_zero() == rhs.is_zero()) return false;
-
-    auto [ls, le, lm] = ui::fp::decompose_fp(lhs);
-    auto [rs, re, rm] = ui::fp::decompose_fp(rhs);
-
-    // 5. lhs sign -ve then rhs must've +ve sign. Otherwise, same sign
-    if (ls != rs) return rs == false;
-
-    // 6. lhs exponent is smaller than rhs exponent then rhs is bigger
-    if (le != re) return le < re;
-
-    // 7. right mantissa must be bigger
-    return lm < rm;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return mask_get_first(vclt_f16(load_f16(lhs), load_f16(rhs))) == 0xffff;
-        #else
-        return lhs.data < rhs.data;
-        #endif
-    #endif
+    return float(lhs) < float(rhs);
 }
 
 template <typename T>
@@ -792,43 +748,7 @@ static constexpr auto operator<(T lhs, ui::float16 rhs) noexcept -> bool {
 }
 
 static constexpr auto operator>(ui::float16 lhs, ui::float16 rhs) noexcept -> bool {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
-    // 1. NaN != any number or NaN
-    if (lhs.is_nan() || rhs.is_nan()) return false;
-
-    // 2. lhs is +ve infinity is always bigger than any number
-    if (lhs.is_inf(true)) {
-        if (rhs.is_inf(true)) return false;
-        return true;
-    }
-
-    // 3. lhs is -ve inf < rhs any number
-    if (lhs.is_inf(false)) {
-        return false;
-    }
-
-    // 4. +0 == -0
-    if (lhs.is_zero() == rhs.is_zero()) return false;
-
-    auto [ls, le, lm] = ui::fp::decompose_fp(lhs);
-    auto [rs, re, rm] = ui::fp::decompose_fp(rhs);
-
-    // 5. lhs sign -ve then rhs must've +ve sign. Otherwise, same sign
-    if (ls != rs) return ls == false;
-
-    // 6. lhs exponent is smaller than rhs exponent then rhs is bigger
-    if (le != re) return le > re;
-
-    // 7. right mantissa must be bigger
-    return lm > rm;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return mask_get_first(vcgt_f16(load_f16(lhs), load_f16(rhs))) == 0xffff;
-        #else
-        return lhs.data > rhs.data;
-        #endif
-    #endif
+    return float(lhs) > float(rhs);
 }
 
 template <typename T>
@@ -844,17 +764,7 @@ static constexpr auto operator>(T lhs, ui::float16 rhs) noexcept -> bool {
 }
 
 static constexpr auto operator<=(ui::float16 lhs, ui::float16 rhs) noexcept -> bool {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
-    if (lhs == rhs) return true;
-    return lhs < rhs;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return mask_get_first(vcle_f16(load_f16(lhs), load_f16(rhs))) == 0xffff;
-        #else
-        return lhs.data <= rhs.data;
-        #endif
-    #endif
+    return float(lhs) <= float(rhs);
 }
 
 template <typename T>
@@ -870,17 +780,7 @@ static constexpr auto operator<=(T lhs, ui::float16 rhs) noexcept -> bool {
 }
 
 static constexpr auto operator>=(ui::float16 lhs, ui::float16 rhs) noexcept -> bool {
-    #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
-    if (lhs == rhs) return true;
-    return lhs > rhs;
-    #else
-        #if defined(UI_ARM_HAS_NEON) && defined(UI_CPU_ARM64)
-        using namespace ui::internal;
-        return mask_get_first(vcge_f16(load_f16(lhs), load_f16(rhs))) == 0xffff;
-        #else
-        return lhs.data >= rhs.data;
-        #endif
-    #endif
+    return float(lhs) >= float(rhs);
 }
 
 template <typename T>
