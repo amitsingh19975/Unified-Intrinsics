@@ -44,9 +44,16 @@ namespace ui::emul {
                 static constexpr auto lane = bits - 1;
                 using utype = std::make_unsigned_t<T>;
                 T const limit = T(1) << (lane - s);
+                // INFO: Empscripten is optimizing away the right shift
+                #ifdef UI_EMPSCRIPTEN
+                volatile
+                #endif
+                auto t0 = static_cast<utype>(v) >> lane;
+                auto t1 = static_cast<utype>(T(1) << lane);
+                auto res = static_cast<T>(t0 + t1) - 1;
                 return static_cast<T>(
                         (v >= limit || v <= -limit)
-                            ? static_cast<T>(static_cast<T>(static_cast<utype>(v) >> lane) + (T(1) << lane) - 1)
+                            ? res
                             : (v << s)
                     );
             } else {
@@ -64,11 +71,15 @@ namespace ui::emul {
                 static constexpr auto lane = bits - 1;
                 using utype = std::make_unsigned_t<T>;
                 static constexpr T limit = T(1) << (lane - Shift);
-                return static_cast<T>(
-                        (v >= limit || v <= -limit)
-                            ? static_cast<T>(static_cast<T>(static_cast<utype>(v) >> lane) + (T(1) << lane) - 1)
-                            : (v << Shift)
-                    );
+                // INFO: Empscripten is optimizing away the right shift
+                #ifdef UI_EMPSCRIPTEN
+                volatile
+                #endif
+                auto t0 = static_cast<utype>(v) >> lane;
+                auto t1 = utype(1) << lane;
+                auto res = static_cast<T>(t0 + t1) - 1;
+                T mask = (v >= limit || v <= -limit) ? -1 : 0;
+                return (mask & res) | (~mask & (v << Shift));
             } else {
                 static constexpr auto max = std::numeric_limits<T>::max();
                 return static_cast<T>((T(1) << (bits - Shift)) <= v ? max : static_cast<T>(v << Shift));
