@@ -67,20 +67,20 @@ namespace ui {
     #define VEC_ARCH_NAME "x86"
 #elif defined(UI_EMPSCRIPTEN)
     #include "emul/abs.hpp"
-    #include "emul/add.hpp"
+    #include "wasm/add.hpp"
     #include "emul/bit.hpp"
     #include "wasm/cast.hpp"
     #include "emul/cmp.hpp"
     #include "emul/div.hpp"
     #include "wasm/load.hpp"
-    #include "emul/logical.hpp"
+    #include "wasm/logical.hpp"
     #include "emul/manip.hpp"
     #include "emul/minmax.hpp"
     #include "emul/mul.hpp"
     #include "emul/reciprocal.hpp"
     #include "emul/rounding.hpp"
-    #include "emul/shift.hpp"
-    #include "emul/sub.hpp"
+    #include "wasm/shift.hpp"
+    #include "wasm/sub.hpp"
     #include "emul/sqrt.hpp"
     #include "emul/permute.hpp"
     #include "emul/int_mask.hpp"
@@ -88,7 +88,7 @@ namespace ui {
     #include "emul/prefetch.hpp"
     namespace ui {
         using namespace wasm;
-        using emul::bitwise_and, emul::bitwise_xor, emul::min, emul::max, emul::mul, emul::shift_right, emul::shift_left, emul::bitwise_or, emul::add, emul::bitwise_select, emul::cmp, emul::sub;
+        using emul::min, emul::max, emul::mul, emul::bitwise_select, emul::cmp;
         static constexpr auto ARCH_TYPE = Arch::Wasm;
     }
     #define VEC_ARCH_NAME "Wasm"
