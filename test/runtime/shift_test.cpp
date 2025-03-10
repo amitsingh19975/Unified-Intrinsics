@@ -475,6 +475,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
 
         WHEN("Saturating left shift runtime count") {
             auto res = sat_shift_left(v, Vec<N, utype>::load(2)); // sat(v << 2)
+            INFO(std::format("ssl<2>(v): {}", res));
             REQUIRE(res[0] == min);
             REQUIRE(res[1] == max);
             for (auto i = 2u; i < N; ++i) {
@@ -1726,6 +1727,7 @@ TEST_CASE( VEC_ARCH_NAME " Right Shift", "[shift][right]" ) {
 
         WHEN("Insert right shift") {
             auto bs = sat_add(v, Vec<N, type>::load(33));
+            INFO(std::format("bs: {}", bs));
             auto res = insert_shift_right<2>(v, bs);
             INFO(std::format("insert(v, bs): {:x}", res));
             REQUIRE(res[0] == -0x5fff'fff8);
