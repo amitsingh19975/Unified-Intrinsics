@@ -159,7 +159,9 @@ namespace ui {
 
         static constexpr auto min_rep() noexcept -> base_type {
             #ifdef UI_HAS_CUSTOM_FLOAT16_IMPL
-                return fp::compose_fp_helper(fp_rep{ .sign = true, .exponent = 0, .mantissa = 0xFFFF });
+                return fp::compose_fp_helper(fp_rep{
+                    .sign = true, .exponent = -15, .mantissa = 0xFFFF
+                });
             #else
                 return std::bit_cast<base_type>(__FLT16_MIN__);
             #endif
