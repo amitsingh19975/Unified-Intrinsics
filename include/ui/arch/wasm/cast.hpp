@@ -4,6 +4,7 @@
 #include "../../base_vec.hpp"
 #include "../../base.hpp"
 #include "../basic.hpp"
+#include "basic.hpp"
 #include "../../vec_headers.hpp"
 #include "../../float.hpp"
 #include "../../matrix.hpp"
@@ -35,13 +36,16 @@ namespace ui::wasm {
         if constexpr (bits == sizeof(v128_t)) {
             return v;
         } else if constexpr (bits == sizeof(std::int64_t)) {
-            return wasm_i64x2_splat(std::bit_cast<std::int64_t>(v));
+            return wasm_i64x2_make(std::bit_cast<std::int64_t>(v), 0);
         } else if constexpr (bits == sizeof(std::int32_t)) {
-            return wasm_i32x4_splat(std::bit_cast<std::int32_t>(v));
+            return wasm_i32x4_make(std::bit_cast<std::int32_t>(v), 0, 0, 0);
         } else if constexpr (bits == sizeof(std::int16_t)) {
-            return wasm_i16x8_splat(std::bit_cast<std::int16_t>(v));
+            return wasm_i16x8_make(std::bit_cast<std::int16_t>(v), 0, 0, 0, 0, 0, 0, 0);
         } else if constexpr (bits == sizeof(std::int8_t)) {
-            return wasm_i8x16_splat(std::bit_cast<std::int8_t>(v));
+            return wasm_i8x16_make(
+                std::bit_cast<std::int8_t>(v), 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0
+            );
         }
     }
 
@@ -117,13 +121,13 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<8> = [](auto const& v_) {
                                     auto m = fit_to_vec(v_);
-                                    auto z = wasm_i8x16_splat(0);
+                                    auto z = wasm_i8x16_const_splat(0);
                                     m = wasm_i8x16_max(z, m);
                                     return from_vec<To>(m).lo;
                                 },
                                 case_maker<16> = [](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    auto z = wasm_i8x16_splat(0);
+                                    auto z = wasm_i8x16_const_splat(0);
                                     m = wasm_i8x16_max(z, m);
                                     return from_vec<To>(m);
                                 }
@@ -135,7 +139,7 @@ namespace ui::wasm {
                             case_maker<8> = [](auto const& v_) {
                                 auto m = fit_to_vec(v_);
                                 if constexpr (Saturating) {
-                                    auto z = wasm_i8x16_splat(0);
+                                    auto z = wasm_i8x16_const_splat(0);
                                     m = wasm_i8x16_max(z, m);
                                 }
                                 return from_vec<To>(wasm_i16x8_extend_low_i8x16(m)).lo;
@@ -143,7 +147,7 @@ namespace ui::wasm {
                             case_maker<16> = [](auto const& v_) {
                                 auto m = to_vec(v_);
                                 if constexpr (Saturating) {
-                                    auto z = wasm_i8x16_splat(0);
+                                    auto z = wasm_i8x16_const_splat(0);
                                     m = wasm_i8x16_max(z, m);
                                 }
                                 return join(
@@ -185,7 +189,7 @@ namespace ui::wasm {
                             return iter<To, Saturating>(temp, Matcher {
                                 case_maker<8> = [](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    m = wasm_u8x16_min(m, wasm_u8x16_splat(std::numeric_limits<To>::max()));
+                                    m = wasm_u8x16_min(m, wasm_u8x16_const_splat(std::numeric_limits<To>::max()));
                                     return from_vec<To>(
                                         wasm_u8x16_narrow_i16x8(m, m)
                                     ).lo;
@@ -193,8 +197,8 @@ namespace ui::wasm {
                                 case_maker<16> = [](auto const& v_) {
                                     auto lo = to_vec(v_.lo);
                                     auto hi = to_vec(v_.hi);
-                                    lo = wasm_u8x16_min(lo, wasm_u8x16_splat(std::numeric_limits<To>::max()));
-                                    hi = wasm_u8x16_min(hi, wasm_u8x16_splat(std::numeric_limits<To>::max()));
+                                    lo = wasm_u8x16_min(lo, wasm_u8x16_const_splat(std::numeric_limits<To>::max()));
+                                    hi = wasm_u8x16_min(hi, wasm_u8x16_const_splat(std::numeric_limits<To>::max()));
                                     return from_vec<To>(
                                         wasm_u8x16_narrow_i16x8(lo, hi)
                                     );
@@ -285,7 +289,7 @@ namespace ui::wasm {
                         }
 
                         constexpr auto fn1 = [](v128_t m) {
-                            auto mask = wasm_i16x8_splat(0xFF);
+                            auto mask = wasm_i16x8_const_splat(0xFF);
                             m = wasm_v128_and(m, mask);
                             auto res = wasm_i8x16_shuffle(m, m,
                                       0, 2, 4, 6, 8, 10, 12, 14,
@@ -293,7 +297,7 @@ namespace ui::wasm {
                             return from_vec<To>(res).lo;
                         };
                         constexpr auto fn2 = [](v128_t lo, v128_t hi) {
-                            auto mask = wasm_i16x8_splat(0xFF);
+                            auto mask = wasm_i16x8_const_splat(0xFF);
                             lo = wasm_v128_and(lo, mask);
                             hi = wasm_v128_and(hi, mask);
                             auto res = wasm_i8x16_shuffle(lo, hi,
@@ -357,12 +361,12 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<4> = [](auto const& v_) {
                                     auto m = fit_to_vec(v_);
-                                    auto z = wasm_i16x8_splat(0);
+                                    auto z = wasm_i16x8_const_splat(0);
                                     return from_vec<To>(wasm_i16x8_max(m, z)).lo;
                                 },
                                 case_maker<8> = [](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    auto z = wasm_i16x8_splat(0);
+                                    auto z = wasm_i16x8_const_splat(0);
                                     return from_vec<To>(wasm_i16x8_max(m, z));
                                 }
                             });
@@ -373,7 +377,7 @@ namespace ui::wasm {
                             case_maker<4> = [](auto const& v_) {
                                 auto m = fit_to_vec(v_); 
                                 if constexpr (Saturating) {
-                                    auto z = wasm_i16x8_splat(0);
+                                    auto z = wasm_i16x8_const_splat(0);
                                     m = wasm_i16x8_max(m, z);
                                 }
                                 return wasm_i32x4_extend_low_i16x8(m);
@@ -381,7 +385,7 @@ namespace ui::wasm {
                             case_maker<8> = [](auto const& v_) {
                                 auto m = to_vec(v_);
                                 if constexpr (Saturating) {
-                                    auto z = wasm_i16x8_splat(0);
+                                    auto z = wasm_i16x8_const_splat(0);
                                     m = wasm_i16x8_max(m, z);
                                 }
                                 return join(
@@ -419,14 +423,14 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<8> = [](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    auto z = wasm_u16x8_splat(std::numeric_limits<std::int8_t>::max());
+                                    auto z = wasm_u16x8_const_splat(std::numeric_limits<std::int8_t>::max());
                                     m = wasm_u16x8_min(m, z);
                                     return from_vec<To>(wasm_i8x16_narrow_i16x8(m, m)).lo;
                                 },
                                 case_maker<16> = [](auto const& v_) {
                                     auto lo = to_vec(v_.lo);
                                     auto hi = to_vec(v_.hi);
-                                    auto z = wasm_u16x8_splat(std::numeric_limits<std::int8_t>::max());
+                                    auto z = wasm_u16x8_const_splat(std::numeric_limits<std::int8_t>::max());
                                     lo = wasm_u16x8_min(z, lo);
                                     hi = wasm_u16x8_min(z, hi);
                                     return from_vec<To>(
@@ -442,13 +446,13 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<4> = [](auto const& v_) {
                                     auto m = fit_to_vec(v_);
-                                    auto z = wasm_u16x8_splat(std::numeric_limits<std::int16_t>::max());
+                                    auto z = wasm_u16x8_const_splat(std::numeric_limits<std::int16_t>::max());
                                     m = wasm_u16x8_min(m, z);
                                     return from_vec<To>(m).lo;
                                 },
                                 case_maker<8> = [](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    auto z = wasm_u16x8_splat(std::numeric_limits<std::int16_t>::max());
+                                    auto z = wasm_u16x8_const_splat(std::numeric_limits<std::int16_t>::max());
                                     m = wasm_u16x8_min(z, m);
                                     return from_vec<To>(m);
                                 }
@@ -479,14 +483,14 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<8> = [](auto const& v_) {
                                     auto m = fit_to_vec(v_);
-                                    auto z = wasm_u16x8_splat(std::numeric_limits<std::uint8_t>::max());
+                                    auto z = wasm_u16x8_const_splat(std::numeric_limits<std::uint8_t>::max());
                                     m = wasm_u16x8_min(m, z);
                                     return from_vec<To>(wasm_u8x16_narrow_i16x8(m, m)).lo;
                                 },
                                 case_maker<16> = [](auto const& v_) {
                                     auto lo = to_vec(v_.lo);
                                     auto hi = to_vec(v_.hi);
-                                    auto z = wasm_u16x8_splat(std::numeric_limits<std::uint8_t>::max());
+                                    auto z = wasm_u16x8_const_splat(std::numeric_limits<std::uint8_t>::max());
                                     lo = wasm_u16x8_min(z, lo);
                                     hi = wasm_u16x8_min(z, hi);
                                     return from_vec<To>(
@@ -567,7 +571,7 @@ namespace ui::wasm {
                         }
 
                         constexpr auto fn = [](v128_t m) {
-                            auto mask = wasm_i32x4_splat(0xFFFF);
+                            auto mask = wasm_i32x4_const_splat(0xFFFF);
                             m = wasm_v128_and(m, mask);
                             auto res = wasm_i16x8_shuffle(m, m,
                                 0,  2,  4,  6,
@@ -612,14 +616,14 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<4> = [](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    auto z = wasm_u32x4_splat(std::numeric_limits<std::uint16_t>::max());
+                                    auto z = wasm_u32x4_const_splat(std::numeric_limits<std::uint16_t>::max());
                                     m = wasm_i32x4_min(m, z);
                                     return from_vec<To>(wasm_u16x8_narrow_i32x4(m, m)).lo;
                                 },
                                 case_maker<8> = [](auto const& v_) {
                                     auto lo = to_vec(v_.lo);
                                     auto hi = to_vec(v_.hi);
-                                    auto z = wasm_u32x4_splat(std::numeric_limits<std::uint16_t>::max());
+                                    auto z = wasm_u32x4_const_splat(std::numeric_limits<std::uint16_t>::max());
                                     lo = wasm_i32x4_min(z, lo);
                                     hi = wasm_i32x4_min(z, hi);
                                     return from_vec<To>(
@@ -635,7 +639,7 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<4> = [](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    auto z = wasm_i32x4_splat(0);
+                                    auto z = wasm_i32x4_const_splat(0);
                                     return from_vec<To>(wasm_i32x4_max(m, z));
                                 }
                             });
@@ -646,7 +650,7 @@ namespace ui::wasm {
                             case_maker<4> = [](auto const& v_) {
                                 auto m = to_vec(v_);
                                 if constexpr (Saturating) {
-                                    auto z = wasm_i32x4_splat(0);
+                                    auto z = wasm_i32x4_const_splat(0);
                                     m = wasm_i32x4_max(m, z);
                                 }
                                 auto lo = wasm_i64x2_extend_low_i32x4(m);
@@ -692,7 +696,7 @@ namespace ui::wasm {
                         if constexpr (Saturating) {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<4> = [](auto const& v_) {
-                                    auto mx = wasm_u32x4_splat(std::numeric_limits<std::int16_t>::max());
+                                    auto mx = wasm_u32x4_const_splat(std::numeric_limits<std::int16_t>::max());
                                     auto m = wasm_u32x4_min(to_vec(v_), mx);
                                     return from_vec<To>(
                                         wasm_i16x8_narrow_i32x4(m, m)
@@ -701,7 +705,7 @@ namespace ui::wasm {
                                 case_maker<8> = [](auto const& v_) {
                                     auto lo = to_vec(v_.lo);
                                     auto hi = to_vec(v_.hi);
-                                    auto mx = wasm_u32x4_splat(std::numeric_limits<std::int16_t>::max());
+                                    auto mx = wasm_u32x4_const_splat(std::numeric_limits<std::int16_t>::max());
                                     lo = wasm_u32x4_min(lo, mx);
                                     hi = wasm_u32x4_min(hi, mx);
                                     return from_vec<To>(
@@ -716,7 +720,7 @@ namespace ui::wasm {
                         if constexpr (Saturating) {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<4> = [](auto const& v_) {
-                                    auto mx = wasm_u32x4_splat(std::numeric_limits<std::int32_t>::max());
+                                    auto mx = wasm_u32x4_const_splat(std::numeric_limits<std::int32_t>::max());
                                     auto m = wasm_u32x4_min(to_vec(v_), mx);
                                     return m;
                                 }
@@ -753,14 +757,14 @@ namespace ui::wasm {
                             return iter<To, Saturating>(v, Matcher {
                                 case_maker<4> = [convert](auto const& v_) {
                                     auto m = to_vec(v_);
-                                    auto mx = wasm_u32x4_splat(std::numeric_limits<std::uint16_t>::max());
+                                    auto mx = wasm_u32x4_const_splat(std::numeric_limits<std::uint16_t>::max());
                                     m = wasm_u32x4_min(m, mx);
                                     return convert(m, m).lo;
                                 },
                                 case_maker<8> = [convert](auto const& v_) {
                                     auto lo = to_vec(v_.lo);
                                     auto hi = to_vec(v_.hi);
-                                    auto mx = wasm_u32x4_splat(std::numeric_limits<std::uint16_t>::max());
+                                    auto mx = wasm_u32x4_const_splat(std::numeric_limits<std::uint16_t>::max());
                                     lo = wasm_u32x4_min(lo, mx);
                                     hi = wasm_u32x4_min(hi, mx);
                                     return convert(lo, hi);
@@ -820,7 +824,7 @@ namespace ui::wasm {
                         return iter<To, false>(v, Matcher {
                             case_maker<2> = [](auto const& v_) {
                                 auto m = to_vec(v_);
-                                auto mask = wasm_u64x2_splat(0xFFFF'FFFFul);
+                                auto mask = wasm_u64x2_const_splat(0xFFFF'FFFFul);
                                 m = wasm_v128_and(m, mask);
                                 auto res = wasm_i32x4_shuffle(m, m, 0, 2, 4, 6);
                                 return from_vec<To>(res).lo;
