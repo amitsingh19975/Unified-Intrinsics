@@ -471,7 +471,6 @@ namespace ui::x86 {
                 auto r = to_vec(rhs);
                 if constexpr (std::same_as<T, float>) {
                     auto res = _mm_hadd_ps(l, r);
-                    res = _mm_shuffle_ps(res, res, _MM_SHUFFLE(3,1, 2, 0));
                     return from_vec<T>(res);
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     return cast<T>(padd(cast<float>(lhs), cast<float>(rhs)));
@@ -493,7 +492,10 @@ namespace ui::x86 {
                     return from_vec<T>(res).lo;
                 }
                 if constexpr (Merge) {
-                    return padd(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
+                    return padd(
+                        join(lhs, rhs),
+                        Vec<2 * N, T>{}
+                    ).lo;
                 }
             }
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
@@ -526,10 +528,6 @@ namespace ui::x86 {
                         auto res = _mm256_permute4x64_epi64(_mm256_add_epi64(t0, t1), 0xD8);
                         return from_vec<T>(res);
                     }
-                }
-            } else if constexpr (size * 2 == sizeof(__m256) && sizeof(T) != 1) {
-                if constexpr (Merge) {
-                    return padd(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
                 }
             }
             #endif
