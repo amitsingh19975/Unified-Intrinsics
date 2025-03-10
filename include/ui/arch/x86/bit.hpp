@@ -34,10 +34,12 @@ namespace ui::x86 {
                     #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
                     return from_vec<T>(_mm_lzcnt_epi8(a));
                     #else
-                    alignas(16) static constexpr std::int8_t mask_CLZ[16] = { /* 0 */ 4,/* 1 */ 3,/* 2 */ 2,/* 3 */ 2,
-                                                         /* 4 */ 1,/* 5 */ 1,/* 6 */ 1,/* 7 */ 1,
-                                                         /* 8 */ 0,/* 9 */ 0,/* a */ 0,/* b */ 0,
-                                                         /* c */ 0,/* d */ 0,/* e */ 0,/* f */ 0 };
+                    alignas(16) static constexpr std::int8_t mask_CLZ[16] = {
+                        /* 0 */ 4,/* 1 */ 3,/* 2 */ 2,/* 3 */ 2,
+                        /* 4 */ 1,/* 5 */ 1,/* 6 */ 1,/* 7 */ 1,
+                        /* 8 */ 0,/* 9 */ 0,/* a */ 0,/* b */ 0,
+                        /* c */ 0,/* d */ 0,/* e */ 0,/* f */ 0
+                    };
                     auto mask_low = _mm_set1_epi8(0x0f);
                     auto fs = _mm_set1_epi8(4);
                     auto low_clz = _mm_shuffle_epi8(*reinterpret_cast<__m128i const*>(mask_CLZ), a);
@@ -339,17 +341,17 @@ namespace ui::x86 {
                     // Step 1: Count bits in 2-bit chunks
                     auto tmp = _mm_srli_epi32(a, 1);
                     tmp = _mm_and_si128(tmp, mask1);
-                    a = _mm_sub_epi16(a, tmp);
+                    a = _mm_sub_epi32(a, tmp);
 
                     // Step 2: Count bits in 4-bit chunks
                     tmp = _mm_srli_epi32(a, 2);
                     tmp = _mm_and_si128(tmp, mask2);
                     a = _mm_and_si128(a, mask2);
-                    a = _mm_add_epi16(a, tmp);
+                    a = _mm_add_epi32(a, tmp);
 
                     // Step 3: Count bits in 8-bit chunks
                     tmp = _mm_srli_epi32(a, 4);
-                    a = _mm_add_epi16(a, tmp);
+                    a = _mm_add_epi32(a, tmp);
                     a = _mm_and_si128(a, mask4);
 
                     // Sum counts in 16-bit halves
