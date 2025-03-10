@@ -138,7 +138,7 @@ namespace ui::x86 {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        if constexpr (std::is_signed_v<T>) {
+        if constexpr (std::is_signed_v<T> || std::floating_point<T>) {
             auto s0 = sub(lhs, rhs);
             auto s1 = sub(rhs, lhs);
             auto c = cmp(lhs, rhs, op::greater_t{});
