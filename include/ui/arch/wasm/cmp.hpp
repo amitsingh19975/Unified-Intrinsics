@@ -4,7 +4,7 @@
 #include "cast.hpp"
 #include "../emul/cmp.hpp"
 #include "ui/base.hpp"
-#include <wasm_simd128.h>
+#include <type_traits>
 
 namespace ui::wasm {
     namespace internal {
@@ -12,7 +12,7 @@ namespace ui::wasm {
     }
 
 // MARK: Bitwise equal and 'and' test
-    template <bool Merge = true, std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, typename T>
     UI_ALWAYS_INLINE auto cmp(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
@@ -65,7 +65,7 @@ namespace ui::wasm {
     /**
      * @return (lhs & rhs) != 0
      */
-    template <bool Merge = true, std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, typename T>
     UI_ALWAYS_INLINE auto cmp(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
@@ -117,7 +117,7 @@ namespace ui::wasm {
 // !MARK
 
 // MARK:  Greater than or equal to
-    template <bool Merge = true, std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, typename T>
     UI_ALWAYS_INLINE auto cmp(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
@@ -141,7 +141,7 @@ namespace ui::wasm {
                         cast<float>(rhs),
                         op
                     ));
-                } else {
+                } else if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
                         return from_vec<result_t>(wasm_i8x16_ge(l, r));
                     } else if constexpr (sizeof(T) == 2) {
@@ -150,6 +150,17 @@ namespace ui::wasm {
                         return from_vec<result_t>(wasm_i32x4_ge(l, r));
                     } else if constexpr (sizeof(T) == 8) {
                         return from_vec<result_t>(wasm_i64x2_ge(l, r));
+                    }
+                } else {
+                    if constexpr (sizeof(T) == 1) {
+                        return from_vec<result_t>(wasm_u8x16_ge(l, r));
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<result_t>(wasm_u16x8_ge(l, r));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<result_t>(wasm_u32x4_ge(l, r));
+                    } else if constexpr (sizeof(T) == 8) {
+                        auto mx = Vec<N, T>{ std::max(lhs[0], rhs[0]), std::max(lhs[1], rhs[1]) }; 
+                        return cmp(mx, lhs, op::equal_t{});
                     }
                 }
             } else if constexpr (bits * 2 == sizeof(v128_t) && Merge) {
@@ -167,7 +178,7 @@ namespace ui::wasm {
         }
     }
 
-    template <std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto cmp(
         Vec<N, T> const& v,
         [[maybe_unused]] op::greater_equal_zero_t op
@@ -201,7 +212,7 @@ namespace ui::wasm {
                         cast<float>(rhs),
                         op
                     ));
-                } else {
+                } else if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
                         return from_vec<result_t>(wasm_i8x16_le(l, r));
                     } else if constexpr (sizeof(T) == 2) {
@@ -210,6 +221,17 @@ namespace ui::wasm {
                         return from_vec<result_t>(wasm_i32x4_le(l, r));
                     } else if constexpr (sizeof(T) == 8) {
                         return from_vec<result_t>(wasm_i64x2_le(l, r));
+                    }
+                } else {
+                    if constexpr (sizeof(T) == 1) {
+                        return from_vec<result_t>(wasm_u8x16_le(l, r));
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<result_t>(wasm_u16x8_le(l, r));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<result_t>(wasm_u32x4_le(l, r));
+                    } else if constexpr (sizeof(T) == 8) {
+                        auto mx = Vec<N, T>{ std::min(lhs[0], rhs[0]), std::min(lhs[1], rhs[1]) }; 
+                        return cmp(mx, lhs, op::equal_t{});
                     }
                 }
             } else if constexpr (bits * 2 == sizeof(v128_t) && Merge) {
@@ -232,7 +254,7 @@ namespace ui::wasm {
         Vec<N, T> const& v,
         [[maybe_unused]] op::less_equal_zero_t op
     ) noexcept -> mask_t<N, T> {
-        return cmp(v, Vec<N, T>{}, op::less_zero_t{});
+        return cmp(v, Vec<N, T>{}, op::less_equal_t{});
     }
 // !MARK
 
@@ -261,7 +283,7 @@ namespace ui::wasm {
                         cast<float>(rhs),
                         op
                     ));
-                } else {
+                } else if constexpr (std::is_signed_v<T>) {
                     if constexpr (sizeof(T) == 1) {
                         return from_vec<result_t>(wasm_i8x16_gt(l, r));
                     } else if constexpr (sizeof(T) == 2) {
@@ -270,6 +292,19 @@ namespace ui::wasm {
                         return from_vec<result_t>(wasm_i32x4_gt(l, r));
                     } else if constexpr (sizeof(T) == 8) {
                         return from_vec<result_t>(wasm_i64x2_gt(l, r));
+                    }
+                } else {
+                    if constexpr (sizeof(T) == 1) {
+                        return from_vec<result_t>(wasm_u8x16_gt(l, r));
+                    } else if constexpr (sizeof(T) == 2) {
+                        return from_vec<result_t>(wasm_u16x8_gt(l, r));
+                    } else if constexpr (sizeof(T) == 4) {
+                        return from_vec<result_t>(wasm_u32x4_gt(l, r));
+                    } else if constexpr (sizeof(T) == 8) {
+                        auto sign = wasm_i64x2_const_splat(static_cast<std::int64_t>(0x8000'0000'0000'0000ULL));
+                        auto a = wasm_i64x2_sub(l, sign);
+                        auto b = wasm_i64x2_sub(r, sign);
+                        return from_vec<result_t>(wasm_i64x2_gt(a, b));
                     }
                 }
             } else if constexpr (bits * 2 == sizeof(v128_t) && Merge) {
@@ -297,54 +332,13 @@ namespace ui::wasm {
 // !MARK
 
 // MARK: Less Than
-    template <bool Merge = true, std::size_t N, typename T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto cmp(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        op::less_t op
+        [[maybe_unused]] op::less_t op
     ) noexcept -> mask_t<N, T> {
-        static constexpr auto bits = sizeof(lhs);
-        using result_t = mask_inner_t<T>;
-        if constexpr (N == 1) {
-            return emul::cmp(lhs, rhs, op);
-        } else {
-            if constexpr (bits == sizeof(v128_t)) {
-                auto l = to_vec(lhs);
-                auto r = to_vec(rhs);
-                if constexpr (std::same_as<T, float>) {
-                    return from_vec<result_t>(wasm_f32x4_lt(l, r)); 
-                } else if constexpr (std::same_as<T, double>) {
-                    return from_vec<result_t>(wasm_f64x2_lt(l, r)); 
-                } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                    return cast<result_t>(cmp(
-                        cast<float>(lhs),
-                        cast<float>(rhs),
-                        op
-                    ));
-                } else {
-                    if constexpr (sizeof(T) == 1) {
-                        return from_vec<result_t>(wasm_i8x16_lt(l, r));
-                    } else if constexpr (sizeof(T) == 2) {
-                        return from_vec<result_t>(wasm_i16x8_lt(l, r));
-                    } else if constexpr (sizeof(T) == 4) {
-                        return from_vec<result_t>(wasm_i32x4_lt(l, r));
-                    } else if constexpr (sizeof(T) == 8) {
-                        return from_vec<result_t>(wasm_i64x2_lt(l, r));
-                    }
-                }
-            } else if constexpr (bits * 2 == sizeof(v128_t) && Merge) {
-                return cmp(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs)),
-                    op
-                ).lo;
-            }
-
-            return join(
-                cmp<false>(lhs.lo, rhs.lo, op),
-                cmp<false>(lhs.hi, rhs.hi, op)
-            );
-        }
+        return cmp(rhs, lhs, op::greater_t{});
     }
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto cmp(

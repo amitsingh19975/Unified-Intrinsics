@@ -225,6 +225,12 @@ namespace ui::wasm {
         }
     }
 // !MARK
+    template <bool Merge, std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto bitwise_select(
+        mask_t<N, T> const& cond,
+        Vec<N, T> const& true_,
+        Vec<N, T> const& false_
+    ) noexcept -> Vec<N, T>;
 
     template <bool Merge = true, std::size_t N, std::integral T, std::integral U>
         requires (std::is_signed_v<T> != std::is_signed_v<U>)
@@ -264,7 +270,7 @@ namespace ui::wasm {
 
             // For negative rhs, we need to do a subtraction instead
             // If rhs is negative and |rhs| <= lhs, then result is lhs - |rhs|
-            auto abs_rhs = bitwise_select(rhs_negative, negate(rhs), rhs);
+            auto abs_rhs = bitwise_select<true>(rhs_negative, negate(rhs), rhs);
             auto safe_subtraction = cmp(lhs, rcast<T>(abs_rhs), op::greater_equal_t{});
 
             // For negative rhs, compute lhs - |rhs| directly instead of using sum
@@ -287,7 +293,7 @@ namespace ui::wasm {
             // - sum otherwise (positive rhs, no overflow)
 
             auto zero = Vec<N, T>{};
-            auto result_for_neg = bitwise_select(safe_subtraction, neg_result, zero);
+            auto result_for_neg = bitwise_select<true>(safe_subtraction, neg_result, zero);
 
             // First select between regular sum and max based on overflow mask
             auto pos_result = bitwise_or(
@@ -296,7 +302,7 @@ namespace ui::wasm {
             );
 
             // Then select between positive and negative cases
-            return bitwise_select(rhs_negative, result_for_neg, pos_result);
+            return bitwise_select<true>(rhs_negative, result_for_neg, pos_result);
         }
     }
 // !MARK

@@ -4,6 +4,8 @@
 #include "cast.hpp"
 #include "../emul/abs.hpp"
 #include "cmp.hpp"
+#include "logical.hpp"
+#include <concepts>
 
 namespace ui::wasm {
     namespace internal {
@@ -54,7 +56,7 @@ namespace ui::wasm {
         }
     }
 
-    template <std::size_t N, typename T>
+    template <bool Merge, std::size_t N, typename T>
     UI_ALWAYS_INLINE auto bitwise_select(
         mask_t<N, T> const& cond,
         Vec<N, T> const& true_,
@@ -79,26 +81,20 @@ namespace ui::wasm {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T>;
 
-    template <std::size_t N, std::integral T>
-    UI_ALWAYS_INLINE auto bitwise_xor(
-        Vec<N, T> const& lhs,
-        Vec<N, T> const& rhs
-    ) noexcept -> Vec<N, T>;
-
-    template <bool Merge = true, std::size_t N, std::integral T>
+    template <std::size_t N, typename T>
     UI_ALWAYS_INLINE auto abs_diff(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        if constexpr (std::is_signed_v<T>) {
-            auto s0 = sub(lhs, rhs);
-            auto s1 = sub(rhs, lhs);
+        if constexpr (std::is_signed_v<T> || std::floating_point<T>) {
+            auto s0 = sub<true>(lhs, rhs);
+            auto s1 = sub<true>(rhs, lhs);
             auto c = cmp(lhs, rhs, op::greater_t{});
-            auto temp = bitwise_select(c, s0, s1);
+            auto temp = bitwise_select<true>(c, s0, s1);
             return temp;
         } else {
-            auto s0 = sat_sub(lhs, rhs);
-            auto s1 = sat_sub(rhs, lhs);
+            auto s0 = sat_sub<true>(lhs, rhs);
+            auto s1 = sat_sub<true>(rhs, lhs);
             return bitwise_or(s0, s1);
         }
     }
@@ -119,7 +115,7 @@ namespace ui::wasm {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         auto res = abs_diff(lhs, rhs);
-        return add(acc, res);
+        return add<true>(acc, res);
     }
 
     template <std::size_t N, std::integral T>
@@ -129,14 +125,14 @@ namespace ui::wasm {
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
         auto res = widening_abs_diff(lhs, rhs);
-        return add(acc, res);
+        return add<true>(acc, res);
     }
 
     template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto sat_abs(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
-        auto m = Vec<N, T>::load(static_cast<T>(1) << (sizeof(T) * 8 - 1));
+        auto m = Vec<N, T>::load(static_cast<T>(T(1) << (sizeof(T) * 8 - 1)));
         auto a = abs(v);
         auto c = cmp(a, m, op::equal_t{});
         return bitwise_xor(a, rcast<T>(c));
