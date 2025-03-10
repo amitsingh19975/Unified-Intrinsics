@@ -13,7 +13,7 @@
 namespace ui::x86 {
 
 // MARK: Bitwise And
-    template <std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto bitwise_and(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -31,22 +31,18 @@ namespace ui::x86 {
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (size == sizeof(__m256)) {
                 return from_vec<T>(_mm256_and_si256(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m256)) {
-                return bitwise_and(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
             #endif
 
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
             if constexpr (size == sizeof(__m512)) {
                 return from_vec<T>(_mm512_and_si512(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m512)) {
-                return bitwise_and(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
             #endif
 
             return join(
-                bitwise_and(lhs.lo, rhs.lo),
-                bitwise_and(lhs.hi, rhs.hi)
+                bitwise_and<false>(lhs.lo, rhs.lo),
+                bitwise_and<false>(lhs.hi, rhs.hi)
             );
         }
     }
@@ -54,7 +50,7 @@ namespace ui::x86 {
 // !MARK
 
 // MARK: Bitwise XOR
-    template <std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto bitwise_xor(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -65,36 +61,32 @@ namespace ui::x86 {
         } else {
             if constexpr (size == sizeof(__m128)) {
                 return from_vec<T>(_mm_xor_si128(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m128)) {
+            } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                 return bitwise_xor(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
 
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (size == sizeof(__m256)) {
                 return from_vec<T>(_mm256_xor_si256(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m256)) {
-                return bitwise_xor(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
             #endif
 
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
             if constexpr (size == sizeof(__m512)) {
                 return from_vec<T>(_mm512_xor_si512(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m512)) {
-                return bitwise_xor(from_vec<T>(fit_to_vec(lhs)), from_vec<T>(fit_to_vec(rhs))).lo;
             }
             #endif
 
             return join(
-                bitwise_xor(lhs.lo, rhs.lo),
-                bitwise_xor(lhs.hi, rhs.hi)
+                bitwise_xor<false>(lhs.lo, rhs.lo),
+                bitwise_xor<false>(lhs.hi, rhs.hi)
             );
         }
     }
 // !MARK
 
 // MARK: Negation
-    template <std::size_t N, typename T>
+    template <bool Merge = true, std::size_t N, typename T>
         requires (std::is_floating_point_v<T> || std::is_signed_v<T>)
     UI_ALWAYS_INLINE auto negate(
         Vec<N, T> const& v 
@@ -126,7 +118,7 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(T) == 8) {
                         return from_vec<T>(_mm_sub_epi64(_mm_setzero_si128(), to_vec(v)));
                     }
-                } else if constexpr (size * 2 == sizeof(__m128)) {
+                } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                     return negate(from_vec<T>(fit_to_vec(v))).lo;
                 }
 
@@ -141,8 +133,6 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(T) == 8) {
                         return from_vec<T>(_mm256_sub_epi64(_mm256_setzero_si256(), to_vec(v)));
                     }
-                } else if constexpr (size * 2 == sizeof(__m256)) {
-                    return negate(from_vec<T>(fit_to_vec(v))).lo;
                 }
                 #endif
 
@@ -157,13 +147,11 @@ namespace ui::x86 {
                     } else if constexpr (sizeof(T) == 8) {
                         return from_vec<T>(_mm512_sub_epi64(_mm512_setzero_si512(), to_vec(v)));
                     }
-                } else if constexpr (size * 2 == sizeof(__m512)) {
-                    return negate(from_vec<T>(fit_to_vec(v))).lo;
                 }
                 #endif
                 return join(
-                    negate(v.lo),
-                    negate(v.hi)
+                    negate<false>(v.lo),
+                    negate<false>(v.hi)
                 );
             }
         }
@@ -180,7 +168,6 @@ namespace ui::x86 {
     UI_ALWAYS_INLINE auto sat_negate(
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
-        static constexpr auto size = sizeof(v);
         if constexpr (N == 1) {
             return emul::sat_negate(v);
         } else {
@@ -190,7 +177,7 @@ namespace ui::x86 {
 // !MARK
 
 // MARK: Bitwise Not
-    template <std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto bitwise_not(
         Vec<N, T> const& v 
     ) noexcept -> Vec<N, T> {
@@ -212,7 +199,7 @@ namespace ui::x86 {
                     auto ci = _mm_cmpeq_epi64(to_vec(v), to_vec(v));
                     return from_vec<T>(_mm_andnot_si128(to_vec(v), ci));
                 }
-            } else if constexpr (size * 2 == sizeof(__m128)) {
+            } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                 return bitwise_not(from_vec<T>(fit_to_vec(v))).lo;
             }
 
@@ -231,8 +218,6 @@ namespace ui::x86 {
                     auto ci = _mm256_cmpeq_epi64(to_vec(v), to_vec(v));
                     return from_vec<T>(_mm256_andnot_si256(to_vec(v), ci));
                 }
-            } else if constexpr (size * 2 == sizeof(__m256)) {
-                return bitwise_not(from_vec<T>(fit_to_vec(v))).lo;
             }
             #endif
 
@@ -251,20 +236,18 @@ namespace ui::x86 {
                     auto ci = _mm512_set1_epi8(0xFFFF'FFFF'FFFF'FFFFf);
                     return from_vec<T>(_mm512_xor_si512(to_vec(v), ci));
                 }
-            } else if constexpr (size * 2 == sizeof(__m512)) {
-                return bitwise_not(from_vec<T>(fit_to_vec(v))).lo;
             }
             #endif
             return join(
-                bitwise_not(v.lo),
-                bitwise_not(v.hi)
+                bitwise_not<false>(v.lo),
+                bitwise_not<false>(v.hi)
             );
         }
     }
 // !MARK
 
 // MARK: Bitwise OR
-    template <std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto bitwise_or(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -275,7 +258,7 @@ namespace ui::x86 {
         } else {
             if constexpr (size == sizeof(__m128)) {
                 return from_vec<T>(_mm_or_si128(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m128)) {
+            } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                 return bitwise_or(
                     from_vec<T>(fit_to_vec(lhs)),
                     from_vec<T>(fit_to_vec(rhs))
@@ -285,34 +268,24 @@ namespace ui::x86 {
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (size == sizeof(__m256)) {
                 return from_vec<T>(_mm256_or_si256(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m256)) {
-                return bitwise_or(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
 
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
             if constexpr (size == sizeof(__m512)) {
                 return from_vec<T>(_mm512_or_si512(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m512)) {
-                return bitwise_or(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
             return join(
-                bitwise_or(lhs.lo, rhs.lo),
-                bitwise_or(lhs.hi, rhs.hi)
+                bitwise_or<false>(lhs.lo, rhs.lo),
+                bitwise_or<false>(lhs.hi, rhs.hi)
             );
         }
     }
 // !MARK
 
 // MARK: Bitwise Not-And ~lhs & rhs
-    template <std::size_t N, std::integral T>
+    template <bool Merge = true, std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto bitwise_notand(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
@@ -323,7 +296,7 @@ namespace ui::x86 {
         } else {
             if constexpr (size == sizeof(__m128)) {
                 return from_vec<T>(_mm_andnot_si128(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m128)) {
+            } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                 return bitwise_notand(
                     from_vec<T>(fit_to_vec(lhs)),
                     from_vec<T>(fit_to_vec(rhs))
@@ -333,27 +306,17 @@ namespace ui::x86 {
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX2
             if constexpr (size == sizeof(__m256)) {
                 return from_vec<T>(_mm256_andnot_si256(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m256)) {
-                return bitwise_notand(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
 
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_SKX
             if constexpr (size == sizeof(__m512)) {
                 return from_vec<T>(_mm512_andnot_si512(to_vec(lhs), to_vec(rhs)));
-            } else if constexpr (size * 2 == sizeof(__m512)) {
-                return bitwise_notand(
-                    from_vec<T>(fit_to_vec(lhs)),
-                    from_vec<T>(fit_to_vec(rhs))
-                ).lo;
             }
             #endif
             return join(
-                bitwise_notand(lhs.lo, rhs.lo),
-                bitwise_notand(lhs.hi, rhs.hi)
+                bitwise_notand<false>(lhs.lo, rhs.lo),
+                bitwise_notand<false>(lhs.hi, rhs.hi)
             );
         }
     }
