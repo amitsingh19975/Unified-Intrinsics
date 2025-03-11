@@ -4,12 +4,6 @@
 #include "cast.hpp"
 #include <limits>
 
-#ifndef UI_USE_CSTDLIB
-    #if !defined(UI_EMPSCRIPTEN)
-        #define UI_USE_CSTDLIB
-    #endif
-#endif
-
 #if defined(UI_USE_CSTDLIB)
 #include <cmath>
 #include <cfenv>

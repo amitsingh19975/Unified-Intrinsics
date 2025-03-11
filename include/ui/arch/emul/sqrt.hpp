@@ -3,7 +3,10 @@
 
 #include "cast.hpp"
 #include "../../maths.hpp"
-#include <concepts>
+
+#if defined(UI_USE_CSTDLIB)
+#include <cmath>
+#endif
 
 namespace ui::emul {
     template<std::size_t N, typename T>
@@ -17,7 +20,15 @@ namespace ui::emul {
                 if constexpr (std::integral<T>) {
                     return static_cast<T>(maths::isqrt(v_));
                 } else {
+                #if defined(UI_USE_CSTDLIB)
                     return static_cast<T>(std::sqrt(v_));
+                #else
+                    if constexpr (std::same_as<T, float>) {
+                        return static_cast<T>(__builtin_sqrtf(v_));
+                    } else {
+                        return static_cast<T>(__builtin_sqrt(v_));
+                    }
+                #endif
                 }
             }
         }, v);

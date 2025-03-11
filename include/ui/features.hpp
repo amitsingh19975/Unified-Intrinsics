@@ -147,4 +147,10 @@
     #endif
 #endif
 
+#ifndef UI_USE_CSTDLIB
+    #if !defined(UI_EMPSCRIPTEN)
+        #define UI_USE_CSTDLIB
+    #endif
+#endif
+
 #endif // AMT_UI_FEATURES_HPP
