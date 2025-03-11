@@ -74,7 +74,7 @@ namespace ui {
     #include "wasm/div.hpp"
     #include "wasm/load.hpp"
     #include "wasm/logical.hpp"
-    #include "emul/manip.hpp"
+    #include "wasm/manip.hpp"
     #include "wasm/minmax.hpp"
     #include "wasm/mul.hpp"
     #include "emul/reciprocal.hpp"
