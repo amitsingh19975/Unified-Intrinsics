@@ -119,8 +119,9 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
     static constexpr auto max = std::numeric_limits<type>::max();
 
     WHEN("Sqrt") {
+        v[0] = 0;
         auto res = sqrt(v);
-        INFO(std::format("restimate(v): {}", res));
+        INFO(std::format("sqrt(v): {}", res));
         for (auto i = 0ul; i < N; ++i) {
             ftype l = ftype(res[i]);
             ftype r = ftype(std::sqrt(ftype(v[i])));
