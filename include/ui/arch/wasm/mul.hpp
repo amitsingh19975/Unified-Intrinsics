@@ -4,6 +4,7 @@
 #include "cast.hpp"
 #include "../emul/mul.hpp"
 #include "add.hpp"
+#include "ui/base.hpp"
 
 namespace ui::wasm {
     namespace internal {
@@ -137,6 +138,67 @@ namespace ui::wasm {
     }
 // !MARK
 
+    namespace internal {
+        template <bool Merge = true, std::size_t N, std::floating_point T, typename Op>
+            requires (std::same_as<Op, op::add_t> || std::same_as<Op, op::sub_t>)
+        UI_ALWAYS_INLINE auto fused_mul_helper(
+            Vec<N, T> const& acc,
+            Vec<N, T> const& lhs,
+            Vec<N, T> const& rhs,
+            Op op 
+        ) noexcept -> Vec<N, T> {
+            #ifdef UI_EMPSCRIPTEN_WASM_RELAXED_SIMD
+            static constexpr auto size = sizeof(lhs);
+            if constexpr (N == 1) {
+                return emul::fused_mul_acc(acc, lhs, rhs, op);
+            } else {
+                if constexpr (size == sizeof(v128_t)) {
+                    auto a = to_vec(acc);
+                    auto l = to_vec(lhs);
+                    auto r = to_vec(rhs);
+                    if constexpr (std::same_as<T, float>) {
+                        v128_t res;
+                        if constexpr (std::same_as<Op, op::add_t>) {
+                            res = wasm_f32x4_relaxed_madd(l, r, a);
+                        } else {
+                            res = wasm_f32x4_relaxed_nmadd(l, r, a);
+                        }
+                        return from_vec<T>(res);
+                    } else if constexpr (std::same_as<T, double>) {
+                        v128_t res;
+                        if constexpr (std::same_as<Op, op::add_t>) {
+                            res = wasm_f64x2_relaxed_madd(l, r, a);
+                        } else {
+                            res = wasm_f64x2_relaxed_nmadd(l, r, a);
+                        }
+                        return from_vec<T>(res);
+                    } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                        return cast<T>(fused_mul_helper(
+                            cast<float>(acc),
+                            cast<float>(lhs),
+                            cast<float>(rhs),
+                            op
+                        ));
+                    }
+                } else if constexpr (size * 2 == sizeof(v128_t) && Merge) {
+                    return fused_mul_helper(
+                        from_vec<T>(fit_to_vec(lhs)),
+                        from_vec<T>(fit_to_vec(rhs)),
+                        op
+                    ).lo;
+                }
+
+                return join(
+                    fused_mul_helper<false>(acc.lo, lhs.lo, rhs.lo, op),
+                    fused_mul_helper<false>(acc.hi, lhs.hi, rhs.hi, op)
+                );
+            }
+            #else
+            return mul_acc(acc, lhs, rhs, op);
+            #endif
+        }
+    } // namespace internal
+
 // MARK: Fused-Multiply-Accumulate
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto fused_mul_acc(
@@ -145,7 +207,7 @@ namespace ui::wasm {
         Vec<N, T> const& rhs,
         op::add_t op
     ) noexcept -> Vec<N, T> {
-        return mul_acc(acc, lhs, rhs, op);
+        return internal::fused_mul_helper(acc, lhs, rhs, op);
     }
 
     template <std::size_t N, std::floating_point T>
@@ -155,7 +217,7 @@ namespace ui::wasm {
         Vec<N, T> const& rhs,
         op::sub_t op
     ) noexcept -> Vec<N, T> {
-        return mul_acc(acc, lhs, rhs, op);
+        return internal::fused_mul_helper(acc, lhs, rhs, op);
     }
 
     template <std::size_t Lane, std::size_t N, std::size_t M, std::floating_point T>

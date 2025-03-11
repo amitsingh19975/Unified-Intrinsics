@@ -13,6 +13,12 @@
     #endif
 #endif
 
+#ifndef UI_EMPSCRIPTEN_WASM_RELAXED_SIMD
+    #if defined(UI_EMPSCRIPTEN) && defined(__wasm_relaxed_simd__)
+        #define UI_EMPSCRIPTEN_WASM_RELAXED_SIMD
+    #endif
+#endif
+
 #if !defined(UI_OS_ANDROID) && !defined(UI_OS_IOS) && !defined(UI_OS_WIN) && \
     !defined(UI_OS_UNIX) && !defined(UI_OS_MAC) && !defined(UI_EMPSCRIPTEN)
 

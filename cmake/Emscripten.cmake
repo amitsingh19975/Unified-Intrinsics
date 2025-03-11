@@ -2,7 +2,7 @@ if(CMAKE_TOOLCHAIN_FILE MATCHES ".*Emscripten\.cmake$" OR CMAKE_CXX_COMPILER MAT
         set(EMSCRIPTEN 1)
         set(CMAKE_CXX_COMPILER_ID "Emscripten")
         message(" * C++ compiler: Emscripten")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128 -mrelaxed-simd")
 
         set(CLANGD_FILE ${CMAKE_BINARY_DIR}/clangd)
         execute_process(COMMAND ${CMAKE_C_COMPILER} --cflags OUTPUT_VARIABLE CLANGD_FLAGS_TO_ADD)
