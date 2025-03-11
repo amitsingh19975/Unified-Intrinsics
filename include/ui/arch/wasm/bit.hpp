@@ -6,6 +6,7 @@
 #include "logical.hpp"
 #include "add.hpp"
 #include "sub.hpp"
+#include <wasm_simd128.h>
 
 namespace ui::wasm {
     namespace internal {
@@ -149,20 +150,7 @@ namespace ui::wasm {
             if constexpr (bits == sizeof(v128_t)) {
                 auto a = to_vec(v);
                 if constexpr (sizeof(T) == 1) {
-                    alignas(16) static constexpr std::int8_t mask_POPCOUNT[16] = 
-                        { /* 0 */ 0,/* 1 */ 1,/* 2 */ 1,/* 3 */ 2,
-                          /* 4 */ 1,/* 5 */ 2,/* 6 */ 2,/* 7 */ 3,
-                          /* 8 */ 1,/* 9 */ 2,/* a */ 2,/* b */ 3,
-                          /* c */ 2,/* d */ 3,/* e */ 3,/* f */ 4};
-
-                    auto mask_low = wasm_i8x16_const_splat(0x0f);
-                    auto mask = wasm_v128_and(a, mask_low);
-                    auto mp = *reinterpret_cast<v128_t const*>(mask_POPCOUNT);
-                    auto lowpopcnt = wasm_i8x16_swizzle(mp, mask);
-                    mask = wasm_u16x8_shr(a, 4);
-                    mask = wasm_v128_and(mask, mask_low);
-                    auto hipopcnt = wasm_i8x16_swizzle(mp, mask);
-                    return from_vec<T>(wasm_i8x16_add(lowpopcnt, hipopcnt));
+                    return from_vec<T>(wasm_i8x16_popcnt(a));
                 } else if constexpr (sizeof(T) == 2) {
                     auto mask1 = wasm_i16x8_const_splat(0x5555);  // 0b0101010101010101
                     auto mask2 = wasm_i16x8_const_splat(0x3333);  // 0b0011001100110011

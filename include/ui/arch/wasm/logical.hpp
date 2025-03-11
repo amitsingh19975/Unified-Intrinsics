@@ -79,30 +79,23 @@ namespace ui::wasm {
         } else {
             if constexpr (bits == sizeof(v128_t)) {
                 if constexpr (std::same_as<T, float>) {
-                    static constexpr std::uint32_t sign_mask = 0x8000'0000;
-                    auto mask = Vec<N, std::uint32_t>::load(sign_mask);
-                    auto res = bitwise_xor(rcast<std::uint32_t>(v), mask);
-                    return rcast<T>(res);
+                    return from_vec<T>(wasm_f32x4_neg(to_vec(v)));
                 } else if constexpr (std::same_as<T, double>) {
-                    static constexpr std::uint64_t sign_mask = 0x8000'0000'0000'0000;
-                    auto mask = Vec<N, std::uint64_t>::load(sign_mask);
-                    auto res = bitwise_xor(rcast<std::uint64_t>(v), mask);
-                    return rcast<T>(res);
+                    return from_vec<T>(wasm_f64x2_neg(to_vec(v)));
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
                     static constexpr std::uint16_t sign_mask = 0x8000;
                     auto mask = Vec<N, std::uint16_t>::load(sign_mask);
                     return rcast<T>(bitwise_xor(rcast<std::uint16_t>(v), mask));
                 } else {
                     auto m = to_vec(v);
-                    auto z = wasm_i32x4_splat(0);
                     if constexpr (sizeof(T) == 1) {
-                        return from_vec<T>(wasm_i8x16_sub(z, m));
+                        return from_vec<T>(wasm_i8x16_neg(m));
                     } else if constexpr (sizeof(T) == 2) {
-                        return from_vec<T>(wasm_i16x8_sub(z, m));
+                        return from_vec<T>(wasm_i16x8_neg(m));
                     } else if constexpr (sizeof(T) == 4) {
-                        return from_vec<T>(wasm_i32x4_sub(z, m));
+                        return from_vec<T>(wasm_i32x4_neg(m));
                     } else if constexpr (sizeof(T) == 8) {
-                        return from_vec<T>(wasm_i64x2_sub(z, m));
+                        return from_vec<T>(wasm_i64x2_neg(m));
                     }
                 }
             } else if constexpr (bits * 2 == sizeof(v128_t) && Merge) {
