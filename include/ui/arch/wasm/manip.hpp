@@ -5,11 +5,9 @@
 #include "../emul/manip.hpp"
 #include "logical.hpp"
 #include "shift.hpp"
-#include "bit.hpp"
-#include "ui/arch/basic.hpp"
+#include "basic.hpp"
 #include <cstdint>
 #include <type_traits>
-#include <wasm_simd128.h>
 
 namespace ui::wasm {
     // MARK: Copy vector lane
@@ -181,76 +179,6 @@ namespace ui::wasm {
 
 // MARK: Zip
     namespace internal {
-        UI_ALWAYS_INLINE static auto unpacklo_i8(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i8x16_shuffle(
-                a, b,
-                0, 16, 1, 17, 2, 18, 3, 19,
-                4, 20, 5, 21, 6, 22, 7, 23
-            );
-        }
-
-        UI_ALWAYS_INLINE static auto unpacklo_i16(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i16x8_shuffle(
-                a, b,
-                0, 8, 1, 9, 2, 10, 3, 11
-            );
-        }
-
-        UI_ALWAYS_INLINE static auto unpacklo_i32(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i32x4_shuffle(a, b, 0, 4, 1, 5);
-        }
-
-        UI_ALWAYS_INLINE static auto unpacklo_i64(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i64x2_shuffle(a, b, 0, 2);
-        }
-
-        UI_ALWAYS_INLINE static auto unpackhi_i8(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i8x16_shuffle(
-                a, b,
-                8, 24, 9, 25, 10, 26, 11, 27,
-                12, 28, 13, 29, 14, 30, 15, 31
-            );
-        }
-
-        UI_ALWAYS_INLINE static auto unpackhi_i16(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i16x8_shuffle(
-                a, b,
-                4, 12, 5, 13, 6, 14, 7, 15
-            );
-        }
-
-        UI_ALWAYS_INLINE static auto unpackhi_i32(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i32x4_shuffle(a, b, 2, 6, 3, 7);
-        }
-
-        UI_ALWAYS_INLINE static auto unpackhi_i64(
-            v128_t a,
-            v128_t b
-        ) noexcept -> v128_t {
-             return wasm_i64x2_shuffle(a, b, 1, 3);
-        }
-
         struct zip_helper {
             template <std::size_t N, typename T>
                 requires (N == 2)

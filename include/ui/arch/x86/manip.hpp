@@ -706,7 +706,7 @@ namespace ui::x86 {
                     r = _mm_shuffle_epi32(r, _MM_SHUFFLE(3, 1, 3, 1));
                     return rcast<T>(from_vec<std::int64_t>(_mm_unpacklo_epi32(l, r)));
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 auto l = fit_to_vec(a); // [a0, a1, a2, a3, a4, ...] => [a0, a2, a4, a6, ...]
                 auto r = fit_to_vec(b); // [b0, b1, b2, b3, b4, ...] => [b0, b2, b4, b6, ...]
                 return transpose_high(from_vec<T>(l), from_vec<T>(r)).lo; // [a0, b0, a2, b2, a4, b4, a6, b6 ...]
