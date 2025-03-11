@@ -26,6 +26,10 @@
     #include "arch/x86/join.hpp"
 #endif
 
+#ifdef UI_EMPSCRIPTEN
+    #include "arch/wasm/join.hpp"
+#endif
+
 namespace ui {
 
     template <std::size_t... Is, std::size_t N, typename T>
@@ -278,11 +282,13 @@ namespace ui {
         Vec<N, T> const& y
     ) noexcept -> Vec<2 * N, T> {
         #ifdef UI_ARM_HAS_NEON
-        return arm::neon::join_impl(x, y); 
+            return arm::neon::join_impl(x, y); 
         #elif UI_CPU_SSE_LEVEL > UI_CPU_SSE_LEVEL_SSE41
-        return x86::join_impl(x, y); 
+            return x86::join_impl(x, y); 
+        #elif defined(UI_EMPSCRIPTEN)
+            return wasm::join_impl(x, y); 
         #else
-        return { x, y };
+            return { x, y };
         #endif
     }
 

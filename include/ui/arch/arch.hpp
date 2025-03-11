@@ -82,10 +82,9 @@ namespace ui {
     #include "wasm/shift.hpp"
     #include "wasm/sub.hpp"
     #include "wasm/sqrt.hpp"
-    #include "emul/permute.hpp"
     #include "emul/int_mask.hpp"
-    #include "emul/permute.hpp"
-    #include "emul/prefetch.hpp"
+    #include "wasm/permute.hpp"
+    #include "wasm/prefetch.hpp"
     namespace ui {
         using namespace wasm;
         static constexpr auto ARCH_TYPE = Arch::Wasm;
