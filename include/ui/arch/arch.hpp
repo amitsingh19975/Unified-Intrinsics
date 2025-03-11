@@ -71,7 +71,7 @@ namespace ui {
     #include "wasm/bit.hpp"
     #include "wasm/cast.hpp"
     #include "wasm/cmp.hpp"
-    #include "emul/div.hpp"
+    #include "wasm/div.hpp"
     #include "wasm/load.hpp"
     #include "wasm/logical.hpp"
     #include "emul/manip.hpp"
