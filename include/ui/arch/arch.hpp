@@ -82,7 +82,7 @@ namespace ui {
     #include "wasm/shift.hpp"
     #include "wasm/sub.hpp"
     #include "wasm/sqrt.hpp"
-    #include "emul/int_mask.hpp"
+    #include "wasm/int_mask.hpp"
     #include "wasm/permute.hpp"
     #include "wasm/prefetch.hpp"
     namespace ui {
