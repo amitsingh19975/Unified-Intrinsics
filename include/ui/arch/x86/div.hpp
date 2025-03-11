@@ -3,12 +3,8 @@
 
 #include "cast.hpp"
 #include "../emul/div.hpp"
-#include <algorithm>
-#include <bit>
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <type_traits>
+#include "rounding.hpp"
+#include "mul.hpp"
 
 namespace ui::x86 {
 
@@ -16,7 +12,7 @@ namespace ui::x86 {
         using namespace ::ui::internal;
     } // namespace internal
 
-    template <std::size_t N, std::floating_point T>
+    template <bool Merge = true, std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto div(
         Vec<N, T> const& num,
         Vec<N, T> const& den
@@ -33,7 +29,7 @@ namespace ui::x86 {
                 } else if constexpr (::ui::internal::is_fp16<T>) {
                     return cast<T>(div(cast<float>(num), cast<float>(den)));
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 return div(from_vec<T>(fit_to_vec(num)), from_vec<T>(fit_to_vec(den))).lo;
             }
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
@@ -61,8 +57,8 @@ namespace ui::x86 {
             #endif
 
             return join(
-                div(num.lo, den.lo),
-                div(num.hi, den.hi)
+                div<false>(num.lo, den.lo),
+                div<false>(num.hi, den.hi)
             );
         }
     }
@@ -72,7 +68,6 @@ namespace ui::x86 {
         Vec<N, T> const& num,
         Vec<N, T> const& den
     ) noexcept -> Vec<N, T> {
-        static constexpr auto bits = sizeof(num);
         if constexpr (N == 1) {
             return emul::div(num, den);
         } else {
@@ -96,8 +91,7 @@ namespace ui::x86 {
         Vec<N, T> const& den
     ) noexcept -> Vec<N, T> {
         auto q = round<std::float_round_style::round_toward_zero>(div(num, den));
-        auto temp = fused_mul_acc(num, q, den, op::sub_t{});
-        return temp;
+        return fused_mul_acc(num, q, den, op::sub_t{});
     }
 
     template <std::size_t N, std::integral T>
