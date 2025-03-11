@@ -172,7 +172,7 @@ namespace ui::x86 {
         Vec<N, T> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        op::add_t op
+        [[maybe_unused]] op::add_t op
     ) noexcept -> Vec<N, T> {
         if constexpr (::ui::internal::is_fp16<T>) {
             auto a = cast<float>(acc);
@@ -195,7 +195,7 @@ namespace ui::x86 {
         Vec<N, T> const& acc,
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs,
-        op::sub_t op
+        [[maybe_unused]] op::sub_t op
     ) noexcept -> Vec<N, T> {
         if constexpr (::ui::internal::is_fp16<T>) {
             auto a = cast<float>(acc);
