@@ -30,9 +30,8 @@ namespace ui::x86 {
                     return v;
                 };
                 auto from_mask = create_mask(std::make_index_sequence<M>{});
-                auto t0 = bitwise_notand(from_mask, rcast<mtype>(to));
-                auto t1 = bitwise_and(from_mask, rcast<mtype>(from));
-                return rcast<T>(bitwise_or(t0, t1));
+                auto tmp = bitwise_select(from_mask, from, to);
+                return tmp;
             }
         }
 
@@ -93,7 +92,7 @@ namespace ui::x86 {
                     auto res = rev_helper(rev_helper, rcast<mtype>(reverse_bits(rcast<std::uint8_t>(v))));
                     return rcast<T>(res);
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 return reverse_bits(
                     from_vec<T>(fit_to_vec(v))
                 ).lo;
@@ -172,12 +171,12 @@ namespace ui::x86 {
             if constexpr (bits == sizeof(__m128)) {
                 auto a = to_vec(rcast<mtype>(v));
                 if constexpr (sizeof(T) == 1) {
-                    static constexpr std::int8_t mask_rev_e8[16] = {
+                    alignas(16) static constexpr std::int8_t mask_rev_e8[16] = {
                         15,14,13,12,11,10,9,8,
                          7, 6, 5, 4, 3, 2,1,0}; 
                     return rcast<T>(from_vec<mtype>(_mm_shuffle_epi8(a, *reinterpret_cast<__m128i const*>(mask_rev_e8))));
                 } else if constexpr (sizeof(T) == 2) {
-                    static constexpr std::int8_t mask_rev_e16[16] = {
+                    alignas(16) static constexpr std::int8_t mask_rev_e16[16] = {
                         14,15, 12,13, 10,11, 8,9,
                          6, 7,  4, 5,  2, 3, 0,1
                     };
@@ -191,7 +190,7 @@ namespace ui::x86 {
                         a, _MM_SHUFFLE(1, 0, 3, 2)
                     )));
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 return reverse(
                     from_vec<T>(fit_to_vec(v))
                 ).hi;
@@ -201,7 +200,7 @@ namespace ui::x86 {
             if constexpr (bits == sizeof(__m256)) {
                 auto a = to_vec(rcast<mtype>(v));
                 if constexpr (sizeof(T) == 1) {
-                    static constexpr std::int8_t mask_rev_e8[32] = {
+                    alignas(32) static constexpr std::int8_t mask_rev_e8[32] = {
                         15,14,13,12,11,10,9,8,
                          7, 6, 5, 4, 3, 2,1,0,
                         15,14,13,12,11,10,9,8,
@@ -211,7 +210,7 @@ namespace ui::x86 {
                     res = _mm256_permute2f128_si256(res, res, 0b01);
                     return rcast<T>(from_vec<mtype>(res));
                 } else if constexpr (sizeof(T) == 2) {
-                    static constexpr std::int8_t mask_rev_e16[32] = {
+                    alignas(32) static constexpr std::int8_t mask_rev_e16[32] = {
                         14,15, 12,13, 10,11, 8,9,
                          6, 7,  4, 5,  2, 3, 0,1,
                         14,15, 12,13, 10,11, 8,9,
@@ -240,7 +239,7 @@ namespace ui::x86 {
             if constexpr (bits == sizeof(__m512)) {
                 auto a = to_vec(rcast<mtype>(v));
                 if constexpr (sizeof(T) == 1) {
-                    static constexpr std::int8_t mask_rev_e8[32] = {
+                    alignas(64) static constexpr std::int8_t mask_rev_e8[64] = {
                         15,14,13,12,11,10,9,8,
                          7, 6, 5, 4, 3, 2,1,0,
                         15,14,13,12,11,10,9,8,
@@ -254,7 +253,7 @@ namespace ui::x86 {
                     res = _mm512_shuffle_i64x2(res, res, 0b00011011);
                     return rcast<T>(from_vec<mtype>(res));
                 } else if constexpr (sizeof(T) == 2) {
-                    static constexpr std::int8_t mask_rev_e16[32] = {
+                    alignas(64) static constexpr std::int8_t mask_rev_e16[64] = {
                         14,15, 12,13, 10,11, 8,9,
                          6, 7,  4, 5,  2, 3, 0,1,
                         14,15, 12,13, 10,11, 8,9,
@@ -289,6 +288,8 @@ namespace ui::x86 {
             );
         }
     }
+// !MARK
+
 // MARK: Zip
     namespace internal {
         struct zip_helper {
@@ -356,7 +357,10 @@ namespace ui::x86 {
                         return rcast<T>(from_vec<std::int64_t>(_mm_unpacklo_epi64(l, r)));
                     }
                 } else if constexpr (bits * 2 == sizeof(__m128)) {
-                    return low(from_vec<T>(fit_to_vec(a)), from_vec<T>(fit_to_vec(b))).lo;
+                    return low(
+                        join(a, b),
+                        Vec<2 * N, T>{}
+                    ).lo;
                 }
                 // TODO: Implement avx256 and 512
             }
@@ -538,7 +542,7 @@ namespace ui::x86 {
                     ));
                     return rcast<T>(from_vec<std::int64_t>(res));
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 auto l = fit_to_vec(a); // [a0, a1, a2, a3, a4, ...] => [a0, a2, a4, a6, ...]
                 auto r = fit_to_vec(b); // [b0, b1, b2, b3, b4, ...] => [b0, b2, b4, b6, ...]
                 auto tmp = unzip_low(from_vec<T>(l), from_vec<T>(r)); // [a0, b0, a2, b2, a4, b4, a6, b6 ...]
@@ -602,7 +606,7 @@ namespace ui::x86 {
                     ));
                     return rcast<T>(from_vec<std::int32_t>(res));
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 auto l = fit_to_vec(a); // [a0, a1, a2, a3, a4, ...] => [a0, a2, a4, a6, ...]
                 auto r = fit_to_vec(b); // [b0, b1, b2, b3, b4, ...] => [b0, b2, b4, b6, ...]
                 auto tmp = unzip_high(from_vec<T>(l), from_vec<T>(r)); // [a0, b0, a2, b2, a4, b4, a6, b6 ...]
@@ -616,7 +620,7 @@ namespace ui::x86 {
 // !MARK
 
 // MARK: Transpose elements
-    template <std::size_t N, typename T>
+    template <bool Merge = true, std::size_t N, typename T>
         requires (N > 1)
     UI_ALWAYS_INLINE auto transpose_low(
         Vec<N, T> const& a,
@@ -651,13 +655,16 @@ namespace ui::x86 {
                     r = _mm_shuffle_epi32(r, _MM_SHUFFLE(3, 1, 2, 0));
                     return rcast<T>(from_vec<std::int64_t>(_mm_unpacklo_epi32(l, r)));
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 auto l = fit_to_vec(a); // [a0, a1, a2, a3, a4, ...] => [a0, a2, a4, a6, ...]
                 auto r = fit_to_vec(b); // [b0, b1, b2, b3, b4, ...] => [b0, b2, b4, b6, ...]
                 return transpose_low(from_vec<T>(l), from_vec<T>(r)).lo; // [a0, b0, a2, b2, a4, b4, a6, b6 ...]
             }
             // TODO: implement avx256/512
-            return join(transpose_low(a.lo, b.lo), transpose_low(a.hi, b.hi));
+            return join(
+                transpose_low<false>(a.lo, b.lo),
+                transpose_low<false>(a.hi, b.hi)
+            );
         }
     }
 
