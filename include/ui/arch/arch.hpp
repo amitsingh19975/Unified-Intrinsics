@@ -75,7 +75,7 @@ namespace ui {
     #include "wasm/load.hpp"
     #include "wasm/logical.hpp"
     #include "emul/manip.hpp"
-    #include "emul/minmax.hpp"
+    #include "wasm/minmax.hpp"
     #include "emul/mul.hpp"
     #include "emul/reciprocal.hpp"
     #include "emul/rounding.hpp"
@@ -88,7 +88,7 @@ namespace ui {
     #include "emul/prefetch.hpp"
     namespace ui {
         using namespace wasm;
-        using emul::min, emul::max, emul::mul;
+        using emul::mul;
         static constexpr auto ARCH_TYPE = Arch::Wasm;
     }
     #define VEC_ARCH_NAME "Wasm"
