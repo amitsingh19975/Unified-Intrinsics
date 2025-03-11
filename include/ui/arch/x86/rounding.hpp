@@ -16,7 +16,7 @@ namespace ui::x86 {
         using namespace ::ui::internal;
     } // namespace internal
 
-    template <std::float_round_style mode = std::float_round_style::round_to_nearest, std::size_t N, std::floating_point T>
+    template <std::float_round_style mode = std::float_round_style::round_to_nearest, bool Merge = true, std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto round(
         Vec<N, T> const& v
     ) noexcept -> Vec<N, T> {
@@ -72,7 +72,7 @@ namespace ui::x86 {
                 } else if constexpr (::ui::internal::is_fp16<T>) {
                     return cast<T>(round<mode>(cast<float>(v)));
                 }
-            } else if constexpr (bits * 2 == sizeof(__m128)) {
+            } else if constexpr (bits * 2 == sizeof(__m128) && Merge) {
                 return round<mode>(from_vec<T>(fit_to_vec(v))).lo;
             }
             #if UI_CPU_SSE_LEVEL >= UI_CPU_SSE_LEVEL_AVX
@@ -180,8 +180,8 @@ namespace ui::x86 {
             #endif
 
             return join(
-                round<mode>(v.lo),
-                round<mode>(v.hi)
+                round<mode, false>(v.lo),
+                round<mode, false>(v.hi)
             );
         }
     }
