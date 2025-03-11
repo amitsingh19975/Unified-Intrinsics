@@ -274,9 +274,7 @@ namespace ui::wasm {
                 auto c = to_vec(cond);
                 auto t = to_vec(true_);
                 auto f = to_vec(false_);
-                auto t0 = bitwise_and(cond, rcast<mask_inner_t<T>>(true_));
-                auto t1 = bitwise_notand(cond, rcast<mask_inner_t<T>>(false_));
-                return rcast<T>(bitwise_or(t0, t1));
+                return from_vec<T>(wasm_v128_bitselect(t, f, c));
             } else if constexpr (size * 2 == sizeof(v128_t)) {
                 return bitwise_select(
                     from_vec<mask_inner_t<T>>(fit_to_vec(cond)),
