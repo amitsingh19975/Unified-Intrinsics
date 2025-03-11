@@ -4,12 +4,6 @@
 #include "cast.hpp"
 #include "../emul/minmax.hpp"
 #include "bit.hpp"
-#include "ui/arch/basic.hpp"
-#include "ui/arch/wasm/abs.hpp"
-#include "ui/base.hpp"
-#include "ui/base_vec.hpp"
-#include <cstdint>
-#include <wasm_simd128.h>
 
 namespace ui::wasm {
     namespace internal {
