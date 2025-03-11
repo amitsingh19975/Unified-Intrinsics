@@ -81,7 +81,7 @@ namespace ui {
     #include "wasm/rounding.hpp"
     #include "wasm/shift.hpp"
     #include "wasm/sub.hpp"
-    #include "emul/sqrt.hpp"
+    #include "wasm/sqrt.hpp"
     #include "emul/permute.hpp"
     #include "emul/int_mask.hpp"
     #include "emul/permute.hpp"
