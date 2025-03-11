@@ -732,6 +732,16 @@ namespace ui {
                     return;
                     #endif
                 }
+            } else if constexpr (sizeof(T) == 4) {
+                if constexpr (N == 4) {
+                    mask = static_cast<base_type>(_mm_movemask_ps(std::bit_cast<__m128>(v)));
+                    return;
+                }
+            } else if constexpr (sizeof(T) == 8) {
+                if constexpr (N == 4) {
+                    mask = static_cast<base_type>(_mm_movemask_pd(std::bit_cast<__m128d>(v)));
+                    return;
+                }
             }
 
             auto ext = rcast<mtype>(shift_right<7>(rcast<std::make_signed_t<T>>(m)));
