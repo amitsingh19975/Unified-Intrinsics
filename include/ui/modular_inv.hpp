@@ -3,7 +3,7 @@
 
 #include "features.hpp"
 #include "float.hpp"
-#include "ui/maths.hpp"
+#include "maths.hpp"
 #include <array>
 #include <bit>
 #include <cassert>
@@ -15,7 +15,6 @@
 #include <type_traits>
 
 namespace ui::maths {
-
     namespace internal {
         template <std::size_t Iter = 1, bool M = false, typename T>
             requires (std::is_arithmetic_v<T>)
