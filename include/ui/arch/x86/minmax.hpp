@@ -239,26 +239,24 @@ namespace ui::x86 {
                     auto mx = _mm_max_ps(l, r);
                     auto mask_l = _mm_cmpunord_ps(l, l); 
                     auto mask_r = _mm_cmpunord_ps(r, r); 
-                    auto mask = _mm_or_ps(mask_l, mask_r);
-                    auto t0 = _mm_blendv_ps(r, l, mask_r); 
+                    auto t0 = _mm_blendv_ps(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm_blendv_ps(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, double>) {
                     auto mx = _mm_max_pd(l, r);
                     auto mask_l = _mm_cmpunord_pd(l, l); 
                     auto mask_r = _mm_cmpunord_pd(r, r); 
-                    auto mask = _mm_or_pd(mask_l, mask_r);
-                    auto t0 = _mm_blendv_pd(r, l, mask_r); 
+                    auto t0 = _mm_blendv_pd(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm_blendv_pd(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
@@ -279,26 +277,24 @@ namespace ui::x86 {
                     auto mx = _mm256_max_ps(l, r);
                     auto mask_l = _mm256_cmp_ps(l, l, _CMP_UNORD_Q);
                     auto mask_r = _mm256_cmp_ps(r, r, _CMP_UNORD_Q);
-                    auto mask = _mm256_or_ps(mask_l, mask_r);
-                    auto t0 = _mm256_blendv_ps(r, l, mask_r); 
+                    auto t0 = _mm256_blendv_ps(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm256_blendv_ps(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, double>) {
                     auto mx = _mm256_max_pd(l, r);
                     auto mask_l = _mm256_cmp_pd(l, l, _CMP_UNORD_Q);
                     auto mask_r = _mm256_cmp_pd(r, r, _CMP_UNORD_Q);
-                    auto mask = _mm256_or_pd(mask_l, mask_r);
-                    auto t0 = _mm256_blendv_pd(r, l, mask_r); 
+                    auto t0 = _mm256_blendv_pd(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm256_blendv_pd(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
@@ -368,26 +364,24 @@ namespace ui::x86 {
                     auto mx = _mm_min_ps(l, r);
                     auto mask_l = _mm_cmpunord_ps(l, l); 
                     auto mask_r = _mm_cmpunord_ps(r, r); 
-                    auto mask = _mm_or_ps(mask_l, mask_r);
-                    auto t0 = _mm_blendv_ps(r, l, mask_r); 
+                    auto t0 = _mm_blendv_ps(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm_blendv_ps(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, double>) {
                     auto mx = _mm_min_pd(l, r);
                     auto mask_l = _mm_cmpunord_pd(l, l); 
                     auto mask_r = _mm_cmpunord_pd(r, r); 
-                    auto mask = _mm_or_pd(mask_l, mask_r);
-                    auto t0 = _mm_blendv_pd(r, l, mask_r); 
+                    auto t0 = _mm_blendv_pd(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm_blendv_pd(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
@@ -408,26 +402,24 @@ namespace ui::x86 {
                     auto mx = _mm256_min_ps(l, r);
                     auto mask_l = _mm256_cmp_ps(l, l, _CMP_UNORD_Q);
                     auto mask_r = _mm256_cmp_ps(r, r, _CMP_UNORD_Q);
-                    auto mask = _mm256_or_ps(mask_l, mask_r);
-                    auto t0 = _mm256_blendv_ps(r, l, mask_r); 
+                    auto t0 = _mm256_blendv_ps(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm256_blendv_ps(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, double>) {
                     auto mx = _mm256_min_pd(l, r);
                     auto mask_l = _mm256_cmp_pd(l, l, _CMP_UNORD_Q);
                     auto mask_r = _mm256_cmp_pd(r, r, _CMP_UNORD_Q);
-                    auto mask = _mm256_or_pd(mask_l, mask_r);
-                    auto t0 = _mm256_blendv_pd(r, l, mask_r); 
+                    auto t0 = _mm256_blendv_pd(mx, l, mask_r); 
                     return from_vec<T>(
                         _mm256_blendv_pd(
-                            mx,
                             t0,
-                            mask
+                            r,
+                            mask_l
                         )
                     );
                 } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
@@ -480,16 +472,25 @@ namespace ui::x86 {
 
 // MARK: Pairwise Maximum
     namespace internal {
-        template <bool Merge = true, std::size_t N, typename T>
+        template <bool Merge = true, std::size_t N, typename T, typename Op>
             requires (N > 1)
         UI_ALWAYS_INLINE auto pminmax_helper(
             Vec<N, T> const& lhs,
             Vec<N, T> const& rhs,
+            Op op,
             auto&& fn
         ) noexcept -> Vec<N, T> {
             static constexpr auto size = sizeof(lhs);
             if constexpr (N <= 2) {
-                return emul::pmax(lhs, rhs);
+                if constexpr (std::same_as<Op, op::max_t>) {
+                    return emul::pmax(lhs, rhs);
+                } else if constexpr (std::same_as<Op, op::min_t>) {
+                    return emul::pmin(lhs, rhs);
+                } else if constexpr (std::same_as<Op, op::maxnm_t>) {
+                    return emul::pmaxnm(lhs, rhs);
+                } else if constexpr (std::same_as<Op, op::minnm_t>) {
+                    return emul::pminnm(lhs, rhs);
+                }
             } else {
                 if constexpr (size == sizeof(__m128)) {
                     auto l = to_vec(lhs);
@@ -505,7 +506,7 @@ namespace ui::x86 {
                             mx
                         );
                     } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                        return cast<T>(pminmax_helper(cast<float>(lhs), cast<float>(rhs), fn));
+                        return cast<T>(pminmax_helper(cast<float>(lhs), cast<float>(rhs), op, fn));
                     } else if constexpr (sizeof(T) == 1) {
                         static constexpr std::uint8_t odd_mask[16] = {
                             1, 1, 3, 3, 5, 5, 7, 7,
@@ -527,11 +528,11 @@ namespace ui::x86 {
                         return from_vec<T>(_mm_unpacklo_epi64(lo, hi));
                     } else if constexpr (sizeof(T) == 2) {
                         // [a00, a01, a10, a11, a20, a21, a30, a31, ...]
-                        static constexpr std::uint8_t odd_mask[16] = {
+                        alignas(16) static constexpr std::uint8_t odd_mask[16] = {
                              2,  3,  2,  3,  6,  7,  6,  7,
                             10, 11, 10, 11, 14, 15, 14, 15
                         };
-                        static constexpr std::uint8_t even_pos_mask[16] = {
+                        alignas(16) static constexpr std::uint8_t even_pos_mask[16] = {
                              0,  1,  4,  5,  8,  9, 12, 13,
                             16, 17, 20, 21, 24, 26, 30, 31
                         };
@@ -555,8 +556,9 @@ namespace ui::x86 {
                     }
                 } else if constexpr (size * 2 == sizeof(__m128) && Merge) {
                     return pminmax_helper(
-                        from_vec<T>(fit_to_vec(lhs)),
-                        from_vec<T>(fit_to_vec(rhs)),
+                        join(lhs, rhs),
+                        Vec<2 * N, T>{},
+                        op,
                         fn
                     ).lo;
                 }
@@ -590,15 +592,15 @@ namespace ui::x86 {
 
                         return from_vec<T>(fn(t_low, t_high));
                     } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
-                        return cast<T>(pminmax_helper(cast<float>(lhs), cast<float>(rhs), fn));
+                        return cast<T>(pminmax_helper(cast<float>(lhs), cast<float>(rhs), op, fn));
                     } else if constexpr (sizeof(T) == 1) {
-                        static constexpr std::uint8_t even_mask[32] = {
+                        alignas(32) static constexpr std::uint8_t even_mask[32] = {
                             0, 2, 4, 6, 8, 10, 12, 14,
                             0, 2, 4, 6, 8, 10, 12, 14,
                             0, 2, 4, 6, 8, 10, 12, 14,
                             0, 2, 4, 6, 8, 10, 12, 14
                         };
-                        static constexpr std::uint8_t odd_mask[32] = {
+                        alignas(32) static constexpr std::uint8_t odd_mask[32] = {
                             1, 3, 5, 7, 9, 11, 13, 15,
                             1, 3, 5, 7, 9, 11, 13, 15,
                             1, 3, 5, 7, 9, 11, 13, 15,
@@ -620,7 +622,7 @@ namespace ui::x86 {
                         return from_vec<T>(fn(even, odd));
                     } else if constexpr (sizeof(T) == 2) {
                             // INFO: This is a direct translation of clang output
-                            static const int32_t even_mask[4] = {
+                            alignas(4) static const int32_t even_mask[4] = {
                                 84148480, 218892552, 353636624, 488380696
                             };
                             auto temp = *reinterpret_cast<__m128i const*>(even_mask);
@@ -633,7 +635,7 @@ namespace ui::x86 {
                             auto t0 = _mm256_shuffle_ps(shuf_l_ps, shuf_r_ps, _MM_SHUFFLE(2,0,2,0));
                             auto t0_perm = _mm256_castpd_ps(_mm256_permute4x64_pd(_mm256_castps_pd(t0), 216));
 
-                            static const uint8_t odd_mask[32] = {
+                            alignas(32) static const uint8_t odd_mask[32] = {
                                  2,  3,  6,  7, 10, 11, 14, 15,
                                  2,  3,  6,  7, 10, 11, 14, 15,
                                 18, 19, 22, 23, 26, 27, 30, 31,
@@ -695,8 +697,8 @@ namespace ui::x86 {
 
                 // TODO: Add avx 512 implementation
                 return join(
-                    pminmax_helper<false>(lhs.lo, lhs.hi, fn),
-                    pminmax_helper<false>(rhs.lo, rhs.hi, fn)
+                    pminmax_helper<false>(lhs.lo, lhs.hi, op, fn),
+                    pminmax_helper<false>(rhs.lo, rhs.hi, op, fn)
                 );
             }
         }
@@ -878,7 +880,7 @@ namespace ui::x86 {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::pminmax_helper(lhs, rhs, [](auto l, auto r) {
+        return internal::pminmax_helper(lhs, rhs, op::max_t{}, [](auto l, auto r) {
             using type = std::conditional_t<
                 std::same_as<T, float16> || std::same_as<T, bfloat16>,
                 float,
@@ -932,7 +934,7 @@ namespace ui::x86 {
         requires (N > 1)
     UI_ALWAYS_INLINE auto fold(
         Vec<N, T> const& v,
-        op::max_t op
+        [[maybe_unused]] op::max_t op
     ) noexcept -> T {
         return internal::fold_helper(v, op::pmax_t{});
     }
@@ -943,7 +945,7 @@ namespace ui::x86 {
         Vec<N, T> const& x,
         Vec<N, T> const& y
     ) noexcept -> Vec<N, T> {
-        return internal::pminmax_helper(x, y, [](auto l, auto r) {
+        return internal::pminmax_helper(x, y, op::maxnm_t{}, [](auto l, auto r) {
             using type = std::conditional_t<
                 std::same_as<T, float16> || std::same_as<T, bfloat16>,
                 float,
@@ -966,7 +968,7 @@ namespace ui::x86 {
         requires (N > 1)
     UI_ALWAYS_INLINE auto fold(
         Vec<N, T> const& v,
-        op::maxnm_t op
+        [[maybe_unused]] op::maxnm_t op
     ) noexcept -> T {
         return internal::fold_helper(v, op::pmaxnm_t{});
     }
@@ -979,7 +981,7 @@ namespace ui::x86 {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::pminmax_helper(lhs, rhs, [](auto l, auto r) {
+        return internal::pminmax_helper(lhs, rhs, op::min_t{}, [](auto l, auto r) {
             using type = std::conditional_t<
                 std::same_as<T, float16> || std::same_as<T, bfloat16>,
                 float,
@@ -1033,7 +1035,7 @@ namespace ui::x86 {
         requires (N > 1)
     UI_ALWAYS_INLINE auto fold(
         Vec<N, T> const& v,
-        op::min_t op
+        [[maybe_unused]] op::min_t op
     ) noexcept -> T {
         return internal::fold_helper(v, op::pmin_t{});
     }
@@ -1044,7 +1046,7 @@ namespace ui::x86 {
         Vec<N, T> const& x,
         Vec<N, T> const& y
     ) noexcept -> Vec<N, T> {
-        return internal::pminmax_helper(x, y, [](auto l, auto r) {
+        return internal::pminmax_helper(x, y, op::minnm_t{}, [](auto l, auto r) {
             using type = std::conditional_t<
                 std::same_as<T, float16> || std::same_as<T, bfloat16>,
                 float,
@@ -1067,7 +1069,7 @@ namespace ui::x86 {
         requires (N > 1)
     UI_ALWAYS_INLINE auto fold(
         Vec<N, T> const& v,
-        op::minnm_t op
+        [[maybe_unused]] op::minnm_t op
     ) noexcept -> T {
         return internal::fold_helper(v, op::pminnm_t{});
     }
