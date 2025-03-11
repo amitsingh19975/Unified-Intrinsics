@@ -3,11 +3,6 @@
 
 #include "cast.hpp"
 #include "../emul/sqrt.hpp"
-#include <algorithm>
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <type_traits>
 
 namespace ui::x86 {
 
