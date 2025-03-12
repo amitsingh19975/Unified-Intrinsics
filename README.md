@@ -119,3 +119,99 @@ sat_abs(Vec v) -> Vec
 ```
 ##### Description
 It takes absolute value while saturating like 8bit integer `-128` will be turned to `127`; otherwise, normal `abs` returns `-128` since `128` cannot be represented in signed 8bit integer.
+
+
+### Addition
+
+#### 1. `add`
+```cpp
+add(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+Computes `lhs + rhs`.
+
+#### 2. `widening_add`
+```cpp
+widening_add(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+Computes `lhs + rhs` but widens the return type like 8bit integer to 16bit integer.
+
+#### 3. `halving_add`
+```cpp
+halving_add(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+Computes `(lhs + rhs)/2` and rounds if needed
+
+#### 4. `high_narrowing_add`
+```cpp
+high_narrowing_add(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It Adds the left and right hand side but returns the uppper half of bits. So, it'll narrow the result type like 16bit integer to 8bit integer. Ex: let `0b1110'0101'1111'0000` is the result after adding two 16bit integer then result will be `0b1110'0101`.
+
+#### 5. `sat_add`
+```cpp
+sat_add(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It adds the lhs and rhs while saturating the result. Ex: `128 + anything` in 8bit integer will always return `128`.
+
+#### 6. `padd`
+```cpp
+padd(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It adds next value in each register and combine both lhs and rhs together.
+```
+a: [1, 2, 3, 4]
+b: [5, 6, 7, 8]
+padd(a,b): [1 + 2, 3 + 4, 5 + 6, 7 + 8] => [3, 7, 11, 15]
+```
+
+#### 7. `fold`
+```cpp
+fold(Vec v, op::padd_t) -> Value
+//          OR
+fold(Vec v, op::add_t) -> Value
+```
+
+##### Description
+It reduces the vector using addition and returns the scalar value.
+
+```
+a: [1, 2, 3, 4]
+fold(a, op::add_t{}): 1 + 2 + 3 + 4 => 10
+```
+
+#### 6. `widening_padd`
+```cpp
+widening_padd(Vec v) -> Vec
+```
+##### Description
+It is similar to `padd` but result type is promoted to next big integer and reduces the resulting vector register to half.
+
+```
+a: [1, 2, 3, 4]
+widening_padd(a): [1 + 2, 3 + 4] => [3, 7]
+```
+#### 7. `widening_padd`
+```cpp
+widening_padd(Vec<N / 2, W> a, Vec<N, T> v) -> Vec<N / 2, W> where W > T
+```
+##### Description
+It adds the a and adjacent pair togther.
+
+```
+a: [1, 2]
+b: [5, 6, 7, 8]
+widening_padd(a): [1 + 5 + 6, 2 + 7 + 8] => [12, 17]
+```
+#### 8. `widening_fold`
+```cpp
+widening_fold(Vec v, op::add_t) -> WidenedValue
+```
+
+##### Description
+It is similar to addition fold but the result type is widened to makes to avoid truncation.
