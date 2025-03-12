@@ -264,6 +264,7 @@ b: i8 = [   5, 3,    1, 0]
 c: i8 = [0xff, 0, 0xff, 0]
 bitwise_select(c, a, b): [1, 3, 3, 0]
 ```
+
 ### Casting
 
 #### 1. `cast`
