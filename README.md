@@ -264,3 +264,33 @@ b: i8 = [   5, 3,    1, 0]
 c: i8 = [0xff, 0, 0xff, 0]
 bitwise_select(c, a, b): [1, 3, 3, 0]
 ```
+### Casting
+
+#### 1. `cast`
+```cpp
+cast<To>(Vec<N, From> v) -> Vec<N, To>
+```
+##### Description
+Convert one type to another type. It could be downcast to type promotion.
+
+```
+a: f32 = [1.2, 0.33, 123, 2.5]
+cast<int>(a): [1, 0, 123, 2]
+```
+#### 2. `sat_cast`
+```cpp
+sat_cast<To>(Vec<N, From> v) -> Vec<N, To>
+```
+##### Description
+It's similar to `cast` but it saturates the result
+
+```
+a: i16 = [2000, -1200, 12, 0]
+sat_cast<int8_t>(a): [127, -128, 12, 0]
+```
+#### 2. `rcast`
+```cpp
+rcast<To>(Vec<N, From> v) -> Vec<N, To>
+```
+##### Description
+It acts like C++'s `reinterpret_cast`. It interprets underlying data to another type.
