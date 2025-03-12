@@ -100,7 +100,7 @@ namespace ui::emul {
         return map([](T v_) -> T {
             static constexpr T sign_bit = static_cast<T>(T(1) << (sizeof(T) * 8 - 1));
             if (v_ == sign_bit) return std::numeric_limits<T>::max();
-            return std::abs(v_);
+            return static_cast<T>(std::abs(v_));
         }, v);
     }
 
