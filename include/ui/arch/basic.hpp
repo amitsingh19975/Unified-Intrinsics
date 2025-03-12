@@ -173,23 +173,15 @@ namespace ui::internal {
     using narrowing_result_t = typename NarrowingResult<T>::type;
 
 
-    template <bool Round, typename From>
-        requires (sizeof(From) < 8)
+    template <typename From>
     UI_ALWAYS_INLINE constexpr auto halving_round_helper(From lhs, From rhs, op::add_t) noexcept -> std::int64_t {
-        if constexpr (Round) {
-            using utype = std::make_unsigned_t<From>;
-            static constexpr auto bits = sizeof(From) * 8 - 1;
-            auto l = lhs >> 1;
-            auto r = rhs >> 1;
-            From res = lhs | rhs;
-            res = static_cast<utype>(res << bits) >> bits;
-            return static_cast<std::int64_t>(res + (l + r));
-        } else {
-            auto l = static_cast<std::int64_t>(lhs);
-            auto r = static_cast<std::int64_t>(rhs);
-            auto sum = l + ((r - l) >> 1);
-            return sum;
-        }
+        using utype = std::make_unsigned_t<From>;
+        static constexpr auto bits = sizeof(From) * 8 - 1;
+        auto l = lhs >> 1;
+        auto r = rhs >> 1;
+        From res = lhs | rhs;
+        res = static_cast<utype>(res << bits) >> bits;
+        return static_cast<std::int64_t>(res + (l + r));
     }
 
     template <typename From>
