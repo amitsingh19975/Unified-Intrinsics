@@ -489,6 +489,51 @@ namespace ui {
     using long2   = Vec< 2, std::int64_t>;
     using long4   = Vec< 4, std::int64_t>;
     using long8   = Vec< 8, std::int64_t>;
+
+    namespace native {
+
+#if UI_NATIVE_SIZE == 16 || !defined(UI_NATIVE_SIZE)
+        using f16  = Vec< 8, float16>;
+        using bf16 = Vec< 8, bfloat16>;
+        using f32  = Vec< 4, float>;
+        using f64  = Vec< 2, double>;
+        using u8   = Vec<16, std::uint8_t>;
+        using u16  = Vec< 8, std::uint16_t>;
+        using u32  = Vec< 4, std::uint32_t>;
+        using u64  = Vec< 2, std::uint64_t>;
+        using i8   = Vec<16, std::int8_t>;
+        using i16  = Vec< 8, std::int16_t>;
+        using i32  = Vec< 4, std::int32_t>;
+        using i64  = Vec< 2, std::int64_t>;
+#elif UI_NATIVE_SIZE == 32
+        using f16  = Vec< 8 * 2, float16>;
+        using bf16 = Vec< 8 * 2, bfloat16>;
+        using f32  = Vec< 4 * 2, float>;
+        using f64  = Vec< 2 * 2, double>;
+        using u8   = Vec<16 * 2, std::uint8_t>;
+        using u16  = Vec< 8 * 2, std::uint16_t>;
+        using u32  = Vec< 4 * 2, std::uint32_t>;
+        using u64  = Vec< 2 * 2, std::uint64_t>;
+        using i8   = Vec<16 * 2, std::int8_t>;
+        using i16  = Vec< 8 * 2, std::int16_t>;
+        using i32  = Vec< 4 * 2, std::int32_t>;
+        using i64  = Vec< 2 * 2, std::int64_t>;
+#elif UI_NATIVE_SIZE == 64
+        using f16  = Vec< 8 * 4, float16>;
+        using bf16 = Vec< 8 * 4, bfloat16>;
+        using f32  = Vec< 4 * 4, float>;
+        using f64  = Vec< 2 * 4, double>;
+        using u8   = Vec<16 * 4, std::uint8_t>;
+        using u16  = Vec< 8 * 4, std::uint16_t>;
+        using u32  = Vec< 4 * 4, std::uint32_t>;
+        using u64  = Vec< 2 * 4, std::uint64_t>;
+        using i8   = Vec<16 * 4, std::int8_t>;
+        using i16  = Vec< 8 * 4, std::int16_t>;
+        using i32  = Vec< 4 * 4, std::int32_t>;
+        using i64  = Vec< 2 * 4, std::int64_t>;
+#endif
+
+    } // namespace native
 }
 
 #endif // AMT_UI_VEC_OP_HPP
