@@ -163,7 +163,7 @@ namespace ui::x86 {
                     return;
                 } else if constexpr (size * 2 == sizeof(__m128)) {
                     auto t0 = _mm_loadu_ps(data); // [d0, d1, d2, d3]
-                    auto temp = from_vec<T>(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(t0), 0b11'10'01'00)));
+                    auto temp = from_vec<T>(_mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(t0), _MM_SHUFFLE(3, 1, 2, 0))));
                     a = temp.lo;
                     b = temp.hi;
                     return;
