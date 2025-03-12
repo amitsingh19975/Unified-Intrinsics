@@ -20,8 +20,6 @@ namespace ui::wasm {
             0,  1,  4,  5,  8,  9,  12, 13,
             2,  3,  6,  7,  10, 11, 14, 15,
         };
-
-        static constexpr auto swap_hi_low32 = 0b01'00'11'10; // (2 | (3 << 2) | (0 << 4) | (1 << 6));
     }
 
     namespace internal {
