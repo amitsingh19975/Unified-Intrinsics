@@ -149,7 +149,7 @@ Computes `(lhs + rhs)/2` and rounds if needed
 high_narrowing_add(Vec lhs, Vec rhs) -> Vec
 ```
 ##### Description
-It Adds the left and right hand side but returns the uppper half of bits. So, it'll narrow the result type like 16bit integer to 8bit integer. Ex: let `0b1110'0101'1111'0000` is the result after adding two 16bit integer then result will be `0b1110'0101`.
+It Adds the left and right hand side but returns the upper half of bits. So, it'll narrow the result type like 16bit integer to 8bit integer. Ex: let `0b1110'0101'1111'0000` is the result after adding two 16bit integer then result will be `0b1110'0101`.
 
 #### 5. `sat_add`
 ```cpp
@@ -201,7 +201,7 @@ widening_padd(a): [1 + 2, 3 + 4] => [3, 7]
 widening_padd(Vec<N / 2, W> a, Vec<N, T> v) -> Vec<N / 2, W> where W > T
 ```
 ##### Description
-It adds the a and adjacent pair togther.
+It adds the `a` and adjacent pair together.
 
 ```
 a: [1, 2]
@@ -295,3 +295,21 @@ rcast<To>(Vec<N, From> v) -> Vec<N, To>
 ```
 ##### Description
 It acts like C++'s `reinterpret_cast`. It interprets underlying data to another type.
+
+### Division
+
+#### 1. `div`
+```cpp
+div(Vec num, Vec den) -> Vec
+```
+##### Description
+As the name suggests, it divides the numbers.
+> **_NOTE:_** For integer division, it casts the number to floating-point and then divides them on some architecture since they do not support SIMD division.
+
+
+#### 1. `div`
+```cpp
+rem(Vec num, Vec den) -> Vec
+```
+> **_NOTE:_** There is no native support for remainder in most of the architecture we support so we have to use division and subtraction with rounding.
+
