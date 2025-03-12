@@ -78,16 +78,10 @@ namespace ui::wasm {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        if constexpr (Round) {
-            auto t0 = bitwise_and(lhs, rhs);
-            auto t1 = bitwise_xor(lhs, rhs);
-            auto t2 = shift_right<1>(t1); 
-            return add(t0, t2);
-        } else {
-            auto tmp = sub<true>(rhs, lhs);
-            tmp = shift_right<1>(tmp);
-            return add(lhs, tmp);
-        }
+        auto t0 = bitwise_and(lhs, rhs);
+        auto t1 = bitwise_xor(lhs, rhs);
+        auto t2 = shift_right<1>(t1); 
+        return add(t0, t2);
     }
 
     /**
@@ -127,6 +121,7 @@ namespace ui::wasm {
                     }
                     return from_vec<result_t>(res).lo;
                 } else if constexpr (sizeof(T) == 8) {
+                    sum = shift_right<32>(sum);
                     return cast<result_t>(sum);
                 }
             } else if constexpr (bits * 2 == sizeof(v128_t) && Merge) {
@@ -347,7 +342,7 @@ namespace ui::wasm {
                         return from_vec<T>(res);
                     }
                 }
-            } else if constexpr (size * 2 == sizeof(v128_t)) {
+            } else if constexpr (size * 2 == sizeof(v128_t) && Merge) {
                 if constexpr (sizeof(T) == 1) {
                     auto l = to_vec(cast<internal::widening_result_t<T>>(from_vec<T>(fit_to_vec(lhs))).lo);
                     auto r = to_vec(cast<internal::widening_result_t<T>>(from_vec<T>(fit_to_vec(rhs))).lo);
@@ -391,13 +386,11 @@ namespace ui::wasm {
                     return static_cast<T>(fold(cast<float>(v), op));
                 } else {
                     if constexpr (sizeof(T) == 1) {
-                        auto b = wasm_i8x16_shuffle(a, a,
-                            8, 9, 10, 11, 12, 13, 14, 15,
-                            8, 9, 10, 11, 12, 13, 14, 15
-                        );
-                        auto sum = wasm_i8x16_add(a, b);
-                        auto res = wasm_i16x8_extadd_pairwise_i8x16(sum);
-                        return static_cast<T>(wasm_i16x8_extract_lane(res, 0));
+                        auto res = wasm_i16x8_extadd_pairwise_i8x16(a);
+                        res = wasm_i32x4_extadd_pairwise_i16x8(res);
+                        auto b = wasm_i64x2_shuffle(res, res, 1, 1);
+                        auto tmp = from_vec<std::int32_t>(wasm_i32x4_add(res, b));
+                        return static_cast<T>(tmp[0] + tmp[1]);
                     } else if constexpr (sizeof(T) == 2) {
                         auto b = wasm_i16x8_shuffle(a, a, 4, 5, 6, 7, 4, 5, 6, 7);
                         auto sum = wasm_i16x8_add(a, b);
