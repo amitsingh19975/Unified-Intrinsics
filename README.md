@@ -289,6 +289,7 @@ It's similar to `cast` but it saturates the result
 a: i16 = [2000, -1200, 12, 0]
 sat_cast<int8_t>(a): [127, -128, 12, 0]
 ```
+
 #### 2. `rcast`
 ```cpp
 rcast<To>(Vec<N, From> v) -> Vec<N, To>
@@ -307,9 +308,58 @@ As the name suggests, it divides the numbers.
 > **_NOTE:_** For integer division, it casts the number to floating-point and then divides them on some architecture since they do not support SIMD division.
 
 
-#### 1. `div`
+#### 2. `div`
 ```cpp
 rem(Vec num, Vec den) -> Vec
 ```
 > **_NOTE:_** There is no native support for remainder in most of the architecture we support so we have to use division and subtraction with rounding.
 
+
+### Load
+
+#### 1. `load<N>`
+```cpp
+load<N>(T val) -> Vec<N, T>
+```
+##### Description
+Broadcasts the scalar value across the lanes and returns a new vector.
+```cpp
+auto v = load<8>(2); // [2, 2, 2, 2, 2, 2, 2, 2]
+```
+#### 2. `load<N, Lane>`
+```cpp
+load<N, Lane>(Vec<M, T> v) -> Vec<N, T> where Lane < M
+```
+##### Description
+Broadcasts the lane value from given vector.
+```cpp
+auto v = ui::float4 {1, 2, 3, 4};
+auto a = ui::load<4, 0>(v); // [1, 1, 1, 1]
+```
+#### 2. `strided_load`
+```cpp
+strided_load(T const* data, Vec<N, T> a, Vec<N, T> b) -> void;
+strided_load(T const* data, Vec<N, T> a, Vec<N, T> b, Vec<N, T> c) -> void;
+strided_load(T const* data, Vec<N, T> a, Vec<N, T> b, Vec<N, T> c, Vec<N, T> d) -> void;
+```
+##### Description
+It has three overloads. The number `Vec` arguments tell you the stride it'll take. For example: two `Vec` has stride of 2, three `Vec` has stride 3 and the last one has stride 4.
+
+```
+data = [1, 2, 3, 4, 5, 6, 7, 8, .... 100]
+a: i8 = []
+b: i8 = []
+strided_load(data, a, b)
+a => [1, 3, 5, 7, ...]
+b => [2, 4, 6, 8, ...]
+```
+```
+data = [1, 2, 3, 4, 5, 6, 7, 8, .... 100]
+a: i8 = []
+b: i8 = []
+c: i8 = []
+strided_load(data, a, b, c)
+a => [1, 4, 7, 10, ...]
+b => [2, 5, 8, 11, ...]
+c => [3, 6, 9, 12, ...]
+```
