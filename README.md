@@ -81,5 +81,41 @@ int main() {
     return 0;
 }
 ```
+## Function Reference
 
+### Absolute Operations
 
+#### 1. `abs_diff`
+```cpp
+abs_diff(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+Computes `lhs - rhs` if `lhs` is bigger than `rhs`; otherwise, `rhs - lhs`.
+
+#### 2. `widening_abs_diff`
+```cpp
+widening_abs_diff(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+Computes `abs_diff` but widens the vector type like 8bit integer to 16bit integer.
+
+#### 3. `abs_acc_diff`
+```cpp
+abs_acc_diff(Vec acc, Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+Computes `acc + acc_diff(lhs, rhs)`
+
+#### 4. `abs`
+```cpp
+abs(Vec v) -> Vec
+```
+##### Description
+It takes an absolute value of each vector elements. `|v|`.
+
+#### 4. `sat_abs`
+```cpp
+sat_abs(Vec v) -> Vec
+```
+##### Description
+It takes absolute value while saturating like 8bit integer `-128` will be turned to `127`; otherwise, normal `abs` returns `-128` since `128` cannot be represented in signed 8bit integer.
