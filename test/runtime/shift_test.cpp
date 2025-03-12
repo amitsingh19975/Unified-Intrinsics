@@ -15,7 +15,7 @@ using namespace ui;
 
 template <std::size_t... Is, typename Fn>
     requires (std::invocable<Fn, index_t<2>>)
-auto for_each(Fn&& fn) {
+auto for_each(Fn&& fn) -> void {
     std::tuple<index_t<Is>...> ts;
     #define INVOKE(I) std::invoke(fn, std::get<I>(ts))
     // For some reason this is crashing the compiler.
@@ -104,7 +104,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
 
         WHEN("Widening left shift") {
             auto res = widening_shift_left<2>(v);
-            static_assert(std::same_as<decltype(res)::element_t, std::int16_t>);
+            static_assert(std::same_as<typename decltype(res)::element_t, std::int16_t>);
             for (auto i = 0u; i < N; ++i) {
                 INFO("['" << i << "']: (" << int(v[i]) << " << 2)[" << int(type(v[i] << 2)) <<"] == " << int(res[i]));
                 REQUIRE((v[i] << 2) == res[i]);
@@ -204,7 +204,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
 
         WHEN("Widening left shift") {
             auto res = widening_shift_left<2>(v);
-            static_assert(std::same_as<decltype(res)::element_t, std::uint16_t>);
+            static_assert(std::same_as<typename decltype(res)::element_t, std::uint16_t>);
             for (auto i = 0u; i < N; ++i) {
                 INFO("['" << i << "']: (" << int(v[i]) << " << 2)[" << int(type(v[i] << 2)) <<"] == " << int(res[i]));
                 REQUIRE((v[i] << 2) == res[i]);
@@ -303,7 +303,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
 
         WHEN("Widening left shift") {
             auto res = widening_shift_left<2>(v);
-            static_assert(std::same_as<decltype(res)::element_t, std::int32_t>);
+            static_assert(std::same_as<typename decltype(res)::element_t, std::int32_t>);
             for (auto i = 0u; i < N; ++i) {
                 INFO("['" << i << "']: (" << int(v[i]) << " << 2)[" << int(type(v[i] << 2)) <<"] == " << int(res[i]));
                 REQUIRE((v[i] << 2) == res[i]);
@@ -404,7 +404,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
 
         WHEN("Widening left shift") {
             auto res = widening_shift_left<2>(v);
-            static_assert(std::same_as<decltype(res)::element_t, std::uint32_t>);
+            static_assert(std::same_as<typename decltype(res)::element_t, std::uint32_t>);
             for (auto i = 0u; i < N; ++i) {
                 INFO("['" << i << "']: (" << int(v[i]) << " << 2)[" << int(type(v[i] << 2)) <<"] == " << int(res[i]));
                 REQUIRE((v[i] << 2) == res[i]);
@@ -504,7 +504,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
 
         WHEN("Widening left shift") {
             auto res = widening_shift_left<2>(v);
-            static_assert(std::same_as<decltype(res)::element_t, std::int64_t>);
+            static_assert(std::same_as<typename decltype(res)::element_t, std::int64_t>);
             for (auto i = 0u; i < N; ++i) {
                 auto val = std::int64_t(v[i]);
                 INFO("['" << i << "']: (" << val << " << 2)[" << val << 2 <<"] == " << res[i]);
@@ -604,7 +604,7 @@ TEST_CASE( VEC_ARCH_NAME " Left Shift", "[shift][left]" ) {
 
         WHEN("Widening left shift") {
             auto res = widening_shift_left<2>(v);
-            static_assert(std::same_as<decltype(res)::element_t, std::uint64_t>);
+            static_assert(std::same_as<typename decltype(res)::element_t, std::uint64_t>);
             for (auto i = 0u; i < N; ++i) {
                 auto val = std::int64_t(v[i]);
                 INFO("['" << i << "']: (" << val << " << 2)[" << val << 2 <<"] == " << res[i]);

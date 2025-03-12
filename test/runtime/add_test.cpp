@@ -41,7 +41,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
             auto res = widening_add(v, v); 
             INFO(std::format("widening_add(v, v): {}", res));
             using wtype = ui::internal::widening_result_t<type>;
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
 
             for (auto i = 0ul; i < N; ++i) {
                 REQUIRE(res[i] == static_cast<wtype>(v[i]) + static_cast<wtype>(v[i]));
@@ -150,7 +150,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
 
         WHEN("Widening pairwise Addition") {
             auto res = widening_padd(v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == -1);
             REQUIRE(res[ 1] ==  1);
@@ -172,7 +172,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
 
         WHEN("Accumulating widening pairwise Addition") {
             auto res = widening_padd(Vec<N/2, wtype>::load(1), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] ==  0);
             REQUIRE(res[ 1] ==  2);
@@ -237,7 +237,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
             auto res = widening_add(v, v); 
             INFO(std::format("widening_add(v, v): {}", res));
             using wtype = ui::internal::widening_result_t<type>;
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
 
             for (auto i = 0ul; i < N; ++i) {
                 REQUIRE(res[i] == static_cast<wtype>(v[i]) + static_cast<wtype>(v[i]));
@@ -347,7 +347,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
 
         WHEN("Widening pairwise Addition") {
             auto res = widening_padd(v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == 255);
             REQUIRE(res[ 1] ==  1);
@@ -369,7 +369,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
 
         WHEN("Accumulating widening pairwise Addition") {
             auto res = widening_padd(Vec<N/2, wtype>::load(1), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == 256);
             REQUIRE(res[ 1] ==  2);
@@ -437,7 +437,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
             auto res = widening_add(v, v); 
             INFO(std::format("widening_add(v, v): {}", res));
             using wtype = ui::internal::widening_result_t<type>;
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
 
             for (auto i = 0ul; i < N; ++i) {
                 REQUIRE(res[i] == static_cast<wtype>(v[i]) + static_cast<wtype>(v[i]));
@@ -465,7 +465,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
         WHEN("High Narrowing Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = high_narrowing_add(v, bs);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("high_narrowing_add(v, bs): {}", res));
             REQUIRE(res[ 0] == 127);
@@ -543,7 +543,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
 
         WHEN("Widening pairwise Addition") {
             auto res = widening_padd(v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == -1);
             REQUIRE(res[ 1] ==  1);
@@ -557,7 +557,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
 
         WHEN("Accumulating widening pairwise Addition") {
             auto res = widening_padd(Vec<N/2, wtype>::load(1), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] ==  0);
             REQUIRE(res[ 1] ==  2);
@@ -643,7 +643,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
         WHEN("High Narrowing Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = high_narrowing_add(v, bs);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("high_narrowing_add(v, bs): {}", res));
             REQUIRE(res[ 0] == 255);
@@ -713,7 +713,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
 
         WHEN("Widening pairwise Addition") {
             auto res = widening_padd(v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == 65535);
             REQUIRE(res[ 1] ==  1);
@@ -727,7 +727,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
 
         WHEN("Accumulating widening pairwise Addition") {
             auto res = widening_padd(Vec<N/2, wtype>::load(1), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == 65536);
             REQUIRE(res[ 1] ==  2);
@@ -815,7 +815,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
         WHEN("High Narrowing Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = high_narrowing_add(v, bs);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("high_narrowing_add(v, bs): {}", res));
             REQUIRE(res[ 0] == 32767);
@@ -893,7 +893,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
 
         WHEN("Widening pairwise Addition") {
             auto res = widening_padd(v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == -1);
             REQUIRE(res[ 1] ==  1);
@@ -907,7 +907,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
 
         WHEN("Accumulating widening pairwise Addition") {
             auto res = widening_padd(Vec<N/2, wtype>::load(1), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] ==  0);
             REQUIRE(res[ 1] ==  2);
@@ -965,7 +965,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
             auto res = widening_add(v, v); 
             INFO(std::format("widening_add(v, v): {}", res));
             using wtype = ui::internal::widening_result_t<type>;
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
 
             for (auto i = 0ul; i < N; ++i) {
                 REQUIRE(res[i] == static_cast<wtype>(v[i]) + static_cast<wtype>(v[i]));
@@ -994,7 +994,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
         WHEN("High Narrowing Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = high_narrowing_add(v, bs);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("high_narrowing_add(v, bs): {}", res));
 
@@ -1065,7 +1065,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
 
         WHEN("Widening pairwise Addition") {
             auto res = widening_padd(v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == 4294967295);
             REQUIRE(res[ 1] ==  1);
@@ -1079,7 +1079,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
 
         WHEN("Accumulating widening pairwise Addition") {
             auto res = widening_padd(Vec<N/2, wtype>::load(1), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wpadd(v): {}", res));
             REQUIRE(res[ 0] == 4294967296);
             REQUIRE(res[ 1] ==  2);
@@ -1137,7 +1137,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Addition", "[addition][64bit]" ) {
         WHEN("High Narrowing Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = high_narrowing_add(v, bs);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("high_narrowing_add(v, bs): {}", res));
             REQUIRE(res[ 0] == 2147483647);
@@ -1250,7 +1250,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Addition", "[addition][64bit]" ) {
         WHEN("High Narrowing Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = high_narrowing_add(v, bs);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("high_narrowing_add(v, bs): {}", res));
 

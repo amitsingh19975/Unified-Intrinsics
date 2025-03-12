@@ -38,7 +38,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Widening subtraction with same type") {
             auto res = widening_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -50,7 +50,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Widening subtraction with wider right") {
             auto res = widening_sub(v, Vec<N, wtype>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, w(10s)): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -62,7 +62,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Widening subtraction with wider left") {
             auto res = widening_sub(Vec<N, wtype>::load(10), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(w(10s), v): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = wtype(10);
@@ -74,7 +74,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Halving subtraction") {
             auto res = halving_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, type>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, type>);
             INFO(std::format("halving(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -87,7 +87,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             /*auto res = high_narrowing_sub(v, Vec<N, type>::load(10));*/
-            /*STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);*/
+            /*STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);*/
             /*INFO(std::format("hnsub(v, 10s): {}", res));*/
             // Cannot narrow below 8bit integer
         }
@@ -139,7 +139,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Widening subtraction with same type") {
             auto res = widening_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -151,7 +151,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Widening subtraction with wider right") {
             auto res = widening_sub(v, Vec<N, wtype>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, w(10s)): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -163,7 +163,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Widening subtraction with wider left") {
             auto res = widening_sub(Vec<N, wtype>::load(10), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(w(10s), v): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = wtype(10);
@@ -175,7 +175,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("Halving subtraction") {
             auto res = halving_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, type>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, type>);
             INFO(std::format("halving(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -188,7 +188,7 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Subtraction", "[subtraction][8bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             /*auto res = high_narrowing_sub(v, Vec<N, type>::load(10));*/
-            /*STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);*/
+            /*STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);*/
             /*INFO(std::format("hnsub(v, 10s): {}", res));*/
             // Cannot narrow below 8bit integer
         }
@@ -244,7 +244,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with same type") {
             auto res = widening_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -256,7 +256,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider right") {
             auto res = widening_sub(v, Vec<N, wtype>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, w(10s)): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -268,7 +268,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider left") {
             auto res = widening_sub(Vec<N, wtype>::load(10), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(w(10s), v): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = wtype(10);
@@ -280,7 +280,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Halving subtraction") {
             auto res = halving_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, type>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, type>);
             INFO(std::format("halving(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -293,7 +293,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             auto res = high_narrowing_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("hnsub(v, 10s): {}", res));
             ntype ts[] = { 127, 127, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0 };
             for (auto i = 0ul; i < N; ++i) {
@@ -350,7 +350,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with same type") {
             auto res = widening_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -362,7 +362,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider right") {
             auto res = widening_sub(v, Vec<N, wtype>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, w(10s)): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -374,7 +374,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider left") {
             auto res = widening_sub(Vec<N, wtype>::load(10), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(w(10s), v): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = wtype(10);
@@ -386,7 +386,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Halving subtraction") {
             auto res = halving_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, type>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, type>);
             INFO(std::format("halving(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -399,7 +399,7 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             auto res = high_narrowing_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("hnsub(v, 10s): {}", res));
             ntype ts[] = { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0 };
             for (auto i = 0ul; i < N; ++i) {
@@ -459,7 +459,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with same type") {
             auto res = widening_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -471,7 +471,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider right") {
             auto res = widening_sub(v, Vec<N, wtype>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, w(10s)): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -483,7 +483,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider left") {
             auto res = widening_sub(Vec<N, wtype>::load(10), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(w(10s), v): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = wtype(10);
@@ -495,7 +495,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Halving subtraction") {
             auto res = halving_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, type>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, type>);
             INFO(std::format("halving(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -508,7 +508,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             auto res = high_narrowing_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("hnsub(v, 10s): {}", res));
             ntype ts[] = { 32767, 32767, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0 };
             for (auto i = 0ul; i < N; ++i) {
@@ -565,7 +565,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with same type") {
             auto res = widening_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -577,7 +577,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider right") {
             auto res = widening_sub(v, Vec<N, wtype>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(v, w(10s)): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -589,7 +589,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Widening subtraction with wider left") {
             auto res = widening_sub(Vec<N, wtype>::load(10), v);
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, wtype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, wtype>);
             INFO(std::format("wsub(w(10s), v): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = wtype(10);
@@ -601,7 +601,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("Halving subtraction") {
             auto res = halving_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, type>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, type>);
             INFO(std::format("halving(v, 10s): {}", res));
             for (auto i = 0ul; i < N; ++i) {
                 auto l = static_cast<wtype>(v[i]);
@@ -614,7 +614,7 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             auto res = high_narrowing_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("hnsub(v, 10s): {}", res));
             ntype ts[] = { 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 0, 0, 0, 0 };
             for (auto i = 0ul; i < N; ++i) {
@@ -673,7 +673,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             auto res = high_narrowing_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("hnsub(v, 10s): {}", res));
             ntype ts[] = { 2147483647, 2147483647, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0 };
             for (auto i = 0ul; i < N; ++i) {
@@ -729,7 +729,7 @@ TEST_CASE( VEC_ARCH_NAME " 64bit Subtraction", "[subtraction][16bit]" ) {
 
         WHEN("High bit narrowing subtraction") {
             auto res = high_narrowing_sub(v, Vec<N, type>::load(10));
-            STATIC_REQUIRE(std::same_as<decltype(res)::element_t, ntype>);
+            STATIC_REQUIRE(std::same_as<typename decltype(res)::element_t, ntype>);
             INFO(std::format("hnsub(v, 10s): {}", res));
             ntype ts[] = { 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 0, 0, 0, 0 };
             for (auto i = 0ul; i < N; ++i) {

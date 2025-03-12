@@ -82,7 +82,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			auto m = static_cast<int8_t>(UINT8_MAX);
 			REQUIRE(res[1]  == m);
@@ -104,7 +104,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -125,7 +125,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -146,7 +146,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -167,7 +167,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -188,7 +188,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -209,7 +209,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -230,7 +230,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -251,7 +251,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0	     , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(UINT8_MAX, eps<float>));
@@ -273,7 +273,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0	     , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(UINT8_MAX, eps<float>));
@@ -295,7 +295,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0	      , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(UINT8_MAX, eps<float>));
@@ -317,7 +317,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0	      , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(UINT8_MAX, eps<double>));
@@ -340,7 +340,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -361,7 +361,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = sat_cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -382,7 +382,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -403,7 +403,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -424,7 +424,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -445,7 +445,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -466,7 +466,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -487,7 +487,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -538,7 +538,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -559,7 +559,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -581,7 +581,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -602,7 +602,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -623,7 +623,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -644,7 +644,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -665,7 +665,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -686,7 +686,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -707,7 +707,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(INT8_MIN , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INT8_MAX , eps<float>));
@@ -729,7 +729,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(INT8_MIN , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INT8_MAX , eps<float>));
@@ -751,7 +751,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT8_MIN , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT8_MAX , eps<float>));
@@ -773,7 +773,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT8_MIN , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT8_MAX , eps<double>));
@@ -795,7 +795,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -816,7 +816,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = sat_cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -837,7 +837,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -858,7 +858,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -879,7 +879,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -900,7 +900,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -921,7 +921,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -942,7 +942,7 @@ TEST_CASE( VEC_ARCH_NAME " Casting From 8bit integer", "[from_8bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -985,7 +985,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -998,7 +998,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1011,7 +1011,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1024,7 +1024,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1037,7 +1037,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1050,7 +1050,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1063,7 +1063,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1076,7 +1076,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1089,7 +1089,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INFINITY , eps<float>));
@@ -1103,7 +1103,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(max , eps<float>));
@@ -1117,7 +1117,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(max , eps<float>));
@@ -1131,7 +1131,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0   , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(max , eps<double>));
@@ -1146,7 +1146,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1159,7 +1159,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1172,7 +1172,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1185,7 +1185,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1198,7 +1198,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1211,7 +1211,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1224,7 +1224,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1237,7 +1237,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1270,7 +1270,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1283,7 +1283,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1296,7 +1296,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1309,7 +1309,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1322,7 +1322,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1335,7 +1335,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1348,7 +1348,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1361,7 +1361,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1374,7 +1374,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(INT16_MIN , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INT16_MAX , eps<float>));
@@ -1388,7 +1388,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(INT16_MIN , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INT16_MAX , eps<float>));
@@ -1402,7 +1402,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT16_MIN , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT16_MAX , eps<float>));
@@ -1416,7 +1416,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(INT16_MIN , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(INT16_MAX , eps<double>));
@@ -1431,7 +1431,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == INT8_MIN);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1444,7 +1444,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1457,7 +1457,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == INT16_MIN);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1470,7 +1470,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1483,7 +1483,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1496,7 +1496,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1509,7 +1509,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1522,7 +1522,7 @@ TEST_CASE( "Casting From 16bit integer", "[from_16bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1552,7 +1552,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1561,7 +1561,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1570,7 +1570,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1579,7 +1579,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1588,7 +1588,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1597,7 +1597,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1606,7 +1606,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1615,7 +1615,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1624,7 +1624,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INFINITY , eps<float>));
@@ -1634,7 +1634,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(max , eps<float>));
@@ -1644,7 +1644,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(max , eps<float>));
@@ -1654,7 +1654,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0   , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(max , eps<double>));
@@ -1665,7 +1665,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1674,7 +1674,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1683,7 +1683,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1692,7 +1692,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1701,7 +1701,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1710,7 +1710,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1719,7 +1719,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1728,7 +1728,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1753,7 +1753,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1762,7 +1762,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1771,7 +1771,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1780,7 +1780,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1789,7 +1789,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1798,7 +1798,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1807,7 +1807,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1816,7 +1816,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1825,7 +1825,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INFINITY  , eps<float>));
@@ -1835,7 +1835,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(float(INT32_MIN) , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(float(INT32_MAX) , eps<float>));
@@ -1845,7 +1845,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(float(INT32_MIN) , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(float(INT32_MAX) , eps<float>));
@@ -1855,7 +1855,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(INT32_MIN) , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double(INT32_MAX) , eps<double>));
@@ -1865,7 +1865,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == INT8_MIN);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1874,7 +1874,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1883,7 +1883,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == INT16_MIN);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -1892,7 +1892,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1901,7 +1901,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1910,7 +1910,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1919,7 +1919,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1928,7 +1928,7 @@ TEST_CASE( "Casting From 32bit integer", "[from_32bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1954,7 +1954,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1963,7 +1963,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1972,7 +1972,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1981,7 +1981,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1990,7 +1990,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -1999,7 +1999,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2008,7 +2008,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2017,7 +2017,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2026,7 +2026,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0	     , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(INFINITY , eps<float>));
@@ -2036,7 +2036,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(max , eps<float>));
@@ -2046,7 +2046,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0   , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(max , eps<float>));
@@ -2056,7 +2056,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(0   , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(max , eps<double>));
@@ -2066,7 +2066,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2075,7 +2075,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2084,7 +2084,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2093,7 +2093,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2102,7 +2102,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2111,7 +2111,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2120,7 +2120,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2129,7 +2129,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2154,7 +2154,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2163,7 +2163,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2172,7 +2172,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2181,7 +2181,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2190,7 +2190,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2199,7 +2199,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2208,7 +2208,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2217,7 +2217,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == min);
 			REQUIRE(res[1]  == max);
 			REQUIRE(res[2]  == 3);
@@ -2226,7 +2226,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2236,7 +2236,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(float(INT64_MIN) , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(float(INT64_MAX) , eps<float>));
@@ -2246,7 +2246,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(float(INT64_MIN) , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(float(INT64_MAX) , eps<float>));
@@ -2256,7 +2256,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(INT64_MIN) , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double(INT64_MAX) , eps<double>));
@@ -2266,7 +2266,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 8bit integer") {
 			auto res = sat_cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == INT8_MIN);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2275,7 +2275,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2284,7 +2284,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 16bit integer") {
 			auto res = sat_cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == INT16_MIN);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2293,7 +2293,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 16bit integer") {
 			auto res = sat_cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2302,7 +2302,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 32bit integer") {
 			auto res = sat_cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == INT32_MIN);
 			REQUIRE(res[1]  == INT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2311,7 +2311,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 32bit integer") {
 			auto res = sat_cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2320,7 +2320,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to signed 64bit integer") {
 			auto res = sat_cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == INT64_MIN);
 			REQUIRE(res[1]  == INT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2329,7 +2329,7 @@ TEST_CASE( "Casting From 64bit integer", "[from_64bit_int]" ) {
 
 		WHEN("Saturating casting to unsigned 64bit integer") {
 			auto res = sat_cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == INT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2356,7 +2356,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == INT8_MIN);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2365,7 +2365,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2374,7 +2374,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == INT16_MIN);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2383,7 +2383,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2392,7 +2392,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == INT32_MIN);
 			REQUIRE(res[1]  == INT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2401,7 +2401,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2410,7 +2410,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == INT64_MIN);
 			REQUIRE(res[1]  == INT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2419,7 +2419,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2428,7 +2428,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2438,7 +2438,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2448,7 +2448,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2458,7 +2458,7 @@ TEST_CASE( "Casting From 16bit float", "[from_16bit_float]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(-INFINITY) , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double( INFINITY) , eps<double>));
@@ -2486,7 +2486,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == INT8_MIN);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2495,7 +2495,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2504,7 +2504,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == INT16_MIN);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2513,7 +2513,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2522,7 +2522,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == INT32_MIN);
 			REQUIRE(res[1]  == INT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2531,7 +2531,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2540,7 +2540,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == INT64_MIN);
 			REQUIRE(res[1]  == INT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2549,7 +2549,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2558,7 +2558,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2568,7 +2568,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2578,7 +2578,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2588,7 +2588,7 @@ TEST_CASE( "Casting From 16bit brain-float", "[from_16bit_bfloat]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(-INFINITY) , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double( INFINITY) , eps<double>));
@@ -2616,7 +2616,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == INT8_MIN);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2625,7 +2625,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2634,7 +2634,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == INT16_MIN);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2643,7 +2643,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2652,7 +2652,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == INT32_MIN);
 			REQUIRE(res[1]  == INT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2661,7 +2661,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2670,7 +2670,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == INT64_MIN);
 			REQUIRE(res[1]  == INT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2679,7 +2679,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2688,7 +2688,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		/*WHEN("Casting to float16 integer") {*/
 		/*	auto res = cast<float16>(v);*/
-		/*	static_assert(std::same_as<decltype(res)::element_t, float16>);*/
+		/*	static_assert(std::same_as<typename decltype(res)::element_t, float16>);*/
 		/**/
 		/*	REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));*/
 		/*	REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));*/
@@ -2698,7 +2698,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 		/**/
 		/*WHEN("Casting to bfloat16 integer") {*/
 		/*	auto res = cast<bfloat16>(v);*/
-		/*	static_assert(std::same_as<decltype(res)::element_t, bfloat16>);*/
+		/*	static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);*/
 		/**/
 		/*	REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));*/
 		/*	REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));*/
@@ -2708,7 +2708,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2718,7 +2718,7 @@ TEST_CASE( VEC_ARCH_NAME" Casting From 32bit float", "[from_32bit_float]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(-INFINITY) , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double( INFINITY) , eps<double>));
@@ -2746,7 +2746,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 			WHEN("Casting to signed 8bit integer") {
 			auto res = cast<int8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int8_t>);
 			REQUIRE(res[0]  == INT8_MIN);
 			REQUIRE(res[1]  == INT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2755,7 +2755,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to unsigned 8bit integer") {
 			auto res = cast<uint8_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint8_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint8_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT8_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2764,7 +2764,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to signed 16bit integer") {
 			auto res = cast<int16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int16_t>);
 			REQUIRE(res[0]  == INT16_MIN);
 			REQUIRE(res[1]  == INT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2773,7 +2773,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to unsigned 16bit integer") {
 			auto res = cast<uint16_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint16_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint16_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT16_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2782,7 +2782,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to signed 32bit integer") {
 			auto res = cast<int32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int32_t>);
 			REQUIRE(res[0]  == INT32_MIN);
 			REQUIRE(res[1]  == INT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2791,7 +2791,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to unsigned 32bit integer") {
 			auto res = cast<uint32_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint32_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint32_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT32_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2800,7 +2800,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to signed 64bit integer") {
 			auto res = cast<int64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, int64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, int64_t>);
 			REQUIRE(res[0]  == INT64_MIN);
 			REQUIRE(res[1]  == INT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2809,7 +2809,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to unsigned 64bit integer") {
 			auto res = cast<uint64_t>(v);
-			static_assert(std::same_as<decltype(res)::element_t, uint64_t>);
+			static_assert(std::same_as<typename decltype(res)::element_t, uint64_t>);
 			REQUIRE(res[0]  == 0);
 			REQUIRE(res[1]  == UINT64_MAX);
 			REQUIRE(res[2]  == 3);
@@ -2818,7 +2818,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to float16 integer") {
 			auto res = cast<float16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2828,7 +2828,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to bfloat16 integer") {
 			auto res = cast<bfloat16>(v);
-			static_assert(std::same_as<decltype(res)::element_t, bfloat16>);
+			static_assert(std::same_as<typename decltype(res)::element_t, bfloat16>);
 
 			REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2838,7 +2838,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to float32 integer") {
 			auto res = cast<float>(v);
-			static_assert(std::same_as<decltype(res)::element_t, float>);
+			static_assert(std::same_as<typename decltype(res)::element_t, float>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(-INFINITY , eps<float>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel( INFINITY , eps<float>));
@@ -2848,7 +2848,7 @@ TEST_CASE( "Casting From 64bit float", "[from_64bit_float]" ) {
 
 		WHEN("Casting to float64 integer") {
 			auto res = cast<double>(v);
-			static_assert(std::same_as<decltype(res)::element_t, double>);
+			static_assert(std::same_as<typename decltype(res)::element_t, double>);
 
 			REQUIRE_THAT(res[ 0], Catch::Matchers::WithinRel(double(-INFINITY) , eps<double>));
 			REQUIRE_THAT(res[ 1], Catch::Matchers::WithinRel(double( INFINITY) , eps<double>));
