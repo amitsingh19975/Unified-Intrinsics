@@ -3,13 +3,6 @@
 
 #include "cast.hpp"
 #include "../emul/load.hpp"
-#include "basic.hpp"
-#include "ui/base.hpp"
-#include <array>
-#include <cstdint>
-#include <numeric>
-#include <type_traits>
-#include <wasm_simd128.h>
 
 namespace ui::wasm {
     template <std::size_t N, typename T, bool Merge = true>
