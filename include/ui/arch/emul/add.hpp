@@ -2,8 +2,6 @@
 #define AMT_UI_ARCH_EMUL_ADD_HPP
 
 #include "cast.hpp"
-#include "ui/arch/basic.hpp"
-#include "ui/features.hpp"
 #include <concepts>
 #include <cstdint>
 #include <limits>
@@ -11,7 +9,7 @@
 #include <utility>
 
 namespace ui::emul {
-    
+
     namespace internal {
         using namespace ::ui::internal;
     }
@@ -38,7 +36,7 @@ namespace ui::emul {
 // !MAKR
 
 // MARK: Halving Widening Addition
-    template <bool Round = false, std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T>
         requires (sizeof(T) < 8)
     UI_ALWAYS_INLINE static constexpr auto halving_add(
         Vec<N, T> const& lhs,
@@ -46,7 +44,7 @@ namespace ui::emul {
     ) noexcept -> Vec<N, internal::widening_result_t<T>> {
         using acc_t = internal::widening_result_t<T>;
         return map([](auto l, auto r) -> acc_t {
-            return static_cast<acc_t>(internal::halving_round_helper<Round>(l, r, op::add_t{}));
+            return static_cast<acc_t>(internal::halving_round_helper(l, r, op::add_t{}));
         }, lhs, rhs); 
     }
 // !MAKR

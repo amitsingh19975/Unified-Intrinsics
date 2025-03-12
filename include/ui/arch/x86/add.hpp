@@ -126,21 +126,15 @@ namespace ui::x86 {
     ) noexcept -> Vec<N, T>;
 
 // MARK: Narrowing Addition
-    template <bool Round = false, std::size_t N, std::integral T>
+    template <std::size_t N, std::integral T>
     UI_ALWAYS_INLINE auto halving_add(
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        if constexpr (Round) {
-            auto t0 = bitwise_and(lhs, rhs);
-            auto t1 = bitwise_xor(lhs, rhs);
-            auto t2 = shift_right<1>(t1); 
-            return add(t0, t2);
-        } else {
-            auto tmp = sub<true>(rhs, lhs);
-            tmp = shift_right<1>(tmp);
-            return add(lhs, tmp);
-        }
+        auto t0 = bitwise_and(lhs, rhs);
+        auto t1 = bitwise_xor(lhs, rhs);
+        auto t2 = shift_right<1>(t1); 
+        return add(t0, t2);
     }
 
     /**

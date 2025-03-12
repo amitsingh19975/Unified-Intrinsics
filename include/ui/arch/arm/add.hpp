@@ -433,90 +433,56 @@ namespace ui::arm::neon {
 // MARK: Narrowing Addition
 
     namespace internal { 
-        template <bool Round, std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
+        template <std::size_t M0, std::size_t M1, std::size_t N, std::integral T>
         UI_ALWAYS_INLINE auto halving_add_helper(
             Vec<N, T> const& lhs,
             Vec<N, T> const& rhs,
             auto&&   signed_fn0,
             auto&& unsigned_fn0,
-            auto&&   signed_fn0_round,
-            auto&& unsigned_fn0_round,
             auto&&   signed_fn1,
-            auto&& unsigned_fn1,
-            auto&&   signed_fn1_round,
-            auto&& unsigned_fn1_round
+            auto&& unsigned_fn1
         ) noexcept -> Vec<N, T> {
             using ret_t = Vec<N, T>;
             if constexpr (N == 1) {
                 return emul::halving_add(lhs, rhs);
             } else if constexpr (N == M0) {
                 if constexpr (std::is_signed_v<T>) {
-                    if constexpr (!Round) {
-                        return std::bit_cast<ret_t>(
-                            signed_fn0(lhs, rhs)
-                        );
-                    } else {
-                        return std::bit_cast<ret_t>(
-                            signed_fn0_round(lhs, rhs)
-                        );
-                    }
+                    return std::bit_cast<ret_t>(
+                        signed_fn0(lhs, rhs)
+                    );
                 } else {
-                    if constexpr (!Round) {
-                        return std::bit_cast<ret_t>(
-                            unsigned_fn0(lhs, rhs)
-                        );
-                    } else {
-                        return std::bit_cast<ret_t>(
-                            unsigned_fn0_round(lhs, rhs)
-                        );
-                    }
+                    return std::bit_cast<ret_t>(
+                        unsigned_fn0(lhs, rhs)
+                    );
                 }
             } else if constexpr (N == M1) {
                 if constexpr (std::is_signed_v<T>) {
-                    if constexpr (!Round) {
-                        return std::bit_cast<ret_t>(
-                            signed_fn1(lhs, rhs)
-                        );
-                    } else {
-                        return std::bit_cast<ret_t>(
-                            signed_fn1_round(lhs, rhs)
-                        );
-                    }
+                    return std::bit_cast<ret_t>(
+                        signed_fn1(lhs, rhs)
+                    );
                 } else {
-                    if constexpr (!Round) {
-                        return std::bit_cast<ret_t>(
-                            unsigned_fn1(lhs, rhs)
-                        );
-                    } else {
-                        return std::bit_cast<ret_t>(
-                            unsigned_fn1_round(lhs, rhs)
-                        );
-                    }
+                    return std::bit_cast<ret_t>(
+                        unsigned_fn1(lhs, rhs)
+                    );
                 }
             } else {
                 return join(
-                    halving_add_helper<Round, M0, M1>(
+                    halving_add_helper<M0, M1>(
                         lhs.lo,
                         rhs.lo,
                         signed_fn0,
                         unsigned_fn0,
-                        signed_fn0_round,
-                        unsigned_fn0_round,
                         signed_fn1,
-                        unsigned_fn1,
-                        signed_fn1_round,
-                        unsigned_fn1_round), 
-                    halving_add_helper<Round, M0, M1>(
+                        unsigned_fn1
+                    ), 
+                    halving_add_helper<M0, M1>(
                         lhs.hi,
                         rhs.hi,
                         signed_fn0,
                         unsigned_fn0,
-                        signed_fn0_round,
-                        unsigned_fn0_round,
                         signed_fn1,
-                        unsigned_fn1,
-                        signed_fn1_round,
-                        unsigned_fn1_round)
+                        unsigned_fn1
+                    )
                 );
             }
         }
@@ -530,15 +496,10 @@ namespace ui::arm::neon {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::halving_add_helper<Round, 8, 16>(
+        return internal::halving_add_helper<8, 16>(
             lhs, rhs,
-            [](auto const& l, auto const& r) { return vhadd_s8(to_vec(l), to_vec(r)) ; },
-            [](auto const& l, auto const& r) { return vhadd_u8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_u8(to_vec(l), to_vec(r)) ; },
-
-            [](auto const& l, auto const& r) { return vhaddq_s8(to_vec(l), to_vec(r)) ; },
-            [](auto const& l, auto const& r) { return vhaddq_u8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_u8(to_vec(l), to_vec(r)) ; }
         ); 
@@ -550,15 +511,10 @@ namespace ui::arm::neon {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::halving_add_helper<Round, 4, 8>(
+        return internal::halving_add_helper<4, 8>(
             lhs, rhs,
-            [](auto const& l, auto const& r) { return vhadd_s16(to_vec(l), to_vec(r)) ; },
-            [](auto const& l, auto const& r) { return vhadd_u16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_s16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_u16(to_vec(l), to_vec(r)) ; },
-
-            [](auto const& l, auto const& r) { return vhaddq_s16(to_vec(l), to_vec(r)) ; },
-            [](auto const& l, auto const& r) { return vhaddq_u16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_s16(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_u16(to_vec(l), to_vec(r)) ; }
         ); 
@@ -570,15 +526,10 @@ namespace ui::arm::neon {
         Vec<N, T> const& lhs,
         Vec<N, T> const& rhs
     ) noexcept -> Vec<N, T> {
-        return internal::halving_add_helper<Round, 2, 4>(
+        return internal::halving_add_helper<2, 4>(
             lhs, rhs,
-            [](auto const& l, auto const& r) { return vhadd_s32(to_vec(l), to_vec(r)) ; },
-            [](auto const& l, auto const& r) { return vhadd_u32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_s32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhadd_u32(to_vec(l), to_vec(r)) ; },
- 
-            [](auto const& l, auto const& r) { return vhaddq_s32(to_vec(l), to_vec(r)) ; },
-            [](auto const& l, auto const& r) { return vhaddq_u32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_s32(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vrhaddq_u32(to_vec(l), to_vec(r)) ; }
         ); 
