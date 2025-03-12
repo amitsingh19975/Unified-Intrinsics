@@ -206,7 +206,7 @@ It adds the a and adjacent pair togther.
 ```
 a: [1, 2]
 b: [5, 6, 7, 8]
-widening_padd(a): [1 + 5 + 6, 2 + 7 + 8] => [12, 17]
+widening_padd(a, b): [1 + 5 + 6, 2 + 7 + 8] => [12, 17]
 ```
 #### 8. `widening_fold`
 ```cpp
@@ -214,4 +214,53 @@ widening_fold(Vec v, op::add_t) -> WidenedValue
 ```
 
 ##### Description
-It is similar to addition fold but the result type is widened to makes to avoid truncation.
+It is similar to addition fold but the result type is widened to avoid truncation.
+
+### Bits
+
+#### 1. `count_leading_sign_bits`
+```cpp
+count_leading_sign_bits(Vec v) -> Vec
+```
+##### Description
+Counts the number of signed bits (0/1).
+
+```
+a: i8 = [-1, 2]
+count_leading_sign_bits(a): [7, 5]
+```
+
+#### 2. `count_leading_zeros`
+```cpp
+count_leading_zeros(Vec v) -> Vec
+```
+##### Description
+Counts leading zeros in each lane.
+
+#### 3. `popcount`
+```cpp
+popcount(Vec v) -> Vec
+```
+##### Description
+Counts the number of '1s' inside a bit pattern.
+
+#### 4. `bitwise_clear`
+```cpp
+bitwise_clear(Vec a, Vec b) -> Vec
+```
+##### Description
+Computes `a & ~b`.
+
+#### 5. `bitwise_select`
+```cpp
+bitwise_select(Mask condition, Vec true, Vec false) -> Vec
+```
+##### Description
+If condition is true then it selects an element from true lane otherwise false lane.
+
+```
+a: i8 = [   1, 2,    3, 4]
+b: i8 = [   5, 3,    1, 0]
+c: i8 = [0xff, 0, 0xff, 0]
+bitwise_select(c, a, b): [1, 3, 3, 0]
+```
