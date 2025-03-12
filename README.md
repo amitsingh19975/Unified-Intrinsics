@@ -363,3 +363,71 @@ a => [1, 4, 7, 10, ...]
 b => [2, 5, 8, 11, ...]
 c => [3, 6, 9, 12, ...]
 ```
+
+### Logical
+
+#### 1. `negate`
+```cpp
+negate(Vec v) -> Vec
+```
+##### Description
+It negates each elements inside the vector/simd register. `-v`.
+
+```
+data = [1, 2, -3, 4]
+negate(data): [-1, -2, 3, -4]
+```
+
+#### 2. `sat_negate`
+```cpp
+sat_negate(Vec v) -> Vec
+```
+##### Description
+It negates each elements inside the vector/simd register while saturating. `-v`.
+
+```
+data: i8 = [1, 2, -128, 4]
+negate(data): [-1, -2, 127, -4]
+```
+
+#### 3. `bitwise_not`
+```cpp
+bitwise_not(Vec v) -> Vec
+```
+##### Description
+It is equivalent to C++'s `~` operator.
+
+#### 4. `bitwise_and`
+```cpp
+bitwise_and(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It is equivalent to C++'s `&` operator.
+
+#### 5. `bitwise_or`
+```cpp
+bitwise_or(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It is equivalent to C++'s `|` operator.
+
+#### 6. `bitwise_or`
+```cpp
+bitwise_xor(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It is equivalent to C++'s `^` operator.
+
+#### 7. `bitwise_ornot`
+```cpp
+bitwise_xor(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It is equivalent to `lhs | ~rhs`.
+
+#### 8. `bitwise_notand`
+```cpp
+bitwise_xor(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It is equivalent to `~lhs & rhs`.
