@@ -7,9 +7,11 @@
 #include <cstdint>
 #include <format>
 #include <print>
+#include <span>
 #include <type_traits>
 #include <vector>
 #include "ui.hpp"
+#include "ui/arch/emul/load.hpp"
 #include "utils.hpp"
 
 using namespace ui;
@@ -39,7 +41,7 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
     using wtype = Fixture<TestType>::wtype;
     static constexpr auto N = Fixture<TestType>::N;
 
-    std::vector<type> data(100);
+    std::vector<type> data(200);
     DataGenerator<N, type>::random(data.data(), data.size());
 
     static constexpr auto min = std::numeric_limits<type>::min();
@@ -88,7 +90,8 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
         strided_load(data.data(), a, b, c);
 
         INFO(std::format("sload3(d, a, b, c) =>\na: {}\nb: {}\nc: {}", a, b, c));
-        for (auto i = 0ul; i < N; i += 2) {
+
+        for (auto i = 0ul; i < N; i += 3) {
             REQUIRE(a[i] == data[3 * i + 0]);
             REQUIRE(b[i] == data[3 * i + 1]);
             REQUIRE(c[i] == data[3 * i + 2]);
@@ -100,7 +103,7 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
         strided_load(data.data(), a, b, c, d);
 
         INFO(std::format("sload4(d, a, b, c, d) =>\na: {}\nb: {}\nc: {}\nd: {}", a, b, c, d));
-        for (auto i = 0ul; i < N; i += 2) {
+        for (auto i = 0ul; i < N; i += 4) {
             REQUIRE(a[i] == data[4 * i + 0]);
             REQUIRE(b[i] == data[4 * i + 1]);
             REQUIRE(c[i] == data[4 * i + 2]);
@@ -139,7 +142,7 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
     using ftype = FloatFixture<TestType>::ftype;
     static constexpr auto N = Fixture<TestType>::N;
 
-    std::vector<type> data(100);
+    std::vector<type> data(200);
     DataGenerator<N, type>::random(data.data(), data.size());
 
     static constexpr auto min = std::numeric_limits<type>::min();
@@ -194,7 +197,7 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
         strided_load(data.data(), a, b, c);
 
         INFO(std::format("sload3(d, a, b, c) =>\na: {}\nb: {}\nc: {}", a, b, c));
-        for (auto i = 0ul; i < N; i += 2) {
+        for (auto i = 0ul; i < N; i += 3) {
             REQUIRE_THAT(ftype(a[i]), Catch::Matchers::WithinRel(ftype(data[3 * i + 0]), eps<ftype>));
             REQUIRE_THAT(ftype(b[i]), Catch::Matchers::WithinRel(ftype(data[3 * i + 1]), eps<ftype>));
             REQUIRE_THAT(ftype(c[i]), Catch::Matchers::WithinRel(ftype(data[3 * i + 2]), eps<ftype>));
@@ -206,7 +209,7 @@ TEMPLATE_LIST_TEST_CASE_METHOD(
         strided_load(data.data(), a, b, c, d);
 
         INFO(std::format("sload4(d, a, b, c, d) =>\na: {}\nb: {}\nc: {}\nd: {}", a, b, c, d));
-        for (auto i = 0ul; i < N; i += 2) {
+        for (auto i = 0ul; i < N; i += 4) {
             REQUIRE_THAT(ftype(a[i]), Catch::Matchers::WithinRel(ftype(data[4 * i + 0]), eps<ftype>));
             REQUIRE_THAT(ftype(b[i]), Catch::Matchers::WithinRel(ftype(data[4 * i + 1]), eps<ftype>));
             REQUIRE_THAT(ftype(c[i]), Catch::Matchers::WithinRel(ftype(data[4 * i + 2]), eps<ftype>));
