@@ -66,24 +66,6 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
             REQUIRE(res[31] == 25);
         }
 
-        WHEN("Halving Addition with rounding") {
-            auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
-            auto res = halving_add<true>(v, bs);
-            INFO(std::format("bs: {}", bs));
-            INFO(std::format("halving_add(v, bs): {}", res));
-            REQUIRE(res[0] == -69);
-            REQUIRE(res[1] ==  59);
-            REQUIRE(res[2] == -4);
-            REQUIRE(res[3] == -3);
-            REQUIRE(res[4] == -2);
-            REQUIRE(res[5] == -1);
-            REQUIRE(res[6] ==  0);
-            REQUIRE(res[7] ==  1);
-            REQUIRE(res[8] ==  2);
-            REQUIRE(res[9] ==  3);
-            REQUIRE(res[31] == 25);
-        }
-
         WHEN("High Narrowing Addition") {
             /*auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);*/
             /*auto res = high_narrowing_add(v, bs);*/
@@ -262,27 +244,9 @@ TEST_CASE( VEC_ARCH_NAME " 8bit Addition", "[addition][8bit]" ) {
             }
         }
 
-        WHEN("Halving Addition without rounding") {
+        WHEN("Halving Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = halving_add(v, bs);
-            INFO(std::format("bs: {}", bs));
-            INFO(std::format("halving_add(v, bs): {}", res));
-            REQUIRE(res[0] ==  123);
-            REQUIRE(res[1] ==  251);
-            REQUIRE(res[2] ==  124);
-            REQUIRE(res[3] ==  125);
-            REQUIRE(res[4] ==  126);
-            REQUIRE(res[5] ==  127);
-            REQUIRE(res[6] ==  128);
-            REQUIRE(res[7] ==  129);
-            REQUIRE(res[8] ==  130);
-            REQUIRE(res[9] ==  131);
-            REQUIRE(res[31] == 25);
-        }
-
-        WHEN("Halving Addition with rounding") {
-            auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
-            auto res = halving_add<true>(v, bs);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("halving_add(v, bs): {}", res));
             REQUIRE(res[0] ==  123);
@@ -480,27 +444,9 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
             }
         }
 
-        WHEN("Halving Addition without rounding") {
+        WHEN("Halving Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = halving_add(v, bs);
-            INFO(std::format("bs: {}", bs));
-            INFO(std::format("halving_add(v, bs): {}", res));
-            REQUIRE(res[0] == -16389);
-            REQUIRE(res[1] ==  16379);
-            REQUIRE(res[2] == -4);
-            REQUIRE(res[3] == -3);
-            REQUIRE(res[4] == -2);
-            REQUIRE(res[5] == -1);
-            REQUIRE(res[6] ==  0);
-            REQUIRE(res[7] ==  1);
-            REQUIRE(res[8] ==  2);
-            REQUIRE(res[9] ==  3);
-            REQUIRE(res[15] == 9);
-        }
-
-        WHEN("Halving Addition with rounding") {
-            auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
-            auto res = halving_add<true>(v, bs);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("halving_add(v, bs): {}", res));
             REQUIRE(res[0] == -16389);
@@ -676,27 +622,9 @@ TEST_CASE( VEC_ARCH_NAME " 16bit Addition", "[addition][16bit]" ) {
             }
         }
 
-        WHEN("Halving Addition without rounding") {
+        WHEN("Halving Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = halving_add(v, bs);
-            INFO(std::format("bs: {}", bs));
-            INFO(std::format("halving_add(v, bs): {}", res));
-            REQUIRE(res[0] ==  32763);
-            REQUIRE(res[1] ==  65531);
-            REQUIRE(res[2] ==  32764);
-            REQUIRE(res[3] ==  32765);
-            REQUIRE(res[4] ==  32766);
-            REQUIRE(res[5] ==  32767);
-            REQUIRE(res[6] ==  32768);
-            REQUIRE(res[7] ==  32769);
-            REQUIRE(res[8] ==  32770);
-            REQUIRE(res[9] ==  32771);
-            REQUIRE(res[15] == 9);
-        }
-
-        WHEN("Halving Addition with rounding") {
-            auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
-            auto res = halving_add<true>(v, bs);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("halving_add(v, bs): {}", res));
             REQUIRE(res[0] ==  32763);
@@ -866,27 +794,9 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
             }
         }
 
-        WHEN("Halving Addition without rounding") {
+        WHEN("Halving Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = halving_add(v, bs);
-            INFO(std::format("bs: {}", bs));
-            INFO(std::format("halving_add(v, bs): {}", res));
-            REQUIRE(res[0] == -1073741829);
-            REQUIRE(res[1] ==  1073741819);
-            REQUIRE(res[2] == -4);
-            REQUIRE(res[3] == -3);
-            REQUIRE(res[4] == -2);
-            REQUIRE(res[5] == -1);
-            REQUIRE(res[6] ==  0);
-            REQUIRE(res[7] ==  1);
-            REQUIRE(res[8] ==  2);
-            REQUIRE(res[9] ==  3);
-            REQUIRE(res[15] == 9);
-        }
-
-        WHEN("Halving Addition with rounding") {
-            auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
-            auto res = halving_add<true>(v, bs);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("halving_add(v, bs): {}", res));
             REQUIRE(res[0] == -1073741829);
@@ -1062,30 +972,12 @@ TEST_CASE( VEC_ARCH_NAME " 32bit Addition", "[addition][32bit]" ) {
             }
         }
 
-        WHEN("Halving Addition without rounding") {
+        WHEN("Halving Addition") {
             auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
             auto res = halving_add(v, bs);
             INFO(std::format("bs: {}", bs));
             INFO(std::format("halving_add(v, bs): {}", res));
 
-            REQUIRE(res[0] ==  2147483643);
-            REQUIRE(res[1] ==  4294967291);
-            REQUIRE(res[2] ==  2147483644);
-            REQUIRE(res[3] ==  2147483645);
-            REQUIRE(res[4] ==  2147483646);
-            REQUIRE(res[5] ==  2147483647);
-            REQUIRE(res[6] ==  2147483648);
-            REQUIRE(res[7] ==  2147483649);
-            REQUIRE(res[8] ==  2147483650);
-            REQUIRE(res[9] ==  2147483651);
-            REQUIRE(res[15] == 9);
-        }
-
-        WHEN("Halving Addition with rounding") {
-            auto bs = DataGenerator<N, type>::cyclic_make(-10, 100);
-            auto res = halving_add<true>(v, bs);
-            INFO(std::format("bs: {}", bs));
-            INFO(std::format("halving_add(v, bs): {}", res));
             REQUIRE(res[0] ==  2147483643);
             REQUIRE(res[1] ==  4294967291);
             REQUIRE(res[2] ==  2147483644);
@@ -1461,14 +1353,15 @@ TEST_CASE( VEC_ARCH_NAME " Float16 Addition", "[addition][float16]" ) {
         INFO(std::format("add(v, v): {}", res));
 
         for (auto i = 0ul; i < N; ++i) {
-            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(float(v[i]) * 2, eps<float>));
+            auto r = float(type(float(v[i]) * 2));
+            REQUIRE_THAT(float(res[i]), Catch::Matchers::WithinRel(r, eps<float>));
         }
     }
 
     WHEN("Pairwise Addition") {
         auto res = padd(v, v);
         INFO(std::format("padd(v, v): {}", res));
-        
+
         REQUIRE_THAT(float(res[ 0]), Catch::Matchers::WithinRel(float(65504), eps<float>));
         REQUIRE_THAT(float(res[ 1]), Catch::Matchers::WithinRel(float(1), eps<float>));
         REQUIRE_THAT(float(res[ 2]), Catch::Matchers::WithinRel(float(5), eps<float>));
