@@ -25,20 +25,27 @@
     #ifdef __APPLE__
         #include <TargetConditionals.h>
     #endif
-    
+
     #if defined(_WIN32) || defined(__SYMBIAN32__)
         #define UI_OS_WIN
     #elif defined(ANDROID) || defined(__ANDROID__)
         #define UI_OS_ANDROID
-    #elif defined(linux) || defined(__linux) || defined(__FreeBSD__) || \
-          defined(__OpenBSD__) || defined(__sun) || defined(__NetBSD__) || \
-          defined(__DragonFly__) || defined(__Fuchsia__) || \
-          defined(__GLIBC__) || defined(__GNU__) || defined(__unix__)
+        #define UI_OS_UNIX
+    #elif defined(linux) || defined(__linux)
+        #define UI_OS_LINUX
+        #define UI_OS_UNIX
+    #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || \
+          defined(__DragonFly__)
+        #define UI_OS_BSD
+        #define UI_OS_UNIX
+    #elif defined(__Fuchsia__) || defined(__GLIBC__) || defined(__GNU__) || defined(__unix__)
         #define UI_OS_UNIX
     #elif TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
         #define UI_OS_IOS
+        #define UI_OS_UNIX
     #else
         #define UI_OS_MAC
+        #define UI_OS_UNIX
     #endif
 #endif
 

@@ -6,6 +6,10 @@
 #include <vector>
 #include <optional>
 
+#define UI_CPU_API_ID_WIN 1
+#define UI_CPU_API_ID_BSD 2
+#define UI_CPU_API_ID_LINUX 3
+
 #if defined(UI_OS_WIN)
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
@@ -26,11 +30,15 @@
 #    undef NOMINMAX_WAS_LOCALLY_DEFINED
 #    undef NOMINMAX
 #  endif
-#elif defined(UI_OS_MAC)
+#  define UI_CPU_API UI_CPU_API_ID_WIN
+#elif defined(UI_OS_MAC) || defined(UI_OS_BSD)
     #include <sys/sysctl.h>
-#elif defined(UI_OS_UNIX) || defined(UI_OS_ANDROID)
+    #define UI_CPU_API UI_CPU_API_ID_BSD
+#elif defined(UI_OS_LINUX) || defined(UI_OS_ANDROID)
     #include <sys/sysinfo.h>
+    #define UI_CPU_API UI_CPU_API_ID_LINUX
 #endif
+
 
 namespace ui {
     struct CacheInfo {
@@ -46,7 +54,7 @@ namespace ui {
     };
 
     namespace internal {
-        #if defined(UI_OS_MAC)
+        #if UI_CPU_API == UI_CPU_API_ID_BSD
         template <typename T>
         inline static auto read_info_by_name(std::string_view name) -> std::optional<T> {
             if constexpr (std::same_as<T, std::string>) {
@@ -96,7 +104,7 @@ namespace ui {
             if (cacheline) res.cacheline = *cacheline;
             return res;
         }
-        #elif defined(UI_OS_WIN)
+        #elif UI_CPU_API == UI_CPU_API_ID_WIN
         inline static auto cpu_info_helper() -> CpuInfo {
             auto res = CpuInfo {
                 .cache = {},
@@ -145,7 +153,7 @@ namespace ui {
 
             return res;
         }
-        #elif defined(UI_OS_UNIX) || defined(UI_OS_ANDROID)
+        #elif UI_CPU_API == UI_CPU_API_ID_LINUX
         inline static auto cpu_info_helper() -> CpuInfo {
             auto res = CpuInfo {
                 .cache = {},
@@ -219,5 +227,10 @@ namespace ui {
     }
 
 } // ui
+
+#undef UI_CPU_API
+#undef UI_CPU_API_ID_LINUX
+#undef UI_CPU_API_ID_WIN
+#undef UI_CPU_API_ID_BSD
 
 #endif // AMT_UI_ARCH_ARM_INFO_HPP 
