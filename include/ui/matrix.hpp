@@ -59,11 +59,11 @@ namespace ui {
         constexpr auto operator()(size_type r, size_type c) const noexcept -> element_t {
             return val[r][c];
         }
-        
+
         constexpr auto operator()(size_type r, size_type c) noexcept -> element_t& {
             return val[r][c];
         }
-        
+
         auto data() noexcept -> element_t* {
             return reinterpret_cast<element_t*>(this);
         }
