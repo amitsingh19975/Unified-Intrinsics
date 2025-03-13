@@ -934,3 +934,53 @@ insert_shift_right<Count>(Vec a, Vec b) -> Vec;
 ##### Description
 It shifts the vector `b` to right by count and inserts the bits in the empty space left by shifting. 
 Operation: let mask be `~UT(0) >> Count` then `(a & ~mask) | (b >> Count)`.
+
+### Square-Root
+
+```cpp
+sqrt(Vec v) -> Vec;
+```
+##### Description
+It applies `sqrt` function each elements of the vector.
+
+### Subtraction
+
+#### 1. `sub`
+
+```cpp
+sub(Vec lhs, Vec rhs) -> Vec;
+```
+##### Description
+It maps to `lhs - rhs` in C++.
+
+#### 2. `widening_sub`
+
+```cpp
+widening_sub(Vec<N, T> lhs, Vec<N, T> rhs) -> Vec<N, W> where W > T;
+```
+##### Description
+It subtracts the operands while widening the result.
+
+#### 3. `halving_sub`
+
+```cpp
+halving_sub(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+Computes `(lhs - rhs) / 2`
+
+#### 4. `high_narrowing_sub`
+
+```cpp
+high_narrowing_sub(Vec lhs, Vec rhs) -> Vec
+```
+##### Description
+It computes `lhs - rhs` and returns upper part of the bit pattern.
+
+#### 5. `sub`
+
+```cpp
+sat_sub(Vec lhs, Vec rhs) -> Vec;
+```
+##### Description
+It subtracts operand while saturating.
