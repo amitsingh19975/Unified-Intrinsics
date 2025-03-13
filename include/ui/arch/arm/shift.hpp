@@ -1441,7 +1441,7 @@ namespace ui::arm::neon {
                     );
                 }
             }
-            
+
             return join(
                 sat_unsigned_narrowing_shift_right<Shift>(v.lo),
                 sat_unsigned_narrowing_shift_right<Shift>(v.hi)
@@ -1529,7 +1529,7 @@ namespace ui::arm::neon {
             );
         }
     }
-    
+
     template <unsigned Shift, std::size_t N, std::integral T>
         requires ((Shift > 0 && Shift < sizeof(T) * 8) && sizeof(T) > 1 && std::is_signed_v<T>)
     UI_ALWAYS_INLINE auto sat_rounding_unsigned_narrowing_shift_right(
@@ -1719,7 +1719,7 @@ namespace ui::arm::neon {
                     }
                 }
             }
-        
+
             return join(
                 insert_shift_right<Shift>(a.lo, b.lo),
                 insert_shift_right<Shift>(a.hi, b.hi)
