@@ -637,3 +637,72 @@ fold(Vec a, op::minnm_t) -> Value;
 ```
 ##### Description
 It reduces the vector based on the `tag`. `pmin_t` and `min_t` uses difference intrinsics on `arm` but are same on different platform. 
+
+### Multiplication Operation
+
+#### 1. `mul`
+```cpp
+mul(Vec lhs, Vec rhs) -> Vec;
+mul(Vec<N, T> v, T constant) -> Vec;
+mul(Vec<N, T> v, T constant) -> Vec;
+mul<Lane>(Vec<N, T> a, Vec<M, T> v, op::add_t) -> Vec<N, T> where Lane < M;
+```
+##### Description
+It multiplies two vectors.
+
+#### 2. `mul_acc`
+```cpp
+mul_acc(Vec acc, Vec lhs, Vec rhs, op::add_t) -> Vec;
+mul_acc(Vec acc, Vec lhs, Vec rhs, op::sub_t) -> Vec;
+mul_acc(Vec<N, W> acc, Vec<N, T> lhs, Vec<N, T> rhs, op::add_t) -> Vec<N, W> where W > T;
+mul_acc(Vec<N, W> acc, Vec<N, T> lhs, Vec<N, T> rhs, op::sub_t) -> Vec<N, W> where W > T;
+mul_acc(Vec<N, T> acc, Vec<N, T> a, T constant, op::add_t) -> Vec;
+mul_acc(Vec<N, T> acc, Vec<N, T> a, T constant, op::sub_t) -> Vec;
+```
+##### Description
+It multiplies two vectors and add it to or subtract it from the accumulator. `acc +/- (lhs * rhs)`
+
+#### 3. `fused_mul_acc`
+```cpp
+fused_mul_acc(Vec acc, Vec lhs, Vec rhs, op::add_t) -> Vec;
+fused_mul_acc(Vec acc, Vec lhs, Vec rhs, op::sub_t) -> Vec;
+```
+##### Description
+It does the same as `mul_acc` but uses fused intrinsic.
+
+> **_NOTE:_** Platforms that does not support fused multiplication instruction, it'll fallback to two `mul_acc`
+
+#### 4. `fused_mul_acc` / `mul_acc`
+```cpp
+fused_mul_acc<Lane>(Vec<N, T> acc, Vec<N, T> a, Vec<M, T> v, op::add_t) -> Vec where Lane < M;
+fused_mul_acc<Lane>(Vec<N, T> acc, Vec<N, T> a, Vec<M, T> v, op::sub_t) -> Vec where Lane < M;
+mul_acc<Lane>(Vec<N, T> acc, Vec<N, T> a, Vec<M, T> v, op::add_t) -> Vec where Lane < M;
+mul_acc<Lane>(Vec<N, T> acc, Vec<N, T> a, Vec<M, T> v, op::sub_t) -> Vec where Lane < M;
+```
+##### Description
+It takes the element from the vector `v` at a given position and multiplies it with `a`. `acc +/- a * v[Lane]`
+
+#### 5. `widening_mul`
+```cpp
+widening_mul(Vec<N, T> lhs, Vec<N, T> rhs) -> Vec<N, W> where W > T;
+widening_mul<Lane>(Vec<N, T> v, Vec<M, T> rhs) -> Vec<N, W> where W > T && Lane < M;
+widening_mul(Vec<N, T> a, T constant) -> Vec<N, W> where W > T;
+```
+##### Description
+It is similar to `mul` with it widens the resultant vectors.
+
+#### 2. `mul_acc`
+```cpp
+mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::add_t) -> Vec where W > T;
+mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::sub_t) -> Vec where W > T;
+```
+##### Description
+It is similar to `mul_acc` with it widens the resultant vectors.
+
+#### 2. `fused_mul_acc`
+```cpp
+fused_mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::add_t) -> Vec where W > T;
+fused_mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::sub_t) -> Vec where W > T;
+```
+##### Description
+It is similar to `fused_mul_acc` with it widens the resultant vectors.
