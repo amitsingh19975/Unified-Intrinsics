@@ -706,3 +706,73 @@ fused_mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::sub_t) -> Vec where W 
 ```
 ##### Description
 It is similar to `fused_mul_acc` with it widens the resultant vectors.
+
+### Shuffle/Permute
+
+#### 1. `shuffle`
+```cpp
+shuffle<Is...>(Vec<N, T> v) -> Vec<count(Is...), T> where count(Is...) is power of 2;
+```
+##### Description
+It shuffle the element around based on the indices.
+
+> **_NOTE:_** It's a compiler dependent function. If compiler is GCC or Clang, it'll use builtin to shuffle around the vector, but other compilers it leaves the optimization to the compiler.
+
+```
+a = [1, 2, 3, 4]
+shuffl<3, 2>(a) => [4, 3]
+```
+
+### Prefetch
+
+```cpp
+enum class PrefetchRW { Read, Write, RW };
+enum class PrefetchLocality { None, Low, Medium, High };
+
+prefetch<RW = PrefetchRW::Read, Locality = PrefetchLocality::High>(T const* const data) -> void
+```
+##### Description
+It a no-op for platform that does not support it, but for `x86` and `ARM`, it'll generate prefetch instruction.
+
+### Reciprocal Operations
+
+#### 1. `reciprocal_estimate`
+```cpp
+reciprocal_estimate(Vec v) -> Vec
+```
+##### Description
+It estimates `1/v`.
+
+#### 2. `reciprocal_refine`
+```cpp
+reciprocal_refine(Vec v, Vec previous_estimate) -> Vec
+```
+##### Description
+It refines the previously generated estimate by one step.
+
+```
+a: f32 = [1, 2, 3, 4]
+e = reciprocal_estimate(a) => [0.9980469, 0.49902344, 0.3330078, 0.24951172]
+reciprocal_refine(a, e) => [1.0019531, 1.0019531, 1.0009766, 1.0019531] 
+```
+
+#### 3. `sqrt_inv_estimate`
+```cpp
+sqrt_inv_estimate(Vec v) -> Vec
+```
+##### Description
+It estimates `1/sqrt(v)`.
+
+#### 4. `sqrt_inv_refine`
+```cpp
+sqrt_inv_refine(Vec v, Vec previous_estimate) -> Vec
+```
+##### Description
+It refines the previously generated estimate by one step.
+
+#### 5. `exponent_reciprocal_estimate`
+```cpp
+exponent_reciprocal_estimate(Vec v) -> Vec
+```
+##### Description
+It estimates `1/float_exponent(v)`. Ex: `1.101 * 2^x` => `1/(2^x)` => `2^-x`
