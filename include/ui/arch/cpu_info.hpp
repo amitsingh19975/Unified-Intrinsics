@@ -169,24 +169,25 @@ namespace ui {
                 res.mem = info.totalram * info.mem_unit;
             }
 
-            // Get cache line size using sysconf.
-            // _SC_LEVEL1_DCACHE_LINESIZE is available on some systems.
+            #ifdef _SC_LEVEL1_DCACHE_LINESIZE
             long cl = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
-            if (cl > 0)
-                res.cacheline = static_cast<unsigned>(cl);
+            if (cl > 0) res.cacheline = static_cast<unsigned>(cl);
+            #endif
 
-            // Get cache sizes (if available)
+            #ifdef _SC_LEVEL1_DCACHE_SIZE
             long l1d = sysconf(_SC_LEVEL1_DCACHE_SIZE);
-            if (l1d > 0)
-                res.cache.push_back({ 1, static_cast<unsigned>(l1d) });
+            if (l1d > 0) res.cache.push_back({ 1, static_cast<unsigned>(l1d) });
+            #endif
 
+            #ifdef _SC_LEVEL2_CACHE_SIZE
             long l2 = sysconf(_SC_LEVEL2_CACHE_SIZE);
-            if (l2 > 0)
-                res.cache.push_back({ 2, static_cast<unsigned>(l2) });
+            if (l2 > 0) res.cache.push_back({ 2, static_cast<unsigned>(l2) });
+            #endif
 
+            #ifdef _SC_LEVEL3_CACHE_SIZE
             long l3 = sysconf(_SC_LEVEL3_CACHE_SIZE);
-            if (l3 > 0)
-                res.cache.push_back({ 3, static_cast<unsigned>(l3) });
+            if (l3 > 0) res.cache.push_back({ 3, static_cast<unsigned>(l3) });
+            #endif
 
             // For instruction caches, some systems define these macros.
             #ifdef _SC_LEVEL1_ICACHE_SIZE

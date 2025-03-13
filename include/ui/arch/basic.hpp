@@ -4,11 +4,12 @@
 #include "../base.hpp"
 #include "../base_vec.hpp"
 #include <algorithm>
+#include <functional>
+#include <cfenv>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <cfenv>
 #include <type_traits>
 
 namespace ui::internal {
