@@ -181,6 +181,45 @@ int main() {
 }
 ```
 
+### `VecMat`
+
+```cpp
+template <std::size_t R, std::size_t C, typename T>
+struct alignas(sizeof(Vec<C, T>)) VecMat {
+    using vec_type = Vec<C, T>;
+    using element_t = T;
+    using size_type = std::size_t;
+
+    static constexpr size_type rows = R;
+    static constexpr size_type cols = C;
+
+    vec_type val[R];
+
+    // Constructors
+    constexpr VecMat() noexcept = default;
+    constexpr VecMat(VecMat const&) noexcept = default;
+    constexpr VecMat(VecMat &&) noexcept = default;
+    constexpr VecMat& operator=(VecMat const&) noexcept = default;
+    constexpr VecMat& operator=(VecMat &&) noexcept = default;
+    constexpr ~VecMat() noexcept = default;
+
+    // Methods
+    static auto load(element_t const* const in, size_type size) noexcept -> VecMat;
+    static constexpr auto load(std::span<element_t> sp) noexcept -> VecMat;
+    static constexpr auto load(element_t val) noexcept -> VecMat;
+
+    template <is_vec... Ts>
+    static constexpr auto load(Ts&&... args) noexcept -> VecMat;
+
+    constexpr auto operator()(size_type r, size_type c) const noexcept -> element_t;
+    constexpr auto operator()(size_type r, size_type c) noexcept -> element_t&;
+    auto data() noexcept -> element_t*;
+    auto data() const noexcept -> element_t const*;
+    auto lo() const noexcept -> VecMat<R / 2, C, T>;
+    auto hi() const noexcept -> VecMat<R / 2, C, T>;
+};
+```
+
 ### Overloaded Operators
 #### 1. Logical Operators
 ```cpp
@@ -203,6 +242,7 @@ constexpr auto operator>>(Vec<N, T> const& lhs, Vec<N, std::make_unsigned_t<T>> 
 constexpr auto operator>>(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
 constexpr auto operator>>(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
 ```
+
 #### 2. Comparison Operators
 ```cpp
 constexpr auto operator==(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
@@ -222,6 +262,7 @@ constexpr auto operator>(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept ->
 constexpr auto operator>(Vec<N, T> const& lhs, U const rhs) noexcept -> mask_t<N, T>;
 constexpr auto operator>(U const lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
 ```
+
 #### 3. Arithmetic Operators
 ```cpp
 constexpr auto operator+(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
@@ -240,6 +281,7 @@ constexpr auto operator%(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept ->
 constexpr auto operator%(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
 constexpr auto operator%(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
 ```
+
 ## Type Alias
 ```cpp
 using float2  = Vec< 2, float>;
@@ -770,6 +812,36 @@ a = [1, 2, 3, 4]
 b = [5, 6, 7, 8]
 transpose_high(a, b): [2, 6, 4, 8]
 ```
+
+### Matrix Operations
+
+#### 1. `transpose`
+
+```cpp
+transpose(VecMat v) -> VecMat;
+```
+##### Description
+Transposes the matrix.
+
+#### 2. `mul`
+
+```cpp
+mul(VecMat<N, M, T> c, VecMat<N, K, T> a, VecMat<K, M, T> b) -> VecMat;
+mul(VecMat<N, K, T> a, VecMat<K, M, T> b) -> VecMat;
+```
+##### Description
+Multiplies two matrices and adds it the `c`. `c + a * b`.
+> **_NOTE:_** This implementation uses broadcasting an element and assumes the matrix is transposed.
+
+#### 3. `mul2`
+
+```cpp
+mul2(VecMat<N, M, T> c, VecMat<N, K, T> a, VecMat<K, M, T> b) -> VecMat;
+mul2(VecMat<N, K, T> a, VecMat<K, M, T> b) -> VecMat;
+```
+##### Description
+Multiplies two matrices and adds it the `c`. `c + a * b`. 
+> **_NOTE:_** This implementation transposes the matrix and uses dot product.
 
 ### Min-Max
 
