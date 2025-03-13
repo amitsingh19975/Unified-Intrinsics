@@ -185,9 +185,6 @@ namespace ui::arm::neon {
             );
         }
     }
-
-
-
 // !MARK
 
 // MARK: Floating-Point Subtraction
@@ -316,7 +313,7 @@ namespace ui::arm::neon {
                     widening_sub_helper<M>(lhs.lo, rhs.lo, sign_fn, unsigned_fn),
                     widening_sub_helper<M>(lhs.hi, rhs.hi, sign_fn, unsigned_fn)
                 );
-            }    
+            }
         }
     } // namespace internal
 
@@ -363,7 +360,7 @@ namespace ui::arm::neon {
         if constexpr (std::is_signed_v<T>) {
             return negate(widening_sub(rhs, lhs));
         } else {
-            return sub(cast<U>(lhs), rhs); 
+            return sub(cast<U>(lhs), rhs);
         }
     }
 
@@ -392,7 +389,7 @@ namespace ui::arm::neon {
             [](auto const& l, auto const& r) { return vsubw_u16(to_vec(l), to_vec(r)); }
         );
     }
-    
+
     template <std::size_t N, std::integral T, std::integral U>
         requires (sizeof(T) == 2 && sizeof(U) == 4 && (std::is_signed_v<T> == std::is_signed_v<U>))
     UI_ALWAYS_INLINE auto widening_sub(
@@ -521,7 +518,7 @@ namespace ui::arm::neon {
             [](auto const& l, auto const& r) { return vhsub_u8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsubq_s8(to_vec(l), to_vec(r)) ; },
             [](auto const& l, auto const& r) { return vhsubq_u8(to_vec(l), to_vec(r)) ; }
-        ); 
+        );
     }
 
     template <std::size_t N, std::integral T>
@@ -587,7 +584,6 @@ namespace ui::arm::neon {
         }
     } // namespace internal
 
-    
     /**
      *  @returns upper half bits of the vector register
     */
@@ -633,7 +629,7 @@ namespace ui::arm::neon {
             lhs, rhs,
             [](auto const& l, auto const& r) { return vsubhn_s64(to_vec(l), to_vec(r)); },
             [](auto const& l, auto const& r) { return vsubhn_u64(to_vec(l), to_vec(r)); }
-        ); 
+        );
     }
 // !MARK
 
@@ -734,8 +730,7 @@ namespace ui::arm::neon {
             [](auto const& l, auto const& r) { return vqsubq_u16(to_vec(l), to_vec(r)); }
         );
     }
-    
-    
+
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 4)
     UI_ALWAYS_INLINE auto sat_sub(
@@ -752,7 +747,6 @@ namespace ui::arm::neon {
         );
     }
 
-    
     template <std::size_t N, std::integral T>
         requires (sizeof(T) == 8)
     UI_ALWAYS_INLINE auto sat_sub(
@@ -767,7 +761,7 @@ namespace ui::arm::neon {
             [](auto const& l, auto const& r) { return vqsubq_s64(to_vec(l), to_vec(r)); },
             [](auto const& l, auto const& r) { return vqsubq_u64(to_vec(l), to_vec(r)); }
         );
-    }  
+    }
 
 // !MARK
 } // namespace ui::arm::neon;
