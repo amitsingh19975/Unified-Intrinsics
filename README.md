@@ -81,6 +81,240 @@ int main() {
     return 0;
 }
 ```
+
+## Class/Structs
+### `Vec<N, T>`
+```cpp
+    template <std::size_t N, typename T>
+    struct alignas(N * sizeof(T)) Vec {
+        // Member variables
+        base_type lo, hi;
+
+        // Constructors
+        constexpr Vec() noexcept = default;
+        constexpr Vec(element_t x, element_t y) noexcept requires (N == 2);
+        constexpr Vec(Vec<elements / 2, element_t> const& low, Vec<elements / 2, element_t> const& high) noexcept requires (elements != 4);
+        constexpr Vec(element_t val) noexcept;
+        constexpr Vec(Vec<2, element_t> xy, element_t z, element_t w) noexcept requires (elements == 4);
+        constexpr Vec(Vec<2, element_t> xy, Vec<2, element_t> zw) noexcept requires (elements == 4);
+        constexpr Vec(std::initializer_list<element_t> li) noexcept;
+        constexpr Vec(std::span<element_t> li) noexcept;
+
+        // Methods
+        auto to_span() const noexcept -> std::span<element_t>;
+        auto data() noexcept -> element_t*;
+        auto data() const noexcept -> element_t const*;
+        constexpr auto operator[](size_type k) noexcept -> element_t&;
+        constexpr auto operator[](size_type k) const noexcept -> element_t;
+        constexpr auto size() const noexcept;
+
+        // Swizzling methods
+        constexpr Vec<2, element_t>& xy() noexcept requires (N == 4);
+        constexpr Vec<2, element_t>& zw() noexcept requires (N == 4);
+        constexpr element_t& x() noexcept requires (N == 4 || N == 2);
+        constexpr element_t& y() noexcept requires (N == 4 || N == 2);
+        constexpr element_t& z() noexcept requires (N == 4);
+        constexpr element_t& w() noexcept requires (N == 4);
+
+        // Load and store methods
+        static constexpr auto load(element_t const* const UI_RESTRICT in, size_type size) noexcept;
+        constexpr auto store(element_t const* const UI_RESTRICT in, size_type size) noexcept;
+    };
+```
+
+### `Vec<1, T>`
+```cpp
+template <typename T>
+struct alignas(1 * sizeof(T)) Vec<1, T> {
+    // Member variables
+    element_t val;
+
+    // Methods
+    template <typename U>
+    constexpr auto cast() const noexcept -> U;
+    operator std::span<element_t const>() const noexcept;
+    auto to_span() const noexcept;
+    auto data() noexcept -> element_t*;
+    auto data() const noexcept -> element_t const*;
+    constexpr auto operator[](size_type k) noexcept -> element_t&;
+    constexpr auto operator[](size_type k) const noexcept -> element_t;
+    static constexpr auto load(T const* const UI_RESTRICT in, size_type size) noexcept;
+    static constexpr auto load(std::span<T> data) noexcept;
+    static constexpr auto load(element_t val) noexcept -> Vec;
+    template <unsigned Lane, std::size_t M>
+    static constexpr auto load(Vec<M, T> const&) noexcept -> Vec;
+    constexpr auto store(T const* const UI_RESTRICT in, size_type size) noexcept;
+};
+```
+### Example
+```cpp
+#include "ui.hpp"
+int main() {
+    auto v = ui::Vec<4, float>{1, 2, 3, 4};
+    std::println("Vec: {}", v);
+    return 0;
+}
+```
+
+### `CpuInfo`
+```cpp
+struct CacheInfo {
+    std::uint8_t level;
+    unsigned size;
+};
+
+struct CpuInfo {
+    std::vector<CacheInfo> cache;
+    std::vector<CacheInfo> icache;
+    unsigned cacheline;
+    std::size_t mem;
+};
+```
+#### Example
+```cpp
+#include "ui.hpp"
+
+int main() {
+    auto info = ui::cpu_info();
+    std::println("CpuInfo: {}", info);
+    return 0;
+}
+```
+
+### Overloaded Operators
+#### 1. Logical Operators
+```cpp
+constexpr auto operator!(Vec<N, T> const& op) noexcept -> Vec<N, T>;
+constexpr auto operator~(Vec<N, T> const& op) noexcept -> Vec<N, T>;
+constexpr auto operator-(Vec<N, T> const& op) noexcept -> Vec<N, T>;
+constexpr auto operator^(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator^(Vec<N, T> const& lhs, U const rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator^(U const lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator&(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator&(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator&(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator|(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator|(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator|(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator<<(Vec<N, T> const& lhs, Vec<N, std::make_unsigned_t<T>> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator<<(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator<<(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator>>(Vec<N, T> const& lhs, Vec<N, std::make_unsigned_t<T>> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator>>(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator>>(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+```
+#### 2. Comparison Operators
+```cpp
+constexpr auto operator==(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator==(Vec<N, T> const& lhs, U const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator!=(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator!=(Vec<N, T> const& lhs, U const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator<=(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator<=(Vec<N, T> const& lhs, U const rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator<=(U const lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator<(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator<(Vec<N, T> const& lhs, U const rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator<(U const lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator>=(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator>=(Vec<N, T> const& lhs, U const rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator>=(U const lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator>(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator>(Vec<N, T> const& lhs, U const rhs) noexcept -> mask_t<N, T>;
+constexpr auto operator>(U const lhs, Vec<N, T> const& rhs) noexcept -> mask_t<N, T>;
+```
+#### 3. Arithmetic Operators
+```cpp
+constexpr auto operator+(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator+(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator+(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator-(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator-(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator-(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator*(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator*(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator*(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator/(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator/(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator/(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator%(Vec<N, T> const& lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+constexpr auto operator%(Vec<N, T> const& lhs, U const rhs) noexcept -> Vec<N, T>;
+constexpr auto operator%(U const lhs, Vec<N, T> const& rhs) noexcept -> Vec<N, T>;
+```
+## Type Alias
+```cpp
+using float2  = Vec< 2, float>;
+using float4  = Vec< 4, float>;
+using float8  = Vec< 8, float>;
+
+using half2  = Vec< 2, float16>;
+using half4  = Vec< 4, float16>;
+using half8  = Vec< 8, float16>;
+
+using bhalf2  = Vec< 2, bfloat16>;
+using bhalf4  = Vec< 4, bfloat16>;
+using bhalf8  = Vec< 8, bfloat16>;
+
+using double2 = Vec< 2, double>;
+using double4 = Vec< 4, double>;
+using double8 = Vec< 8, double>;
+
+using byte2   = Vec< 2,  std::uint8_t>;
+using byte4   = Vec< 4,  std::uint8_t>;
+using byte8   = Vec< 8,  std::uint8_t>;
+using byte16  = Vec< 16, std::uint8_t>;
+
+using int2    = Vec< 2, std::int32_t>;
+using int4    = Vec< 4, std::int32_t>;
+using int8    = Vec< 8, std::int32_t>;
+
+using ushort2 = Vec< 2, std::uint16_t>;
+using ushort4 = Vec< 4, std::uint16_t>;
+using ushort8 = Vec< 8, std::uint16_t>;
+
+using uint2   = Vec< 2, std::uint32_t>;
+using uint4   = Vec< 4, std::uint32_t>;
+using uint8   = Vec< 8, std::uint32_t>;
+
+using long2   = Vec< 2, std::int64_t>;
+using long4   = Vec< 4, std::int64_t>;
+```
+
+### Example
+```cpp
+#include "ui.hpp"
+int main() {
+    auto v = ui::float4{1, 2, 3, 4};
+    std::println("Vec: {}", v);
+    return 0;
+}
+```
+
+## Native Type Alias
+```cpp
+using f16  = Vec< 8 * NativeSizeFactor, float16>;
+using bf16 = Vec< 8 * NativeSizeFactor, bfloat16>;
+using f32  = Vec< 4 * NativeSizeFactor, float>;
+using f64  = Vec< 2 * NativeSizeFactor, double>;
+using u8   = Vec<16 * NativeSizeFactor, std::uint8_t>;
+using u16  = Vec< 8 * NativeSizeFactor, std::uint16_t>;
+using u32  = Vec< 4 * NativeSizeFactor, std::uint32_t>;
+using u64  = Vec< 2 * NativeSizeFactor, std::uint64_t>;
+using i8   = Vec<16 * NativeSizeFactor, std::int8_t>;
+using i16  = Vec< 8 * NativeSizeFactor, std::int16_t>;
+using i32  = Vec< 4 * NativeSizeFactor, std::int32_t>;
+using i64  = Vec< 2 * NativeSizeFactor, std::int64_t>;
+```
+
+### Example
+```cpp
+#include "ui.hpp"
+int main() {
+    auto v = ui::native::f32{1, 2, 3, 4};
+    std::println("Vec: {}", v);
+    return 0;
+}
+```
+
 ## Function Reference
 
 ### Absolute Operations
@@ -251,9 +485,10 @@ bitwise_clear(Vec a, Vec b) -> Vec
 ##### Description
 Computes `a & ~b`.
 
-#### 5. `bitwise_select`
+#### 5. `bitwise_select` or `if_then_else`
 ```cpp
-bitwise_select(Mask condition, Vec true, Vec false) -> Vec
+bitwise_select(Mask condition, Vec true, Vec false) -> Vec;
+if_then_else(Mask condition, Vec true, Vec false) -> Vec;
 ```
 ##### Description
 If condition is true then it selects an element from true lane otherwise false lane.
@@ -984,3 +1219,85 @@ sat_sub(Vec lhs, Vec rhs) -> Vec;
 ```
 ##### Description
 It subtracts operand while saturating.
+
+### Utilities
+
+#### 1. `any`
+
+```cpp
+any(Vec v) -> bool;
+```
+##### Description
+Returns true if any of the elements is non-zero otherwise false.
+
+#### 2. `all`
+
+```cpp
+all(Vec v) -> bool;
+```
+##### Description
+Returns true if all the elements are non-zero otherwise false.
+
+#### 3. `ceil`
+
+```cpp
+ceil(Vec v) -> Vec;
+```
+##### Description
+Equivalent to `std::ceil`
+
+#### 4. `floor`
+
+```cpp
+floor(Vec v) -> Vec;
+```
+##### Description
+Equivalent to `std::floor`
+
+#### 5. `trunc`
+
+```cpp
+trunc(Vec v) -> Vec;
+```
+##### Description
+Equivalent to `std::trunc`
+
+#### 6. `frac`
+
+```cpp
+frac(Vec v) -> Vec;
+```
+##### Description
+Computes the fractional part of the number. `v - floor(v)`.
+
+#### 7. `div255`
+
+```cpp
+div255(Vec<N, u16> v) -> Vec<N, u8>;
+```
+##### Description
+Transforms a number to in 16bit integer to 8bit integer.
+
+#### 8. `approx_scale`
+
+```cpp
+approx_scale(Vec<N, u8> x, Vec<N, u8> y) -> Vec<N, u8>;
+```
+##### Description
+It computes `(x * y + x) / 256`
+
+#### 9. `dot`
+
+```cpp
+dot(Vec<N, u8> x, Vec<N, u8> y) -> Vec<N, u8>;
+```
+##### Description
+It computes dot product of the given vectors.
+
+#### 10. `cross`
+
+```cpp
+cross(Vec<2, T> x, Vec<2, T> y) -> T;
+```
+##### Description
+It computes cross product of vectors of length 2.
