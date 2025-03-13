@@ -37,7 +37,7 @@ The following categories of operations are currently supported:
 
 ## Status
 
-*   [x] Wrappers for `Emulated`, `ARM Neon`, `x86` (`SSE`, `AVX256`, and `AVX512`), and `Wasm SIMD`
+*   [x] Wrappers for `Emulated`, `ARM Neon`, `x86` (`SSE`, `AVX256`, and *`AVX512`), and `Wasm SIMD`
     *   [x] Absolute Ops
     *   [x] Addition
     *   [x] Bit Manipulation
@@ -56,13 +56,14 @@ The following categories of operations are currently supported:
     *   [x] Square-root
     *   [x] Shuffle
     *   [x] Matrix support
-    *   [x] Support for float16 and bfloat16
+    *   [x] Support for `float16` and `bfloat16`
 *   [x] Unit Tests
 *   [x] CPU Information Retrieval using OS APIs
     *   [x] Cache and Instruction Cache Information
     *   [x] Memory Size
     *   [x] Cache Line Size
     *   [x] Compile-time Macro for Cache Line Size (Note: This macro provides an estimate.  For the most accurate value, use the `cpu_info` function at runtime and access the `cacheline` field.)
+*   [ ] Need to test `AVX512`
 *   [ ] Examples (In Progress)
 
 ## TODO
