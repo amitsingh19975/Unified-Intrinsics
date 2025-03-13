@@ -290,7 +290,7 @@ namespace ui::arm::neon {
             } else if constexpr (std::same_as<T, double>) {
                 return from_vec<T>(
                     vpmaxq_f64(to_vec(x), to_vec(y))
-                ); 
+                );
             }
             #endif
             return emul::pmax(x, y);
@@ -300,7 +300,7 @@ namespace ui::arm::neon {
                 if constexpr (N == 4) {
                     return from_vec<T>(
                         vpmaxq_f32(to_vec(x), to_vec(y))
-                    ); 
+                    );
                 }
                 #endif
             } else if constexpr (std::same_as<T, double>) {
@@ -324,31 +324,31 @@ namespace ui::arm::neon {
                     if constexpr (N == 8) {
                         return from_vec<T>(
                             vpmax_s8(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     } else if constexpr (N == 16) {
                         return from_vec<T>(
                             vpmaxq_s8(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
                         return from_vec<T>(
                             vpmax_s16(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     } else if constexpr (N == 8) {
                         return from_vec<T>(
                             vpmaxq_s16(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
                         return from_vec<T>(
                             vpmax_s32(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     } else if constexpr (N == 4) {
                         return from_vec<T>(
                             vpmaxq_s32(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     }
                 } 
             } else {
@@ -356,35 +356,35 @@ namespace ui::arm::neon {
                     if constexpr (N == 8) {
                         return from_vec<T>(
                             vpmax_u8(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     } else if constexpr (N == 16) {
                         return from_vec<T>(
                             vpmaxq_u8(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     }
                 } else if constexpr (sizeof(T) == 2) {
                     if constexpr (N == 4) {
                         return from_vec<T>(
                             vpmax_u16(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     } else if constexpr (N == 8) {
                         return from_vec<T>(
                             vpmaxq_u16(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     }
                 } else if constexpr (sizeof(T) == 4) {
                     if constexpr (N == 2) {
                         return from_vec<T>(
                             vpmax_u32(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     } else if constexpr (N == 4) {
                         return from_vec<T>(
                             vpmaxq_u32(to_vec(x), to_vec(y))
-                        ); 
+                        );
                     }
-                } 
+                }
 
-            }   
+            }
 
             return join(
                 pmax(x.lo, x.hi),
@@ -769,7 +769,7 @@ namespace ui::arm::neon {
                     } else if constexpr (N == 4) {
                         return static_cast<result_t>(vmaxvq_s32(to_vec(v)));
                     }
-                } 
+                }
             } else {
                 if constexpr (sizeof(T) == 1) {
                     if constexpr (N == 8) {
@@ -797,8 +797,8 @@ namespace ui::arm::neon {
                 fold(v.hi, op)
             );
         }
-    } 
-    
+    }
+
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto fold(
         Vec<N, T> const& v,
@@ -925,7 +925,7 @@ namespace ui::arm::neon {
             );
         }
     } 
-    
+
     template <std::size_t N, std::floating_point T>
     UI_ALWAYS_INLINE auto fold(
         Vec<N, T> const& v,
