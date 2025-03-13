@@ -3,6 +3,7 @@
 
 #include "base_vec.hpp"
 #include "arch/arch.hpp"
+#include "ui/arch/arm/mul.hpp"
 
 namespace ui {
     template <std::size_t N, typename T>
@@ -378,14 +379,14 @@ namespace ui {
     UI_ALWAYS_INLINE static constexpr auto any(
         Vec<N, T> const& v
     ) noexcept -> bool {
-        return fold(v > 0, op::max_t{}) > 0;
+        return fold(rcast<std::make_unsigned_t<T>>(v) > 0, op::max_t{}) > 0;
     }
 
     template <std::size_t N, typename T>
     UI_ALWAYS_INLINE static constexpr auto all(
         Vec<N, T> const& v
     ) noexcept -> bool {
-        return fold(v > 0, op::min_t{}) > 0;
+        return fold(rcast<std::make_unsigned_t<T>>(v) > 0, op::min_t{}) > 0;
     }
 
     template <std::size_t N, std::floating_point T>
@@ -425,7 +426,8 @@ namespace ui {
     UI_ALWAYS_INLINE static constexpr auto approx_scale(Vec<N, std::uint8_t> const& x, Vec<N, std::uint8_t> const& y) noexcept -> Vec<N, std::uint8_t> {
         auto X = cast<std::uint16_t>(x);
         auto Y = cast<std::uint16_t>(y);
-        return cast<std::uint8_t>((X * Y + X) / 256);
+        auto tmp = fused_mul_acc(X, X, Y); // X + X * Y
+        return cast<std::uint8_t>(tmp / 256);
     }
 
     template <std::size_t N, typename T>
