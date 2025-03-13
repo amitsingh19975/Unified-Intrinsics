@@ -431,3 +431,209 @@ bitwise_xor(Vec lhs, Vec rhs) -> Vec
 ```
 ##### Description
 It is equivalent to `~lhs & rhs`.
+
+### Vector Manipulation
+
+#### 1. `copy`
+```cpp
+copy<ToLane, FromLane>(Vec to, Vec from) -> Vec
+```
+##### Description
+It allows to copy a element `from` vector at a given position to the `to` at a given position.
+
+```
+to = [1, 2, 3, 4]
+from = [5, 6, 7, 8]
+negate<0, 1>(to, from): [6, 2, 3, 4]
+```
+
+#### 2. `reverse_bits`
+```cpp
+reverse_bits(Vec v) -> Vec
+```
+##### Description
+It reverses the bit pattern of each elements. Ex: `0b1111'0000` will be converted to `0b0000'1111`
+
+
+#### 3. `reverse`
+```cpp
+reverse(Vec v) -> Vec
+```
+##### Description
+It reverse the elements of the vector register. Ex: `[1, 2, 3, 4]` will be turned to `[4, 3, 2, 1]`.
+
+#### 4. `zip_low`
+```cpp
+zip_low(Vec a, Vec b) -> Vec
+```
+##### Description
+It zips the lower part of the vector together.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+zip_low(a, b): [1, 5, 2, 6]
+```
+#### 5. `zip_high`
+```cpp
+zip_high(Vec a, Vec b) -> Vec
+```
+##### Description
+It zips the upper part of the vector together.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+zip_high(a, b): [3, 7, 4, 8]
+```
+#### 6. `unzip_low`
+```cpp
+unzip_low(Vec a, Vec b) -> Vec
+```
+##### Description
+It puts odd part together from the first and second vector register and combine them.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+unzip_low(a, b): [1, 3, 5, 7]
+```
+#### 7. `unzip_high`
+```cpp
+unzip_high(Vec a, Vec b) -> Vec
+```
+##### Description
+It puts even part together from the first and second vector register and combine them.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+unzip_high(a, b): [2, 4, 6, 8]
+```
+#### 8. `transpose_low`
+```cpp
+transpose_low(Vec a, Vec b) -> Vec
+```
+##### Description
+It is similar to zip but works with odd position.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+transpose_low(a, b): [1, 5, 3, 7]
+```
+
+#### 9. `transpose_high`
+```cpp
+transpose_high(Vec a, Vec b) -> Vec
+```
+##### Description
+It is similar to zip but works with even position.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+transpose_high(a, b): [2, 6, 4, 8]
+```
+
+### Min-Max
+
+#### 1. `max`
+```cpp
+max(Vec a, Vec b) -> Vec
+```
+##### Description
+It returns maximum in each position.
+
+```
+a = [1, 2, 3, 4]
+b = [2, 2, 2, 2]
+max(a, b): [2, 2, 3, 4]
+```
+
+#### 2. `min`
+```cpp
+min(Vec a, Vec b) -> Vec
+```
+##### Description
+It returns minimum in each position.
+
+```
+a = [1, 2, 3, 4]
+b = [2, 2, 2, 2]
+max(a, b): [1, 2, 2, 2]
+```
+
+#### 3. `maxnm`
+```cpp
+maxnm(Vec a, Vec b) -> Vec
+```
+##### Description
+It returns number-maximum in each position, which is similar to maximum but treats `NaN` differently. It returns `max(NaN, 10) = 10`, `max(10, NaN) = 10`, or `max(NaN, NaN) = NaN`
+
+#### 4. `minnm`
+```cpp
+minnm(Vec a, Vec b) -> Vec
+```
+##### Description
+It returns number-minimum in each position, which is similar to minimum but treats `NaN` differently. It returns `min(NaN, 10) = 10`, `min(10, NaN) = 10`, or `min(NaN, NaN) = NaN`
+
+#### 5. `pmax`
+```cpp
+pmax(Vec a, Vec b) -> Vec
+```
+##### Description
+It takes adjacent maximum.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+pmax(a, b): [max(1, 2), max(3, 4), max(5, 6), max(7, 8)]
+```
+
+#### 6. `pmaxnm`
+```cpp
+pmaxnm(Vec a, Vec b) -> Vec
+```
+##### Description
+It's a mixture of `pmax` and `maxnm`.
+
+#### 7. `pmin`
+```cpp
+pmin(Vec a, Vec b) -> Vec
+```
+##### Description
+It takes adjacent minimum.
+
+```
+a = [1, 2, 3, 4]
+b = [5, 6, 7, 8]
+pmin(a, b): [min(1, 2), min(3, 4), min(5, 6), min(7, 8)]
+```
+
+#### 8. `pminnm`
+```cpp
+pminnm(Vec a, Vec b) -> Vec
+```
+##### Description
+It's a mixture of `pmin` and `minnm`.
+
+#### 9. `fold`
+```cpp
+fold(Vec a, op::pmax_t) -> Value;
+fold(Vec a, op::pmaxnm_t) -> Value;
+fold(Vec a, op::max_t) -> Value;
+fold(Vec a, op::maxnm_t) -> Value;
+```
+##### Description
+It reduces the vector based on the `tag`. `pmax_t` and `max_t` uses difference intrinsics on `arm` but are same on different platform. 
+
+#### 10. `fold`
+```cpp
+fold(Vec a, op::pmin_t) -> Value;
+fold(Vec a, op::pminnm_t) -> Value;
+fold(Vec a, op::min_t) -> Value;
+fold(Vec a, op::minnm_t) -> Value;
+```
+##### Description
+It reduces the vector based on the `tag`. `pmin_t` and `min_t` uses difference intrinsics on `arm` but are same on different platform. 
