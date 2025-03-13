@@ -691,7 +691,7 @@ widening_mul(Vec<N, T> a, T constant) -> Vec<N, W> where W > T;
 ##### Description
 It is similar to `mul` with it widens the resultant vectors.
 
-#### 2. `mul_acc`
+#### 6. `mul_acc`
 ```cpp
 mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::add_t) -> Vec where W > T;
 mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::sub_t) -> Vec where W > T;
@@ -699,7 +699,7 @@ mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::sub_t) -> Vec where W > T;
 ##### Description
 It is similar to `mul_acc` with it widens the resultant vectors.
 
-#### 2. `fused_mul_acc`
+#### 7. `fused_mul_acc`
 ```cpp
 fused_mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::add_t) -> Vec where W > T;
 fused_mul_acc(Vec<N, W> acc, Vec<N, T> a, T constant, op::sub_t) -> Vec where W > T;
