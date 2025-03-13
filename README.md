@@ -776,3 +776,161 @@ exponent_reciprocal_estimate(Vec v) -> Vec
 ```
 ##### Description
 It estimates `1/float_exponent(v)`. Ex: `1.101 * 2^x` => `1/(2^x)` => `2^-x`
+
+### Rounding
+```cpp
+round<Mode = std::float_round_style::round_to_nearest>(Vec v) -> Vec
+```
+##### Description
+It rounds a floating-point based on the mode.
+
+### Shift
+
+#### 1. `shift_left`
+```cpp
+shift_left(Vec<N, T> v, Vec<N, Unsigned(T)> count) -> Vec<N, T>;
+```
+##### Description
+It maps to `v << count` in C++.
+
+#### 2. `shift_left`
+```cpp
+shift_left<Count>(Vec<N, T> v) -> Vec<N, T>;
+```
+##### Description
+It maps to `v << Count` in C++.
+
+#### 3. `sat_shift_left`
+```cpp
+sat_shift_left(Vec<N, T> v, Vec<N, Unsigned(T)> count) -> Vec<N, T>;
+```
+##### Description
+It similar to `shift_left` while saturating the result.
+
+#### 4. `sat_shift_left`
+```cpp
+shift_left<Count>(Vec<N, T> v) -> Vec<N, T>;
+```
+##### Description
+It similar to `shift_left` while saturating the result.
+
+#### 5. `rounding_shift_left`
+```cpp
+rounding_shift_left(Vec<N, T> v, Vec<N, Unsigned(T)> count) -> Vec<N, T>;
+```
+##### Description
+It similar to `shift_left` while rounding the result.
+
+#### 6. `sat_rounding_shift_left`
+```cpp
+sat_rounding_shift_left(Vec<N, T> v, Vec<N, Unsigned(T)> count) -> Vec<N, T>;
+```
+##### Description
+It similar to `shift_left` while rounding and saturating the result.
+
+#### 7. `widening_shift_left`
+```cpp
+widening_shift_left<Count>(Vec<N, T> v) -> Vec<N, W> where W > T;
+```
+##### Description
+It similar to `shift_left` and the result is widens.
+
+#### 8. `insert_shift_left`
+```cpp
+insert_shift_left<Count>(Vec a, Vec b) -> Vec;
+```
+##### Description
+It shifts the vector `b` to left by count and inserts the bits in the empty space left by shifting. 
+Operation: let mask be `(1 << Count) - 1` then `(a & mask) | ((b << Count) & ~mask)`.
+
+#### 9. `shift_right`
+```cpp
+shift_right(Vec<N, T> v, Vec<N, Unsigned(T)> count) -> Vec<N, T>;
+```
+##### Description
+It maps to `v >> count` in C++.
+
+#### 10. `shift_right`
+```cpp
+shift_right<Count>(Vec v) -> Vec;
+```
+##### Description
+It maps to `v >> count` in C++.
+
+#### 11. `sat_shift_right`
+```cpp
+sat_shift_right(Vec<N, T> v, Vec<N, Unsigned(T)> count) -> Vec<N, T>;
+```
+##### Description
+It does the same as right shift while saturating.
+
+#### 12. `rounding_shift_right`
+```cpp
+rounding_shift_right<Count>(Vec v) -> Vec;
+```
+##### Description
+It does the same as right shift while rounding.
+
+#### 13. `sat_rounding_shift_right`
+```cpp
+rounding_shift_right<Count>(Vec v) -> Vec;
+```
+##### Description
+It does the same as right shift while rounding and saturating.
+
+#### 14. `rounding_shift_right`
+```cpp
+rounding_shift_right_accumulate<Count>(Vec acc, Vec v) -> Vec;
+```
+##### Description
+It does the same as right shift while adding it to `acc`. `acc + (v << Shift)`
+
+#### 15. `narrowing_shift_right`
+```cpp
+narrowing_shift_right<Count>(Vec<N, T> v) -> Vec<N, NT> where T > NT; 
+```
+##### Description
+It does the same as right shift and narrows the result.
+
+#### 16. `rounding_narrowing_shift_right`
+```cpp
+narrowing_shift_right<Count>(Vec<N, T> v) -> Vec<N, NT> where T > NT; 
+```
+##### Description
+It does the same as right shift and narrows the result while rounding.
+
+#### 17. `sat_narrowing_shift_right`
+```cpp
+sat_narrowing_shift_right<Count>(Vec<N, T> v) -> Vec<N, NT> where T > NT; 
+```
+##### Description
+It does the same as right shift and narrows the result while saturating.
+
+#### 18. `sat_rounding_narrowing_shift_right`
+```cpp
+sat_rounding_narrowing_shift_right<Count>(Vec<N, T> v) -> Vec<N, NT> where T > NT; 
+```
+##### Description
+It does the same as right shift and narrows the result while saturating and rounding.
+
+#### 19. `sat_unsigned_narrowing_shift_right`
+```cpp
+sat_unsigned_narrowing_shift_right<Count>(Vec<N, T> v) -> Vec<N, UnsignedNarrowedType> where T > UnsignedNarrowedType;
+```
+##### Description
+It does the same as right shift and narrows the result and converts the result to unsigned while saturating.
+
+#### 20. `sat_rounding_unsigned_narrowing_shift_right`
+```cpp
+sat_rounding_unsigned_narrowing_shift_right<Count>(Vec<N, T> v) -> Vec<N, UnsignedNarrowedType> where T > UnsignedNarrowedType;
+```
+##### Description
+It does the same as right shift and narrows the result and converts the result to unsigned while saturating and rounding.
+
+#### 21. `insert_shift_left`
+```cpp
+insert_shift_right<Count>(Vec a, Vec b) -> Vec;
+```
+##### Description
+It shifts the vector `b` to right by count and inserts the bits in the empty space left by shifting. 
+Operation: let mask be `~UT(0) >> Count` then `(a & ~mask) | (b >> Count)`.
