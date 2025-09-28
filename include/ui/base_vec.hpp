@@ -193,6 +193,7 @@ namespace ui {
         }
 
         UI_ALWAYS_INLINE static constexpr auto load(element_t val) noexcept -> Vec;
+        UI_ALWAYS_INLINE static constexpr auto zeroed() noexcept -> Vec;
 
         template <unsigned Lane, std::size_t M>
         UI_ALWAYS_INLINE static constexpr auto load(Vec<M, T> const&) noexcept -> Vec; 

@@ -17,7 +17,7 @@ namespace ui {
     }
 
     template <std::size_t N, typename T>
-    UI_ALWAYS_INLINE auto zeroed() noexcept -> Vec<N, T> {
+    inline constexpr auto Vec<N, T>::zeroed() noexcept -> Vec<N, T> {
         auto tmp = Vec<N, T>{};
         return bitwise_xor(tmp, tmp);
     }
