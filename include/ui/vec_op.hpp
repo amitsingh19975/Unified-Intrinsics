@@ -3,7 +3,6 @@
 
 #include "base_vec.hpp"
 #include "arch/arch.hpp"
-#include "ui/arch/arm/mul.hpp"
 
 namespace ui {
     template <std::size_t N, typename T>
@@ -16,6 +15,13 @@ namespace ui {
     inline constexpr auto Vec<N, T>::load(Vec<M, T> const& v) noexcept -> Vec<N, T> {
         return ui::load<N, Lane>(v);
     }
+
+    template <std::size_t N, typename T>
+    UI_ALWAYS_INLINE auto zeroed() noexcept -> Vec<N, T> {
+        auto tmp = Vec<N, T>{};
+        return bitwise_xor(tmp, tmp);
+    }
+
 } // namespace ui
 
 // MARK: not
