@@ -198,7 +198,7 @@ namespace ui {
         template <unsigned Lane, std::size_t M>
         UI_ALWAYS_INLINE static constexpr auto load(Vec<M, T> const&) noexcept -> Vec; 
 
-        UI_ALWAYS_INLINE constexpr auto store(element_t const* const UI_RESTRICT in, size_type size) noexcept {
+        UI_ALWAYS_INLINE constexpr auto store(element_t* UI_RESTRICT in, size_type size) noexcept {
             assert(size >= N);
             if (std::is_constant_evaluated()) {
                 std::copy_n(in, std::min(elements, size), data());
@@ -271,9 +271,13 @@ namespace ui {
         template <unsigned Lane, std::size_t M>
         UI_ALWAYS_INLINE static constexpr auto load(Vec<M, T> const&) noexcept -> Vec;
 
-        constexpr auto store(T const* const UI_RESTRICT in, [[maybe_unused]] size_type size) noexcept {
+        constexpr auto store(T* UI_RESTRICT in, [[maybe_unused]] size_type size) noexcept {
             assert(size >= 1);
-            val = in[0];
+            in[0] = val;
+        }
+
+        UI_ALWAYS_INLINE constexpr auto store(std::span<element_t> data) noexcept {
+            store(data.data(), data.size());
         }
     };
 
