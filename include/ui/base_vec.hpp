@@ -172,17 +172,18 @@ namespace ui {
         }
 
         // !MARK
-
-        UI_ALWAYS_INLINE static constexpr auto load(element_t const* const UI_RESTRICT in, size_type size) noexcept {
+        UI_ALWAYS_INLINE static constexpr auto load(element_t const* const UI_RESTRICT in, size_type size) noexcept -> Vec {
             auto res = Vec{};
-            res.store(in, size);
+            if (std::is_constant_evaluated()) {
+                std::copy_n(in, std::min(elements, size), res.data());
+            } else {
+                std::memcpy(res.data(), in, std::min(elements, size) * sizeof(T));
+            }
             return res;
         }
 
-        UI_ALWAYS_INLINE static constexpr auto load(std::span<element_t> data) noexcept {
-            auto res = Vec{};
-            res.store(data);
-            return res;
+        UI_ALWAYS_INLINE static constexpr auto load(std::span<element_t> data) noexcept -> Vec {
+            return load(data.data(), data.size());
         }
 
         template <typename... Us>
@@ -198,7 +199,7 @@ namespace ui {
         template <unsigned Lane, std::size_t M>
         UI_ALWAYS_INLINE static constexpr auto load(Vec<M, T> const&) noexcept -> Vec; 
 
-        UI_ALWAYS_INLINE constexpr auto store(element_t* UI_RESTRICT in, size_type size) noexcept {
+        UI_ALWAYS_INLINE constexpr auto store(element_t* UI_RESTRICT in, size_type size) noexcept -> void {
             assert(size >= N);
             if (std::is_constant_evaluated()) {
                 std::copy_n(in, std::min(elements, size), data());
@@ -207,7 +208,7 @@ namespace ui {
             }
         }
 
-        UI_ALWAYS_INLINE constexpr auto store(std::span<element_t> data) noexcept {
+        UI_ALWAYS_INLINE constexpr auto store(std::span<element_t> data) noexcept -> void {
             store(data.data(), data.size());
         }
     };
@@ -252,16 +253,13 @@ namespace ui {
             return val;
         }
 
-        UI_ALWAYS_INLINE static constexpr auto load(T const* const UI_RESTRICT in, size_type size) noexcept {
-            auto res = Vec{};
-            res.store(in, size);
-            return res;
+        UI_ALWAYS_INLINE static constexpr auto load(T const* const UI_RESTRICT in, size_type size) noexcept -> Vec {
+            assert(size >= 1);
+            return { .val = in[0] };
         }
 
-        UI_ALWAYS_INLINE static constexpr auto load(std::span<T> data) noexcept {
-            auto res = Vec{};
-            res.store(data);
-            return res;
+        UI_ALWAYS_INLINE static constexpr auto load(std::span<T> data) noexcept -> Vec {
+            return load(data.data(), data.size());
         }
 
         UI_ALWAYS_INLINE static constexpr auto load(element_t val) noexcept -> Vec {
@@ -271,12 +269,12 @@ namespace ui {
         template <unsigned Lane, std::size_t M>
         UI_ALWAYS_INLINE static constexpr auto load(Vec<M, T> const&) noexcept -> Vec;
 
-        constexpr auto store(T* UI_RESTRICT in, [[maybe_unused]] size_type size) noexcept {
+        constexpr auto store(T* UI_RESTRICT in, [[maybe_unused]] size_type size) noexcept -> void {
             assert(size >= 1);
             in[0] = val;
         }
 
-        UI_ALWAYS_INLINE constexpr auto store(std::span<element_t> data) noexcept {
+        UI_ALWAYS_INLINE constexpr auto store(std::span<element_t> data) noexcept -> void {
             store(data.data(), data.size());
         }
     };
