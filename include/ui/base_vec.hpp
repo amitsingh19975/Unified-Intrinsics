@@ -203,7 +203,7 @@ namespace ui {
             if (std::is_constant_evaluated()) {
                 std::copy_n(in, std::min(elements, size), data());
             } else {
-                std::memcpy(data(), in, std::min(elements, size) * sizeof(T));
+                std::memcpy(in, data(), std::min(elements, size) * sizeof(T));
             }
         }
 
