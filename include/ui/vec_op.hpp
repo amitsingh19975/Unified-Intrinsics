@@ -570,9 +570,9 @@ namespace ui {
         } else {
             auto m = Vec<N, T>::load(mask);
 
-            b = b + carry;
-            auto s = a - b;
-            auto c = shift_right<Bits>(a < b);
+            auto tb = b + carry;
+            auto s = a - tb;
+            auto c = shift_right<Bits>(a < tb);
             auto r = s & m;
             auto rc = T{};
 
