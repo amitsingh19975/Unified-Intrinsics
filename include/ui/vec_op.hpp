@@ -3,6 +3,7 @@
 
 #include "base_vec.hpp"
 #include "arch/arch.hpp"
+#include "ui/arch/arm/shift.hpp"
 
 namespace ui {
     template <std::size_t N, typename T>
@@ -520,6 +521,71 @@ namespace ui {
         using i64  = Vec< 2 * NativeSizeFactor, std::int64_t>;
 
     } // namespace native
-}
+
+    template <std::size_t Bits, std::size_t N, std::integral T>
+        requires (std::is_unsigned_v<T> && Bits < sizeof(T) * 8)
+    UI_ALWAYS_INLINE auto addc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        Vec<N, T> carry = {}
+    ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+        static constexpr auto max = T{1} << Bits;
+        static constexpr auto mask = max - 1;
+        if constexpr (N == 1) {
+            auto l = a.val;
+            auto r = b.val;
+            auto s = l + r + carry.val;
+            return { { s & mask }, s >> Bits };
+        } else {
+            auto s = a + b + carry;
+            auto m = Vec<N, T>::load(mask);
+            auto r = s & m;
+            auto c = shift_right<Bits>(s);
+            auto rc = T{};
+            for (auto i = std::size_t{}; i < N; ++i) {
+                rc += c[N - 1];
+                c = shift_left_lane<1>(c);
+                s = r + c;
+                r = s & m;
+                c = shift_right<Bits>(s);
+            }
+            return { r, rc };
+        }
+    }
+
+    template <std::size_t Bits, std::size_t N, std::integral T>
+        requires (std::is_unsigned_v<T> && Bits < sizeof(T) * 8)
+    UI_ALWAYS_INLINE auto subc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        Vec<N, T> carry = {}
+    ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+        static constexpr auto max = T{1} << Bits;
+        static constexpr auto mask = max - 1;
+        if constexpr (N == 1) {
+            auto l = a.val;
+            auto r = b.val + carry.val;
+            auto s = l - r;
+            return { { s & mask }, l < r };
+        } else {
+            auto m = Vec<N, T>::load(mask);
+
+            b = b + carry;
+            auto s = a - b;
+            auto c = shift_right<Bits>(a < b);
+            auto r = s & m;
+            auto rc = T{};
+
+            for (auto i = std::size_t{}; i < N; ++i) {
+                rc += c[N - 1];
+                c = shift_left_lane<1>(c);
+                s = r - c;
+                c = shift_right<Bits>(r < c);
+                r = s & m;
+            }
+            return { r, rc };
+        }
+    }
+} // namespace ui
 
 #endif // AMT_UI_VEC_OP_HPP
