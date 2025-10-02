@@ -233,7 +233,7 @@ namespace ui::emul {
 
 // MARK: Addition with carry
     template <std::size_t N, std::integral T>
-        requires (std::is_unsigned_v<class Tp>)
+        requires (std::is_unsigned_v<T>)
     UI_ALWAYS_INLINE auto addc(
         T a,
         T b,
@@ -270,7 +270,7 @@ namespace ui::emul {
     }
 
     template <std::size_t N, std::integral T>
-        requires (std::is_unsigned_v<class Tp>)
+        requires (std::is_unsigned_v<T>)
     UI_ALWAYS_INLINE auto addc(
         Vec<N, T> const& a,
         Vec<N, T> const& b,

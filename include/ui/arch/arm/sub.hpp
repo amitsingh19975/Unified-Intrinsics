@@ -764,6 +764,113 @@ namespace ui::arm::neon {
     }
 
 // !MARK
+
+// MARK: Subtraction with carry
+    template <std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto subc(
+        T a,
+        T b,
+        T carry = {}
+    ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+        if constexpr (sizeof(T) == 8) {
+            auto res = T{};
+            auto c = T{};
+            asm volatile(
+                "subs   %0, %2, %3\n\t"    // sum = a + b, sets flags
+                "sbc    %0, %0, %4\n\t"    // sum += carry_in, add with carry
+                "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
+                : "=&r"(res), "=r"(c)
+                : "r"(a), "r"(b), "r"(carry)
+                : "cc"
+            );
+            return { res, c };
+        } else if constexpr (sizeof(T) == 4) {
+            auto res = T{};
+            auto c = T{};
+            asm volatile(
+                "subs   %w0, %w2, %w3\n\t"    // sum = a + b, sets flags
+                "sbc    %w0, %w0, %w4\n\t"    // sum += carry_in, add with carry
+                "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
+                : "=&r"(res), "=r"(c)
+                : "r"(a), "r"(b), "r"(carry)
+                : "cc"
+            );
+            return { res, c };
+        } else {
+            return emul::subc(a, b, carry);
+        }
+    }
+
+    template <std::size_t N, std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto subc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T carry = {}
+    ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+        if constexpr (N == 1) {
+            auto [s, c] = subc(a.val, b.val, carry);
+            return { Vec<N, T>(s), c };
+        } else {
+            if constexpr (sizeof(T) == 4 || sizeof(T) == 8) {
+                auto res = Vec<N, T>{};
+                auto c = carry;
+
+                if constexpr (sizeof(T) == 8) {
+                    asm volatile(
+                        "subs %0, %2, %3\n\t"    // sum0 = a0 + b0
+                        "sbc %1, xzr, %4\n\t"    // add initial carry
+                        : "=&r"(res[0]), "=&r"(carry)
+                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        : "cc"
+                    );
+                } else {
+                    asm volatile(
+                        "subs %w0, %w2, %w3\n\t"    // sum0 = a0 + b0
+                        "sbc %w1, wzr, %w4\n\t"    // add initial carry
+                        : "=&r"(res[0]), "=&r"(carry)
+                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        : "cc"
+                    );
+                }
+
+                auto helper = [&a, &b, &res]<std::size_t... Is>(auto&& fn, std::index_sequence<Is...>) {
+                    ((res[Is + 1] = fn(a[Is + 1], b[Is + 1])),...);
+                };
+
+                helper([](T l, T r){
+                    auto dst = T{};
+                    if constexpr (sizeof(T) == 8) {
+                        asm volatile(
+                            "sbcs %0, %1, %2\n\t"
+                            : "=&r"(dst), "+r"(l)
+                            : "r"(r)
+                            : "cc"
+                        );
+                    } else {
+                        asm volatile(
+                            "sbcs %w0, %w1, %w2\n\t"
+                            : "=&r"(dst), "+r"(l)
+                            : "r"(r)
+                            : "cc"
+                        );
+                    }
+                    return dst;
+                }, std::make_index_sequence<N - 1>{});
+
+                if constexpr (sizeof(T) == 8) {
+                    asm volatile("cset %0, cs" : "=r"(c) :: "cc");
+                } else {
+                    asm volatile("cset %w0, cs" : "=r"(c) :: "cc");
+                }
+                return { res, c };
+            } else {
+                return emul::subc(a, b, carry);
+            }
+        }
+    }
+// !MARK
 } // namespace ui::arm::neon;
 
 #endif // AMT_UI_ARCH_ARM_SUB_HPP

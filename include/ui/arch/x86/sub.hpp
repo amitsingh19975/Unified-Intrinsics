@@ -557,6 +557,29 @@ namespace ui::x86 {
     }
 // !MARK
 
+// MARK: Addition with carry
+    template <std::size_t N, std::integral T>
+        requires (std::is_unsigned_v<T>)
+    UI_ALWAYS_INLINE auto subc(
+        T a,
+        T b,
+        T carry = {}
+    ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+        // TODO: implement this using msvc builtin `_subborrow_u64` and asm
+        return emul::subc(a, b, carry);
+    }
+
+    template <std::size_t N, std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto subc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T carry = {}
+    ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+        // TODO: implement this using msvc builtin `_subborrow_u64` and asm
+        return emul::subc(a, b, carry);
+    }
+// !MARK
 } // namespace ui::x86
 
 #endif // AMT_UI_ARCH_X86_SUB_HPP

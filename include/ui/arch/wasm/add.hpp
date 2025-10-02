@@ -463,6 +463,27 @@ namespace ui::wasm {
     }
 // !MARK
 
+// MARK: Addition with carry
+    template <std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto addc(
+        T a,
+        T b,
+        T carry = {}
+    ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+        return emul::addc(a, b, carry);
+    }
+
+    template <std::size_t N, std::integral T>
+        requires (std::is_unsigned_v<T>)
+    UI_ALWAYS_INLINE auto addc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T carry = {}
+    ) noexcept -> std::pair<Vec<N, T>, T /*carry*/> {
+        return emul::addc(a, b, carry);
+    }
+// !MARK
 } // namespace ui::wasm
 
 #endif // AMT_UI_ARCH_WASM_ADD_HPP
