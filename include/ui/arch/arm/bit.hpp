@@ -336,7 +336,7 @@ namespace ui::arm::neon {
                     return from_vec<T>(vbslq_f16(to_vec(cond), to_vec(true_), to_vec(false_)));
                 }
                 #else
-                return cast<T>(bitwise_select(a, cast<std::uint16_t>(b), cast<std::uint16_t>(c))); 
+                return cast<T>(bitwise_select(cond, cast<std::uint16_t>(true_), cast<std::uint16_t>(false_))); 
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<T>(bitwise_select(cond, cast<std::uint16_t>(true_), cast<std::uint16_t>(false_))); 

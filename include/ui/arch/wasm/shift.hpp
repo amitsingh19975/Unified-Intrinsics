@@ -3,6 +3,7 @@
 
 #include "cast.hpp"
 #include "../emul/shift.hpp"
+#include <wasm_simd128.h>
 
 namespace ui::wasm {
     namespace internal {
@@ -388,6 +389,26 @@ namespace ui::wasm {
     }
 // !MARK
 
+// MARK: Shift Lane
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_right_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        // TODO: use wasm shuffle to emulate `_mm_slli_si128`
+        return emul::shift_right_lane<Shift>(a, pad);
+    }
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_left_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        // TODO: use wasm shuffle to emulate `_mm_slli_si128`
+        return emul::shift_left_lane<Shift>(a, pad);
+    }
+// !MARK
 } // namespace ui::wasm
 
 #endif // AMT_UI_ARCH_WASM_SHIFT_HPP

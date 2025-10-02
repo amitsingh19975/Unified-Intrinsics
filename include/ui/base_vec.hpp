@@ -89,12 +89,19 @@ namespace ui {
             , hi(zw)
         {}
 
-        UI_ALWAYS_INLINE constexpr Vec(std::initializer_list<element_t> li) noexcept {
-            store(li.begin(), li.size());
+        UI_ALWAYS_INLINE constexpr Vec(std::initializer_list<element_t> li) noexcept
+            : Vec(std::span<element_t const>(li.begin(), li.size()))
+        {
         }
 
-        UI_ALWAYS_INLINE constexpr Vec(std::span<element_t> li) noexcept {
-            store(li.data(), li.size());
+        UI_ALWAYS_INLINE constexpr Vec(std::span<element_t const> li) noexcept
+            : Vec(0)
+        {
+            if (std::is_constant_evaluated()) {
+                std::copy_n(li.begin(), std::min(elements, li.size()), data());
+            } else {
+                std::memcpy(data(), li.data(), std::min(elements, li.size()) * sizeof(T));
+            }
         }
 
         explicit operator std::span<element_t>() const noexcept {
@@ -182,7 +189,7 @@ namespace ui {
             return res;
         }
 
-        UI_ALWAYS_INLINE static constexpr auto load(std::span<element_t> data) noexcept -> Vec {
+        UI_ALWAYS_INLINE static constexpr auto load(std::span<element_t const> data) noexcept -> Vec {
             return load(data.data(), data.size());
         }
 
@@ -253,12 +260,12 @@ namespace ui {
             return val;
         }
 
-        UI_ALWAYS_INLINE static constexpr auto load(T const* const UI_RESTRICT in, size_type size) noexcept -> Vec {
+        UI_ALWAYS_INLINE static constexpr auto load(T const* const UI_RESTRICT in, [[maybe_unused]] size_type size) noexcept -> Vec {
             assert(size >= 1);
             return { .val = in[0] };
         }
 
-        UI_ALWAYS_INLINE static constexpr auto load(std::span<T> data) noexcept -> Vec {
+        UI_ALWAYS_INLINE static constexpr auto load(std::span<element_t const> data) noexcept -> Vec {
             return load(data.data(), data.size());
         }
 

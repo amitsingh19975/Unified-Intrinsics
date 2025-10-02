@@ -2,8 +2,8 @@
 #define AMT_ARCH_EMUL_SUB_HPP
 
 #include "cast.hpp"
-#include "ui/arch/basic.hpp"
-#include "ui/base.hpp"
+#include "../basic.hpp"
+#include "../../base.hpp"
 #include <concepts>
 #include <cstdint>
 #include <type_traits>
@@ -82,6 +82,59 @@ namespace ui::emul {
         }, lhs, rhs);
     }
 // !MARK
+
+// MARK: Subtraction with carry
+    template <std::size_t N, std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto subc(
+        T const& a,
+        T const& b,
+        T carry = {}
+    ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+        if constexpr (sizeof(T) == 1) {
+            auto l = static_cast<std::uint16_t>(a);
+            auto r = static_cast<std::uint16_t>(b) + static_cast<std::uint16_t>(carry);
+            auto s = l - r;
+            return { static_cast<T>(s), l < r };
+        } else if constexpr (sizeof(T) == 2) {
+            auto l = static_cast<std::uint32_t>(a);
+            auto r = static_cast<std::uint32_t>(b) + static_cast<std::uint32_t>(carry);
+            auto s = l - r;
+            return { static_cast<T>(s), l < r };
+        } else {
+            #ifdef UI_ARCH_64BIT
+            if constexpr (sizeof(T) == 4) {
+                auto l = static_cast<std::uint64_t>(a);
+                auto r = static_cast<std::uint64_t>(b) + static_cast<std::uint64_t>(carry);
+                auto s = l - r;
+                return { static_cast<T>(s), l < r };
+            }
+            #endif
+            auto sum = a - carry;
+            auto c0 = a < carry;
+            auto c1 = sum < b;
+            sum = sum - b;
+            return { sum, c0 | c1 };
+        }
+    }
+
+    template <std::size_t N, std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto subc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T carry = {}
+    ) noexcept -> std::pair<Vec<N, T>, T /*carry*/> {
+        if constexpr (N == 1) {
+            auto [sum, c] = adcc(a.val, b.val, carry);
+            return { Vec<N, T>(sum), c };
+        } else {
+            auto [l, lc] = subc(a.lo, b.lo, carry);
+            auto [h, hc] = subc(a.hi, b.hi, lc);
+            return { join(l, h), hc };
+        }
+    }
+// !Mark
 } // namespace ui::emul
 
 #endif // AMT_ARCH_EMUL_SUB_HPP

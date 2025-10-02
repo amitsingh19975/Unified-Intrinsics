@@ -668,7 +668,7 @@ namespace ui::arm::neon {
                     }
                 }
                 #else
-                return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(a), cast<float>(v), op));
+                return cast<T>(fused_mul_acc<Lane>(cast<float>(acc), cast<float>(a), cast<float>(v), op));
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<T>(fused_mul_acc<Lane>(cast<float>(acc), cast<float>(a), cast<float>(v), op));
@@ -793,7 +793,7 @@ namespace ui::arm::neon {
                     }
                 }
                 #else
-                return cast<T>(fused_mul_acc(cast<float>(acc), cast<float>(a), cast<float>(v), op));
+                return cast<T>(fused_mul_acc<Lane>(cast<float>(acc), cast<float>(a), cast<float>(v), op));
                 #endif
             } else if constexpr (std::same_as<T, bfloat16>) {
                 return cast<T>(fused_mul_acc<Lane>(cast<float>(acc), cast<float>(a), cast<float>(v), op));

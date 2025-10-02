@@ -836,6 +836,26 @@ namespace ui::x86 {
     }
 // !MARK
 
+// MARK: Shift Lane
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_right_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        // TODO: use `_mm_slli_si128`
+        return emul::shift_left_lane<Shift>(a, pad);
+    }
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_left_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        // TODO: use `_mm_slli_si128`
+        return emul::shift_left_lane<Shift>(a, pad);
+    }
+// !MARK
 } // namespace ui::x86
 
 #endif // AMT_UI_ARCH_X86_SHIFT_HPP

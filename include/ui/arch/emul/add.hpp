@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_EMUL_ADD_HPP
 
 #include "cast.hpp"
+#include <climits>
 #include <concepts>
 #include <cstdint>
 #include <limits>
@@ -229,6 +230,62 @@ namespace ui::emul {
         return helper(std::make_index_sequence<N>{}, v);
     }
 // !MAKR
+
+// MARK: Addition with carry
+    template <std::size_t N, std::integral T>
+        requires (std::is_unsigned_v<class Tp>)
+    UI_ALWAYS_INLINE auto addc(
+        T a,
+        T b,
+        T carry = {}
+    ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+        if constexpr (sizeof(T) == 1) {
+            auto l = static_cast<std::uint16_t>(a);
+            auto r = static_cast<std::uint16_t>(b) + static_cast<std::uint16_t>(carry);
+            auto s = l + r;
+            static constexpr auto bits = (sizeof(T) * CHAR_BIT);
+            return { static_cast<T>(s), static_cast<T>(s >> bits) };
+        } else if constexpr (sizeof(T) == 2) {
+            auto l = static_cast<std::uint32_t>(a);
+            auto r = static_cast<std::uint32_t>(b) + static_cast<std::uint32_t>(carry);
+            auto s = l + r;
+            static constexpr auto bits = (sizeof(T) * CHAR_BIT);
+            return { static_cast<T>(s), static_cast<T>(s >> bits) };
+        } else {
+            #ifdef UI_ARCH_64BIT
+            if constexpr (sizeof(T) == 4) {
+                auto l = static_cast<std::uint64_t>(a);
+                auto r = static_cast<std::uint64_t>(b) + static_cast<std::uint64_t>(carry);
+                auto s = l + r;
+                static constexpr auto bits = (sizeof(T) * CHAR_BIT);
+                return { static_cast<T>(s), static_cast<T>(s >> bits) };
+            }
+            #endif
+            auto sum = a + b;
+            auto c0 = sum < a;
+            sum = sum + carry;
+            auto c1 = sum < carry;
+            return { sum, sum < a };
+        }
+    }
+
+    template <std::size_t N, std::integral T>
+        requires (std::is_unsigned_v<class Tp>)
+    UI_ALWAYS_INLINE auto addc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T carry = {}
+    ) noexcept -> std::pair<Vec<N, T>, T /*carry*/> {
+        if constexpr (N == 1) {
+            auto [sum, c] = adcc(a.val, b.val, carry);
+            return { Vec<N, T>(sum), c };
+        } else {
+            auto [l, lc] = subc(a.lo, b.lo, carry);
+            auto [h, hc] = subc(a.hi, b.hi, lc);
+            return { join(l, h), hc };
+        }
+    }
+// !Mark
 } // namespace ui::emul
 
 #endif // AMT_UI_ARCH_EMUL_ADD_HPP

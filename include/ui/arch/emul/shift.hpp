@@ -4,6 +4,7 @@
 #include "cast.hpp"
 #include <concepts>
 #include <type_traits>
+#include <utility>
 
 namespace ui::emul {
 
@@ -456,6 +457,42 @@ namespace ui::emul {
             auto res = static_cast<T>(ta | tb);
             return res;
         }, a, b);
+    }
+// !MARK
+// MARK: Shift Lane
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_right_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        if constexpr (Shift == 0) return a;
+        else if constexpr (N == 1 || Shift >= N) return {};
+        else {
+            auto helper = [&a, &pad]<std::size_t... Is>(std::index_sequence<Is...>) {
+                auto res = pad;
+                ((res[Is + Shift] = a[Is]), ...);
+                return res;
+            };
+            return helper(std::make_index_sequence<N - Shift>{});
+        }
+    }
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_left_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        if constexpr (Shift == 0) return a;
+        else if constexpr (N == 1 || Shift >= N) return {};
+        else {
+            auto helper = [&a, &pad]<std::size_t... Is>(std::index_sequence<Is...>) {
+                auto res = pad;
+                ((res[Is] = a[Is + Shift]), ...);
+                return res;
+            };
+            return helper(std::make_index_sequence<N - Shift>{});
+        }
     }
 // !MARK
 } // namespace ui::emul

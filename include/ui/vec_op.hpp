@@ -21,7 +21,6 @@ namespace ui {
         auto tmp = Vec<N, T>{};
         return bitwise_xor(tmp, tmp);
     }
-
 } // namespace ui
 
 // MARK: not

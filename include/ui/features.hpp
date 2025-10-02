@@ -71,6 +71,13 @@
     #define UI_ARM_HAS_NEON
 #endif
 
+#if !defined(UI_ARM_HAS_SVE_NEON) && (defined(__ARM_FEATURE_SVE) || defined(__ARM_FEATURE_SVE2))
+    #if __has_include(<arm_neon.h>)
+        #define UI_ARM_HAS_SVE_NEON
+        #include <arm_sve.h>
+    #endif
+#endif
+
 #ifndef __is_identifier
   #define __is_identifier(x) 0
 #endif
@@ -91,9 +98,9 @@
 #endif
 
 #ifndef UI_EMPSCRIPTEN
-    #if defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN) || __has_keyword(_Float16)
-        #define UI_HAS_FLOAT_16
-    #endif
+    // #if defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN) || __has_keyword(_Float16)
+    //     #define UI_HAS_FLOAT_16
+    // #endif
 
     #if defined(__STDCPP_BFLOAT16_T__)
         #define UI_HAS_BFLOAT_16
@@ -153,4 +160,9 @@
     #endif
 #endif
 
+#if INTPTR_MAX == INT64_MAX
+    #define UI_ARCH_64BIT
+#else
+    #define UI_ARCH_32BIT
+#endif
 #endif // AMT_UI_FEATURES_HPP

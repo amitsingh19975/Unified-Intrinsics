@@ -3,9 +3,12 @@
 #define AMT_UI_ARCH_ARM_SHIFT_HPP
 
 #include "cast.hpp"
+#include <algorithm>
+#include <arm_neon.h>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 #include "../basic.hpp"
 #include "../emul/shift.hpp"
 
@@ -1728,6 +1731,157 @@ namespace ui::arm::neon {
     }
 // !MARK
 
+// MARK: Shift Lane
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_right_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        if constexpr (Shift == 0) return a;
+        else if constexpr (N == 1 || Shift >= N) return {};
+        else {
+            if constexpr (std::same_as<T, float>) {
+                return rcast<T>(shift_right_lane<Shift>(rcast<std::uint32_t>(a)));
+            #ifdef UI_CPU_ARM64
+            } else if constexpr (std::same_as<T, double>) {
+                return rcast<T>(shift_right_lane<Shift>(rcast<std::uint64_t>(a)));
+            #endif
+            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                return rcast<T>(shift_right_lane<Shift>(rcast<std::uint16_t>(a)));
+            } else if constexpr (std::is_signed_v<T>) {
+                using type = std::make_unsigned_t<T>;
+                return rcast<T>(shift_right_lane<Shift>(rcast<type>(a)));
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 16) {
+                        return from_vec<T>(
+                            vextq_u8(to_vec(pad), to_vec(a), N - Shift)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vext_u8(to_vec(pad), to_vec(a), N - Shift)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vextq_u16(to_vec(pad), to_vec(a), N - Shift)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vext_u16(to_vec(pad), to_vec(a), N - Shift)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vextq_u32(to_vec(pad), to_vec(a), N - Shift)
+                        );
+                    } else if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vext_u32(to_vec(pad), to_vec(a), N - Shift)
+                        );
+                    }
+                #ifdef UI_CPU_ARM64
+                } else if constexpr (sizeof(T) == 8) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vextq_u64(to_vec(pad), to_vec(a), N - Shift)
+                        );
+                    }
+                #endif
+                }
+            }
+
+            // [pad.lo, pad.hi, a.lo, a.hi]
+            if constexpr (Shift < N / 2) {
+                auto l = shift_right_lane<Shift>(a.lo, pad.hi);
+                auto r = shift_right_lane<Shift>(a.hi, a.lo);
+                return join(l, r);
+            } else {
+                auto l = shift_right_lane<Shift - N / 2>(pad.hi, pad.lo);
+                auto r = shift_right_lane<Shift - N / 2>(a.lo, pad.hi);
+                return join(l, r);
+            }
+        }
+    }
+
+    template <unsigned Shift, std::size_t N, typename T>
+        requires (Shift <= N)
+    UI_ALWAYS_INLINE auto shift_left_lane(
+        Vec<N, T> const& a,
+        Vec<N, T> const& pad = {}
+    ) noexcept -> Vec<N, T> {
+        if constexpr (Shift == 0) return a;
+        if constexpr (Shift >= N) return {};
+        else if constexpr (N == 1) return {};
+        else {
+            if constexpr (std::same_as<T, float>) {
+                return rcast<T>(shift_left_lane<Shift>(rcast<std::uint32_t>(a)));
+            #ifdef UI_CPU_ARM64
+            } else if constexpr (std::same_as<T, double>) {
+                return rcast<T>(shift_left_lane<Shift>(rcast<std::uint64_t>(a)));
+            #endif
+            } else if constexpr (std::same_as<T, float16> || std::same_as<T, bfloat16>) {
+                return rcast<T>(shift_left_lane<Shift>(rcast<std::uint16_t>(a)));
+            } else if constexpr (std::is_signed_v<T>) {
+                using type = std::make_unsigned_t<T>;
+                return rcast<T>(shift_left_lane<Shift>(rcast<type>(a)));
+            } else {
+                if constexpr (sizeof(T) == 1) {
+                    if constexpr (N == 16) {
+                        return from_vec<T>(
+                            vextq_u8(to_vec(a), to_vec(pad), Shift)
+                        );
+                    } else if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vext_u8(to_vec(a), to_vec(pad), Shift)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 2) {
+                    if constexpr (N == 8) {
+                        return from_vec<T>(
+                            vextq_u16(to_vec(a), to_vec(pad), Shift)
+                        );
+                    } else if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vext_u16(to_vec(a), to_vec(pad), Shift)
+                        );
+                    }
+                } else if constexpr (sizeof(T) == 4) {
+                    if constexpr (N == 4) {
+                        return from_vec<T>(
+                            vextq_u32(to_vec(a), to_vec(pad), Shift)
+                        );
+                    } else if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vext_u32(to_vec(a), to_vec(pad), Shift)
+                        );
+                    }
+                #ifdef UI_CPU_ARM64
+                } else if constexpr (sizeof(T) == 8) {
+                    if constexpr (N == 2) {
+                        return from_vec<T>(
+                            vextq_u64(to_vec(a), to_vec(pad), Shift)
+                        );
+                    }
+                #endif
+                }
+            }
+
+            if constexpr (Shift < N / 2) {
+                auto l = shift_left_lane<Shift>(a.lo, a.hi);
+                auto r = shift_left_lane<Shift>(a.hi, pad.lo);
+                return join(l, r);
+            } else {
+                auto l = shift_left_lane<Shift - N / 2>(a.hi, pad.lo);
+                auto r = shift_left_lane<Shift - N / 2>(pad.lo, pad.hi);
+                return join(l, r);
+            }
+        }
+    }
+// !MARK
 } // namespace ui::arm::neon;
 
 #endif // AMT_UI_ARCH_ARM_SHIFT_HPP

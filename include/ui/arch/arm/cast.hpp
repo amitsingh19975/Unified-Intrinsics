@@ -316,7 +316,7 @@ namespace ui::arm::neon {
         ) noexcept -> Vec<N, To> {
             using ret_t = Vec<N, To>;
             if constexpr (M0 != 1 && N == 1) {
-                return ::ui::internal::saturating_cast_helper<To, Saturating, Saturating>(v);
+                return { ::ui::internal::saturating_cast_helper<To, Saturating>(v.val) };
             } else {
                 if constexpr (N == M0) {
                     return std::bit_cast<ret_t>(fn0(v));
