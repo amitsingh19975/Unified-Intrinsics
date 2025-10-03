@@ -544,8 +544,8 @@ namespace ui {
             auto rc = T{};
             for (auto i = std::size_t{}; i < N; ++i) {
                 rc += c[N - 1];
-                c = shift_left_lane<1>(c);
-                s = r + c;
+                auto tc = shift_right_lane<1>(c);
+                s = r + tc;
                 r = s & m;
                 c = shift_right<Bits>(s);
             }
@@ -578,9 +578,9 @@ namespace ui {
 
             for (auto i = std::size_t{}; i < N; ++i) {
                 rc += c[N - 1];
-                c = shift_left_lane<1>(c);
-                s = r - c;
-                c = shift_right<Bits>(r < c);
+                auto tc = shift_right_lane<1>(c);
+                s = r - tc;
+                c = shift_right<Bits>(r < tc);
                 r = s & m;
             }
             return { r, rc };
