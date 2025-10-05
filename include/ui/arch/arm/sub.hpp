@@ -777,8 +777,8 @@ namespace ui::arm::neon {
             auto res = T{};
             auto c = T{};
             asm volatile(
-                "subs   %0, %2, %3\n\t"    // sum = a + b, sets flags
-                "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
+                "subs   %0, %2, %3\n\t"
+                "cset   %w1, cc\n\t"
                 : "=&r"(res), "=r"(c)
                 : "r"(a), "r"(b)
                 : "cc"
@@ -788,8 +788,8 @@ namespace ui::arm::neon {
             auto res = T{};
             auto c = T{};
             asm volatile(
-                "subs   %w0, %w2, %w3\n\t"    // sum = a + b, sets flags
-                "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
+                "subs   %w0, %w2, %w3\n\t"
+                "cset   %w1, cc\n\t"
                 : "=&r"(res), "=r"(c)
                 : "r"(a), "r"(b)
                 : "cc"
@@ -805,19 +805,16 @@ namespace ui::arm::neon {
     UI_ALWAYS_INLINE auto subc(
         T a,
         T b,
-        T carry = {}
+        T carry
     ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
         if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
-            auto res = T{};
-            auto [tb, tc] = addc(b, carry);
-            auto [r, c] = subc(a, b);
-            (void)tc;
-            return { r, c };
+            auto [ta, c0] = subc(a, carry);
+            auto [res, c1] = subc(ta, b);
+            return { res, c0 | c1 };
         } else {
-            return emul::subc(a, b, carry);
+            return emul::subc(a, b);
         }
     }
-
 
     template <std::size_t N, std::integral T>
         requires std::is_unsigned_v<T>
@@ -874,9 +871,9 @@ namespace ui::arm::neon {
                 }, std::make_index_sequence<N - 1>{});
 
                 if constexpr (sizeof(T) == 8) {
-                    asm volatile("cset %0, cs" : "=r"(c) :: "cc");
+                    asm volatile("cset %0, cc" : "=r"(c) :: "cc");
                 } else {
-                    asm volatile("cset %w0, cs" : "=r"(c) :: "cc");
+                    asm volatile("cset %w0, cc" : "=r"(c) :: "cc");
                 }
                 return { res, c };
             } else {
@@ -885,21 +882,96 @@ namespace ui::arm::neon {
         }
     }
 
+    namespace detail {
+        template <std::size_t N, std::integral T>
+            requires std::is_unsigned_v<T>
+        UI_ALWAYS_INLINE auto subc_helper(
+            Vec<N, T> const& a,
+            Vec<N, T> const& b,
+            T carry = {}
+        ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+            auto i = std::size_t{};
+            auto tb = Vec<N, T>{};
+            while (i < N && carry) {
+                auto [r, c] = addc(b[i], carry);
+                tb[i++] = r;
+                carry = c;
+            }
+            return subc(a, tb);
+        }
+    } // namespace detail
+
     template <std::size_t N, std::integral T>
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto subc(
         Vec<N, T> const& a,
         Vec<N, T> const& b,
-        T carry = {}
+        T carry
     ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
-        auto i = std::size_t{};
-        auto tb = Vec<N, T>{};
-        while (i < N && carry) {
-            auto [r, c] = addc(b[i], carry);
-            tb[i++] = r;
-            carry = c;
+        if (carry > 2) {
+            return detail::subc_helper(a, b, carry);
         }
-        return subc(a, tb);
+
+        if constexpr (N == 1) {
+            auto [s, c] = subc(a.val, b.val);
+            return { Vec<N, T>(s), c };
+        } else {
+            if constexpr (sizeof(T) == 4 || sizeof(T) == 8) {
+                auto res = Vec<N, T>{};
+                auto c = T{};
+
+                if constexpr (sizeof(T) == 8) {
+                    asm volatile(
+                        "subs xzr, %3, #1\n\t"
+                        "sbcs %0, %1, %2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        : "cc"
+                    );
+                } else {
+                    asm volatile(
+                        "subs wzr, %w3, #1\n\t"
+                        "sbcs %w0, %w1, %w2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        : "cc"
+                    );
+                }
+
+                auto helper = [&a, &b, &res]<std::size_t... Is>(auto&& fn, std::index_sequence<Is...>) {
+                    ((res[Is + 1] = fn(a[Is + 1], b[Is + 1])),...);
+                };
+
+                helper([](T l, T r){
+                    auto dst = T{};
+                    if constexpr (sizeof(T) == 8) {
+                        asm volatile(
+                            "sbcs %0, %1, %2\n\t"
+                            : "=&r"(dst), "+r"(l)
+                            : "r"(r)
+                            : "cc"
+                        );
+                    } else {
+                        asm volatile(
+                            "sbcs %w0, %w1, %w2\n\t"
+                            : "=&r"(dst), "+r"(l)
+                            : "r"(r)
+                            : "cc"
+                        );
+                    }
+                    return dst;
+                }, std::make_index_sequence<N - 1>{});
+
+                if constexpr (sizeof(T) == 8) {
+                    asm volatile("cset %0, cc" : "=r"(c) :: "cc");
+                } else {
+                    asm volatile("cset %w0, cc" : "=r"(c) :: "cc");
+                }
+                return { res, c };
+            } else {
+                return emul::subc(a, b);
+            }
+        }
     }
 // !MARK
 } // namespace ui::arm::neon;

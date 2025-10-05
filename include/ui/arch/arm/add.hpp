@@ -1521,6 +1521,23 @@ namespace ui::arm::neon {
         }
     }
 
+    namespace detail {
+        template <std::integral T>
+            requires std::is_unsigned_v<T>
+        UI_ALWAYS_INLINE auto addc_helper(
+            T a,
+            T b,
+            T carry
+        ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+            if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
+                auto [tb, c0] = addc(b, carry);
+                auto [res, c1] = addc(a, tb);
+                return { res, c1 + c0 };
+            } else {
+                return emul::addc(a, b, carry);
+            }
+        }
+    } // namespace detail
     template <std::integral T>
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto addc(
@@ -1528,12 +1545,36 @@ namespace ui::arm::neon {
         T b,
         T carry
     ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
-        if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
-            auto [tb, c0] = addc(b, carry);
-            auto [res, c1] = addc(a, tb);
-            return { res, c1 + c0 };
+        if (carry > 2) {
+            return detail::addc_helper(a, b, carry);
+        }
+
+        if constexpr (sizeof(T) == 8) {
+            auto res = T{};
+            auto c = T{};
+            asm volatile(
+                "subs xzr, %4, #1\n\t"
+                "adcs   %0, %2, %3\n\t"    // sum = a + b, sets flags
+                "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
+                : "=&r"(res), "=r"(c)
+                : "r"(a), "r"(b), "r" (carry)
+                : "cc"
+            );
+            return { res, c };
+        } else if constexpr (sizeof(T) == 4) {
+            auto res = T{};
+            auto c = T{};
+            asm volatile(
+                "subs wzr, %w4, #1\n\t"
+                "adcs   %w0, %w2, %w3\n\t"    // sum = a + b, sets flags
+                "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
+                : "=&r"(res), "=r"(c)
+                : "r"(a), "r"(b), "r" (carry)
+                : "cc"
+            );
+            return { res, c };
         } else {
-            return emul::addc(a, b, carry);
+            return emul::addc(a, b);
         }
     }
 
@@ -1603,6 +1644,27 @@ namespace ui::arm::neon {
             }
         }
     }
+
+    namespace detail {
+        template <std::size_t N, std::integral T>
+            requires std::is_unsigned_v<T>
+        UI_ALWAYS_INLINE auto addc_helper(
+            Vec<N, T> const& a,
+            Vec<N, T> const& b,
+            T carry
+        ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+            auto [res, c] = addc(a, b);
+            auto i = std::size_t{};
+            while (i < N && carry) {
+                auto [tr, tc] = addc(res[0], carry);
+                res[i++] = tr;
+                carry = tc;
+            }
+
+            return { res, c + carry };
+        }
+    } // namespace detail
+
     template <std::size_t N, std::integral T>
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto addc(
@@ -1610,16 +1672,73 @@ namespace ui::arm::neon {
         Vec<N, T> const& b,
         T carry
     ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
-        auto [res, c] = addc(a, b);
-        auto i = std::size_t{};
-        while (i < N && carry) {
-            auto [tr, tc] = addc(res[0], carry);
-            res[i++] = tr;
-            carry = tc;
+        if (carry > 2) {
+            return detail::addc_helper(a, b, carry);
         }
 
-        return { res, c + carry };
+        if constexpr (N == 1) {
+            auto [s, c] = addc(a.val, b.val);
+            return { Vec<N, T>(s), c };
+        } else {
+            if constexpr (sizeof(T) == 4 || sizeof(T) == 8) {
+                auto res = Vec<N, T>{};
+                auto c = T{};
+
+                if constexpr (sizeof(T) == 8) {
+                    asm volatile(
+                        "subs xzr, %3, #1\n\t"
+                        "adds %0, %1, %2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        : "cc"
+                    );
+                } else {
+                    asm volatile(
+                        "subs xzr, %3, #1\n\t"
+                        "adds %w0, %w1, %w2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        : "cc"
+                    );
+                }
+
+
+                auto helper = [&a, &b, &res]<std::size_t... Is>(auto&& fn, std::index_sequence<Is...>) {
+                    ((res[Is + 1] = fn(a[Is + 1], b[Is + 1])),...);
+                };
+
+                helper([](T l, T r){
+                    auto dst = T{};
+                    if constexpr (sizeof(T) == 8) {
+                        asm volatile(
+                            "adcs %0, %1, %2\n\t"
+                            : "=&r"(dst), "+r"(l)
+                            : "r"(r)
+                            : "cc"
+                        );
+                    } else {
+                        asm volatile(
+                            "adcs %w0, %w1, %w2\n\t"
+                            : "=&r"(dst), "+r"(l)
+                            : "r"(r)
+                            : "cc"
+                        );
+                    }
+                    return dst;
+                }, std::make_index_sequence<N - 1>{});
+
+                if constexpr (sizeof(T) == 8) {
+                    asm volatile("cset %0, cs" : "=r"(c) :: "cc");
+                } else {
+                    asm volatile("cset %w0, cs" : "=r"(c) :: "cc");
+                }
+                return { res, c };
+            } else {
+                return emul::addc(a, b);
+            }
+        }
     }
+
 // !MARK
 } // namespace ui::arm::neon;
 
