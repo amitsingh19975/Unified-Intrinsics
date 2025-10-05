@@ -111,7 +111,6 @@ namespace ui::emul {
                 return { static_cast<T>(s), l < r };
             #ifdef UI_HAS_INT128
             } else if constexpr (sizeof(T) == 8) {
-                static constexpr auto bits = (sizeof(T) * CHAR_BIT);
                 auto l = uint128_t(a);
                 auto r = uint128_t(b) + uint128_t(carry);
                 auto s = l - r;
