@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_ARM_SUB_HPP
 
 #include "cast.hpp"
+#include "add.hpp"
 #include <concepts>
 #include <cstddef>
 #include <cstdlib>
@@ -770,18 +771,16 @@ namespace ui::arm::neon {
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto subc(
         T a,
-        T b,
-        T carry = {}
+        T b
     ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
         if constexpr (sizeof(T) == 8) {
             auto res = T{};
             auto c = T{};
             asm volatile(
                 "subs   %0, %2, %3\n\t"    // sum = a + b, sets flags
-                "sbc    %0, %0, %4\n\t"    // sum += carry_in, add with carry
                 "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
                 : "=&r"(res), "=r"(c)
-                : "r"(a), "r"(b), "r"(carry)
+                : "r"(a), "r"(b)
                 : "cc"
             );
             return { res, c };
@@ -790,47 +789,62 @@ namespace ui::arm::neon {
             auto c = T{};
             asm volatile(
                 "subs   %w0, %w2, %w3\n\t"    // sum = a + b, sets flags
-                "sbc    %w0, %w0, %w4\n\t"    // sum += carry_in, add with carry
                 "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
                 : "=&r"(res), "=r"(c)
-                : "r"(a), "r"(b), "r"(carry)
+                : "r"(a), "r"(b)
                 : "cc"
             );
             return { res, c };
+        } else {
+            return emul::subc(a, b);
+        }
+    }
+
+    template <std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto subc(
+        T a,
+        T b,
+        T carry = {}
+    ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+        if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
+            auto res = T{};
+            auto [tb, tc] = addc(b, carry);
+            auto [r, c] = subc(a, b);
+            (void)tc;
+            return { r, c };
         } else {
             return emul::subc(a, b, carry);
         }
     }
 
+
     template <std::size_t N, std::integral T>
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto subc(
         Vec<N, T> const& a,
-        Vec<N, T> const& b,
-        T carry = {}
+        Vec<N, T> const& b
     ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
         if constexpr (N == 1) {
-            auto [s, c] = subc(a.val, b.val, carry);
+            auto [s, c] = subc(a.val, b.val);
             return { Vec<N, T>(s), c };
         } else {
             if constexpr (sizeof(T) == 4 || sizeof(T) == 8) {
                 auto res = Vec<N, T>{};
-                auto c = carry;
+                auto c = T{};
 
                 if constexpr (sizeof(T) == 8) {
                     asm volatile(
-                        "subs %0, %2, %3\n\t"    // sum0 = a0 + b0
-                        "sbc %1, xzr, %4\n\t"    // add initial carry
-                        : "=&r"(res[0]), "=&r"(carry)
-                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        "subs %0, %1, %2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0])
                         : "cc"
                     );
                 } else {
                     asm volatile(
-                        "subs %w0, %w2, %w3\n\t"    // sum0 = a0 + b0
-                        "sbc %w1, wzr, %w4\n\t"    // add initial carry
-                        : "=&r"(res[0]), "=&r"(carry)
-                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        "subs %w0, %w1, %w2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0])
                         : "cc"
                     );
                 }
@@ -866,9 +880,26 @@ namespace ui::arm::neon {
                 }
                 return { res, c };
             } else {
-                return emul::subc(a, b, carry);
+                return emul::subc(a, b);
             }
         }
+    }
+
+    template <std::size_t N, std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto subc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T carry = {}
+    ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+        auto i = std::size_t{};
+        auto tb = Vec<N, T>{};
+        while (i < N && carry) {
+            auto [r, c] = addc(b[i], carry);
+            tb[i++] = r;
+            carry = c;
+        }
+        return subc(a, tb);
     }
 // !MARK
 } // namespace ui::arm::neon;
