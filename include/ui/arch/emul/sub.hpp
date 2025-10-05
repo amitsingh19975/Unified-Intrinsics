@@ -4,6 +4,7 @@
 #include "cast.hpp"
 #include "../basic.hpp"
 #include "../../base.hpp"
+#include "../../features.hpp"
 #include <concepts>
 #include <cstdint>
 #include <type_traits>
@@ -84,7 +85,7 @@ namespace ui::emul {
 // !MARK
 
 // MARK: Subtraction with carry
-    template <std::size_t N, std::integral T>
+    template <std::integral T>
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto subc(
         T const& a,
@@ -108,6 +109,14 @@ namespace ui::emul {
                 auto r = static_cast<std::uint64_t>(b) + static_cast<std::uint64_t>(carry);
                 auto s = l - r;
                 return { static_cast<T>(s), l < r };
+            #ifdef UI_HAS_INT128
+            } else if constexpr (sizeof(T) == 8) {
+                static constexpr auto bits = (sizeof(T) * CHAR_BIT);
+                auto l = uint128_t(a);
+                auto r = uint128_t(b) + uint128_t(carry);
+                auto s = l - r;
+                return { static_cast<T>(s), l < r };
+            #endif
             }
             #endif
             auto sum = a - carry;

@@ -2,6 +2,7 @@
 #define AMT_UI_ARCH_EMUL_ADD_HPP
 
 #include "cast.hpp"
+#include "../../features.hpp"
 #include <climits>
 #include <concepts>
 #include <cstdint>
@@ -232,7 +233,7 @@ namespace ui::emul {
 // !MAKR
 
 // MARK: Addition with carry
-    template <std::size_t N, std::integral T>
+    template <std::integral T>
         requires (std::is_unsigned_v<T>)
     UI_ALWAYS_INLINE auto addc(
         T a,
@@ -259,6 +260,12 @@ namespace ui::emul {
                 auto s = l + r;
                 static constexpr auto bits = (sizeof(T) * CHAR_BIT);
                 return { static_cast<T>(s), static_cast<T>(s >> bits) };
+            #ifdef UI_HAS_INT128
+            } else if constexpr (sizeof(T) == 8) {
+                static constexpr auto bits = (sizeof(T) * CHAR_BIT);
+                auto s = uint128_t(a) + uint128_t(b) + uint128_t(carry);
+                return { static_cast<T>(s), static_cast<T>(s >> bits) };
+            #endif
             }
             #endif
             auto sum = a + b;
