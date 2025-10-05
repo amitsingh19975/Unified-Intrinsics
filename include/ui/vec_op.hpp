@@ -3,7 +3,6 @@
 
 #include "base_vec.hpp"
 #include "arch/arch.hpp"
-#include "ui/arch/arm/shift.hpp"
 
 namespace ui {
     template <std::size_t N, typename T>
@@ -524,7 +523,7 @@ namespace ui {
 
     template <std::size_t Bits, std::size_t N, std::integral T>
         requires (std::is_unsigned_v<T> && Bits < sizeof(T) * 8)
-    UI_ALWAYS_INLINE auto addc(
+    UI_ALWAYS_INLINE auto masked_addc(
         Vec<N, T> const& a,
         Vec<N, T> const& b,
         Vec<N, T> carry = {}
@@ -555,7 +554,7 @@ namespace ui {
 
     template <std::size_t Bits, std::size_t N, std::integral T>
         requires (std::is_unsigned_v<T> && Bits < sizeof(T) * 8)
-    UI_ALWAYS_INLINE auto subc(
+    UI_ALWAYS_INLINE auto masked_subc(
         Vec<N, T> const& a,
         Vec<N, T> const& b,
         Vec<N, T> carry = {}
