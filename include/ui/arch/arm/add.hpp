@@ -1492,18 +1492,16 @@ namespace ui::arm::neon {
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto addc(
         T a,
-        T b,
-        T carry = {}
+        T b
     ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
         if constexpr (sizeof(T) == 8) {
             auto res = T{};
             auto c = T{};
             asm volatile(
                 "adds   %0, %2, %3\n\t"    // sum = a + b, sets flags
-                "adc    %0, %0, %4\n\t"    // sum += carry_in, add with carry
                 "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
                 : "=&r"(res), "=r"(c)
-                : "r"(a), "r"(b), "r"(carry)
+                : "r"(a), "r"(b)
                 : "cc"
             );
             return { res, c };
@@ -1512,13 +1510,28 @@ namespace ui::arm::neon {
             auto c = T{};
             asm volatile(
                 "adds   %w0, %w2, %w3\n\t"    // sum = a + b, sets flags
-                "adc    %w0, %w0, %w4\n\t"    // sum += carry_in, add with carry
                 "cset   %w1, cs\n\t"       // set carry_out = carry flag (1 if carry, 0 if not)
                 : "=&r"(res), "=r"(c)
-                : "r"(a), "r"(b), "r"(carry)
+                : "r"(a), "r"(b)
                 : "cc"
             );
             return { res, c };
+        } else {
+            return emul::addc(a, b);
+        }
+    }
+
+    template <std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto addc(
+        T a,
+        T b,
+        T carry
+    ) noexcept -> std::pair<T /*result*/, T /*carry*/> {
+        if constexpr (sizeof(T) == 8 || sizeof(T) == 4) {
+            auto [tb, c0] = addc(b, carry);
+            auto [res, c1] = addc(a, tb);
+            return { res, c1 + c0 };
         } else {
             return emul::addc(a, b, carry);
         }
@@ -1528,31 +1541,28 @@ namespace ui::arm::neon {
         requires std::is_unsigned_v<T>
     UI_ALWAYS_INLINE auto addc(
         Vec<N, T> const& a,
-        Vec<N, T> const& b,
-        T carry = {}
+        Vec<N, T> const& b
     ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
         if constexpr (N == 1) {
-            auto [s, c] = addc(a.val, b.val, carry);
+            auto [s, c] = addc(a.val, b.val);
             return { Vec<N, T>(s), c };
         } else {
             if constexpr (sizeof(T) == 4 || sizeof(T) == 8) {
                 auto res = Vec<N, T>{};
-                auto c = carry;
+                auto c = T{};
 
                 if constexpr (sizeof(T) == 8) {
                     asm volatile(
-                        "adds %0, %2, %3\n\t"    // sum0 = a0 + b0
-                        "adc %1, xzr, %4\n\t"    // add initial carry
-                        : "=&r"(res[0]), "=&r"(carry)
-                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        "adds %0, %1, %2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0])
                         : "cc"
                     );
                 } else {
                     asm volatile(
-                        "adds %w0, %w2, %w3\n\t"    // sum0 = a0 + b0
-                        "adc %w1, wzr, %w4\n\t"    // add initial carry
-                        : "=&r"(res[0]), "=&r"(carry)
-                        : "r"(a[0]), "r"(b[0]), "r"(carry)
+                        "adds %w0, %w1, %w2\n\t"    // sum0 = a0 + b0
+                        : "=&r"(res[0])
+                        : "r"(a[0]), "r"(b[0])
                         : "cc"
                     );
                 }
@@ -1589,9 +1599,26 @@ namespace ui::arm::neon {
                 }
                 return { res, c };
             } else {
-                return emul::addc(a, b, carry);
+                return emul::addc(a, b);
             }
         }
+    }
+    template <std::size_t N, std::integral T>
+        requires std::is_unsigned_v<T>
+    UI_ALWAYS_INLINE auto addc(
+        Vec<N, T> const& a,
+        Vec<N, T> const& b,
+        T carry
+    ) noexcept -> std::pair<Vec<N, T> /*result*/, T /*carry*/> {
+        auto [res, c] = addc(a, b);
+        auto i = std::size_t{};
+        while (i < N && carry) {
+            auto [tr, tc] = addc(res[0], carry);
+            res[i++] = tr;
+            carry = tc;
+        }
+
+        return { res, c + carry };
     }
 // !MARK
 } // namespace ui::arm::neon;
